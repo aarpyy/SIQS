@@ -1,5 +1,3 @@
-import org.jetbrains.annotations.NotNull;
-
 import java.math.BigInteger;
 import java.util.Arrays;
 
@@ -26,7 +24,7 @@ public class QuadraticSieve {
         return primes;
     }
 
-    public int[] factorIfSmooth(BigInteger n, @NotNull BigIntArray primes) throws ArithmeticException {
+    public int[] factorIfSmooth(BigInteger n, BigIntArray primes) throws ArithmeticException {
         int [] factors = new int[primes.size()];
         int factor;
         for (int i = 0; i < primes.size(); i++) {
@@ -45,11 +43,32 @@ public class QuadraticSieve {
         }
     }
 
+    /*
+    Given a list of primes and a list of corresponding powers for each of those primes,
+    return the BigInteger that is the product of each of those powers.
+     */
+    public BigInteger evalPower(int[] powers, BigIntArray primes) {
+        BigInteger acc = BigInteger.ONE;
+
+        // If invalid arrays, just return -1
+        if (primes.size() != powers.length) {
+            return acc.negate();
+        }
+
+        // Otherwise, they are same length so evaluate powers
+        for (int i = 0; i < primes.size(); i++) {
+            acc = acc.multiply(primes.get(i).pow(powers[i]));
+        }
+        return acc;
+    }
+
     public static void main(String[] args) {
         QuadraticSieve qs = new QuadraticSieve();
         BigIntArray primes = new BigIntArray(qs.firstN(10));
 
         BigInteger a = new BigInteger("3703");
-        System.out.println(Arrays.toString(qs.factorIfSmooth(a, primes)));
+        int[] powers = qs.factorIfSmooth(a, primes);
+        System.out.println(Arrays.toString(powers));
+        System.out.println(qs.evalPower(powers, primes));
     }
 }

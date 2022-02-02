@@ -1,9 +1,9 @@
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class QuadraticSieveTest {
 
@@ -13,6 +13,12 @@ class QuadraticSieveTest {
         BigIntArray primes = new BigIntArray(qs.firstN(10));
 
         BigInteger a = new BigInteger("3703");
-        assertArrayEquals(new int[]{0, 0, 0, 1, 0, 0, 0, 0, 2, 0}, qs.factorIfSmooth(a, primes));
+        int[] powers = qs.factorIfSmooth(a, primes);
+
+        // Confirm that these are the powers
+        assertArrayEquals(new int[]{0, 0, 0, 1, 0, 0, 0, 0, 2, 0}, powers);
+
+        // Confirm that when you take product of each of powers you get original number
+        assertEquals(qs.evalPower(powers, primes), a);
     }
 }
