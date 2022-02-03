@@ -46,34 +46,12 @@ public class NMatrix implements Iterable<NArray> {
         matrix[i] = row;
     }
 
-    public boolean equals(NArray[] other) {
-        if (h == other.length) {
-            for (int i = 0; i < h; i++) {
-                if (!matrix[i].equals(other[i])) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return false;
+    public NMatrix mod(INumber m) {
+        NArray[] mat = new NArray[h];
+        for (int i = 0; i < h; i++) {
+            mat[i] = matrix[i].mod(m);
         }
-    }
-
-    public boolean equals(NMatrix other) {
-        return this.equals(other.matrix);
-    }
-
-    public boolean equals(int[][] other) {
-        if (h == other.length) {
-            for (int i = 0; i < h; i++) {
-                if (!matrix[i].equals(other[i])) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return false;
-        }
+        return new NMatrix(mat);
     }
 
     public NMatrix copy() {
@@ -183,6 +161,36 @@ public class NMatrix implements Iterable<NArray> {
         }
 
         return basis;
+    }
+
+    public boolean equals(NArray[] other) {
+        if (h == other.length) {
+            for (int i = 0; i < h; i++) {
+                if (!matrix[i].equals(other[i])) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean equals(NMatrix other) {
+        return this.equals(other.matrix);
+    }
+
+    public boolean equals(int[][] other) {
+        if (h == other.length) {
+            for (int i = 0; i < h; i++) {
+                if (!matrix[i].equals(other[i])) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public String toString() {

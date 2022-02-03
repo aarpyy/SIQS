@@ -5,7 +5,7 @@ public class NInteger implements INumber {
     public static final NInteger ONE = new NInteger(1);
     public static final NInteger ZERO = new NInteger(0);
 
-    private final int value;
+    private int value;
 
     public NInteger(int val) {
         value = val;
@@ -21,8 +21,18 @@ public class NInteger implements INumber {
     }
 
     @Override
+    public void iAdd(INumber other) {
+        value += other.intValue();
+    }
+
+    @Override
     public NInteger sub(INumber other) {
         return new NInteger(value - other.intValue());
+    }
+
+    @Override
+    public void iSub(INumber other) {
+        value -= other.intValue();
     }
 
     @Override
@@ -31,8 +41,18 @@ public class NInteger implements INumber {
     }
 
     @Override
+    public void iMul(INumber other) {
+        value *= other.intValue();
+    }
+
+    @Override
     public NInteger div(INumber other) {
         return new NInteger(value / other.intValue());
+    }
+
+    @Override
+    public void iDiv(INumber other) {
+        value /= other.intValue();
     }
 
     @Override
@@ -41,8 +61,18 @@ public class NInteger implements INumber {
     }
 
     @Override
+    public void iMod(INumber other) {
+        value %= other.intValue();
+    }
+
+    @Override
     public NInteger negate() {
         return new NInteger(-value);
+    }
+
+    @Override
+    public void iNegate() {
+        value = -value;
     }
 
     @Override

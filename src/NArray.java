@@ -1,4 +1,3 @@
-import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
@@ -7,6 +6,15 @@ public class NArray implements Iterable<INumber> {
     private final INumber[] array;
     public final int length;
 
+    public NArray(int size) {
+        length = size;
+        array = new INumber[length];
+    }
+
+    /*
+    Constructors for NArray. Can be created from array of a number type, array of ints, or
+    array of strings. There is also a copy constructor.
+     */
     public NArray(INumber[] array) {
         length = array.length;
         this.array = array;
@@ -36,6 +44,7 @@ public class NArray implements Iterable<INumber> {
         }
     }
 
+    // Getter/setters methods for the array
     public INumber get(int i) {
         return array[i];
     }
@@ -44,6 +53,7 @@ public class NArray implements Iterable<INumber> {
         array[i] = n;
     }
 
+    // Slice method similar to python list[start:stop]
     public NArray slice(int start) {
         return slice(start, length);
     }
@@ -58,6 +68,7 @@ public class NArray implements Iterable<INumber> {
         return new NArray(temp);
     }
 
+    // Basic vector arithmetic
     public NArray add(NArray other) throws IllegalArgumentException {
         if (length != other.length) {
             throw new IllegalArgumentException("Array lengths differ: " + length +
@@ -92,23 +103,31 @@ public class NArray implements Iterable<INumber> {
         return new NArray(result);
     }
 
-    public BigInteger dot(NArray other) throws IllegalArgumentException {
+    public NArray mod(INumber other) {
+        NArray cpy = new NArray(this);
+        for (INumber n : cpy) n.iMod(other);
+        return cpy;
+    }
+
+    public NBigInteger dot(NArray other) throws IllegalArgumentException {
         if (length != other.length) {
             throw new IllegalArgumentException("Array lengths differ: " + length +
                     " and " + other.length + "\n");
         } else {
-            BigInteger result = BigInteger.ZERO;
+            NBigInteger result = NBigInteger.ZERO;
             for (int i = 0; i < length; i++) {
-                result = result.add(array[i].bigIntValue().multiply(other.get(i).bigIntValue()));
+                result.iAdd(array[i].mul(other.get(i)));
             }
             return result;
         }
     }
 
+    // Given an index of the array, divides every element in the array by that value, s.t.
+    // that value becomes 1
     public void makePivot(int index) {
         INumber n = array[index];
         for (int i = 0; i < length; i++) {
-            array[i] = array[i].div(n);
+            array[i].iDiv(n);
         }
     }
 

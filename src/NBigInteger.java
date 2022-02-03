@@ -5,7 +5,7 @@ public class NBigInteger implements INumber {
     public static final NBigInteger ONE = new NBigInteger(BigInteger.ONE);
     public static final NBigInteger ZERO = new NBigInteger(BigInteger.ZERO);
 
-    private final BigInteger value;
+    private BigInteger value;
 
     public NBigInteger(BigInteger val) {
         value = val;
@@ -17,7 +17,12 @@ public class NBigInteger implements INumber {
 
     @Override
     public NBigInteger add(INumber other) {
-        return new NBigInteger(value.add(BigInteger.valueOf(other.longValue())));
+        return new NBigInteger(value.add(other.bigIntValue()));
+    }
+
+    @Override
+    public void iAdd(INumber other) {
+        value = value.add(other.bigIntValue());
     }
 
     @Override
@@ -26,8 +31,18 @@ public class NBigInteger implements INumber {
     }
 
     @Override
+    public void iSub(INumber other) {
+        value = value.subtract(other.bigIntValue());
+    }
+
+    @Override
     public NBigInteger mul(INumber other) {
         return new NBigInteger(value.multiply(BigInteger.valueOf(other.longValue())));
+    }
+
+    @Override
+    public void iMul(INumber other) {
+        value = value.multiply(other.bigIntValue());
     }
 
     @Override
@@ -36,13 +51,28 @@ public class NBigInteger implements INumber {
     }
 
     @Override
+    public void iDiv(INumber other) {
+        value = value.divide(other.bigIntValue());
+    }
+
+    @Override
     public NBigInteger mod(INumber other) {
         return new NBigInteger(value.mod(BigInteger.valueOf(other.longValue())));
     }
 
     @Override
+    public void iMod(INumber other) {
+        value = value.mod(other.bigIntValue());
+    }
+
+    @Override
     public NBigInteger negate() {
         return new NBigInteger(value.negate());
+    }
+
+    @Override
+    public void iNegate() {
+        value = value.negate();
     }
 
     @Override

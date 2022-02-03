@@ -5,7 +5,7 @@ public class NByte implements INumber {
     public static final NByte ONE = new NByte((byte) 1);
     public static final NByte ZERO = new NByte((byte) 0);
 
-    private final byte value;
+    private byte value;
 
     public NByte(byte val) {
         value = val;
@@ -21,8 +21,18 @@ public class NByte implements INumber {
     }
 
     @Override
+    public void iAdd(INumber other) {
+        value += other.intValue();
+    }
+
+    @Override
     public NByte sub(INumber other) {
         return new NByte((byte) (value - other.intValue()));
+    }
+
+    @Override
+    public void iSub(INumber other) {
+        value -= other.intValue();
     }
 
     @Override
@@ -31,8 +41,18 @@ public class NByte implements INumber {
     }
 
     @Override
+    public void iMul(INumber other) {
+        value *= other.intValue();
+    }
+
+    @Override
     public NByte div(INumber other) {
         return new NByte((byte) (value / other.intValue()));
+    }
+
+    @Override
+    public void iDiv(INumber other) {
+        value /= other.intValue();
     }
 
     @Override
@@ -41,8 +61,18 @@ public class NByte implements INumber {
     }
 
     @Override
+    public void iMod(INumber other) {
+        value %= other.intValue();
+    }
+
+    @Override
     public NByte negate() {
         return new NByte((byte) -value);
+    }
+
+    @Override
+    public void iNegate() {
+        value = (byte) -value;
     }
 
     @Override

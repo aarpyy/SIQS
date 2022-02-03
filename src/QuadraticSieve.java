@@ -2,6 +2,12 @@ import java.math.BigInteger;
 
 public class QuadraticSieve {
 
+    public NArray A;
+    public NArray powersB;
+    public final NArray primes;
+    BigInteger N;
+    int B;
+
     // All primes < 1000
     private final String[] strPrimes = new String[]{"2", "3", "5", "7", "11", "13", "17", "19", "23", "29", "31", "37",
             "41", "43", "47", "53", "59", "61", "67", "71", "73", "79", "83", "89", "97", "101", "103", "107", "109",
@@ -15,6 +21,16 @@ public class QuadraticSieve {
             "761", "769", "773", "787", "797", "809", "811", "821", "823", "827", "829", "839", "853", "857", "859",
             "863", "877", "881", "883", "887", "907", "911", "919", "929", "937", "941", "947", "953", "967", "971",
             "977", "983", "991", "997"};
+
+
+    public QuadraticSieve(BigInteger N) {
+        double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
+        B = (int) (Math.pow(L, 1.0 / Math.sqrt(2)));
+        A = new NArray(B);
+        powersB = new NArray(B);
+        primes = new NArray(firstN(B));
+        this.N = N;
+    }
 
 
     public String[] firstN(int n) {
@@ -62,13 +78,17 @@ public class QuadraticSieve {
         return acc;
     }
 
+    public void findPolynomials() {
+
+    }
+
     public static void main(String[] args) {
-        QuadraticSieve qs = new QuadraticSieve();
-        NArray primes = new NArray(qs.firstN(10));
+        BigInteger N = new BigInteger("3703");
+        QuadraticSieve qs = new QuadraticSieve(N);
 
         BigInteger a = new BigInteger("3703");
-        NArray powers = qs.factorIfSmooth(a, primes);
+        NArray powers = qs.factorIfSmooth(a, qs.primes);
         System.out.println(powers.toString());
-        System.out.println(qs.evalPower(powers, primes));
+        System.out.println(qs.evalPower(powers, qs.primes));
     }
 }
