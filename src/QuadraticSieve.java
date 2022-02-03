@@ -1,5 +1,4 @@
 import java.math.BigInteger;
-import java.util.Arrays;
 
 public class QuadraticSieve {
 
@@ -24,20 +23,20 @@ public class QuadraticSieve {
         return primes;
     }
 
-    public int[] factorIfSmooth(BigInteger n, BigIntArray primes) throws ArithmeticException {
-        int [] factors = new int[primes.size()];
+    public NArray factorIfSmooth(BigInteger n, NArray primes) throws ArithmeticException {
+        NInteger [] factors = new NInteger[primes.length];
         int factor;
-        for (int i = 0; i < primes.size(); i++) {
+        for (int i = 0; i < primes.length; i++) {
             factor = 0;
-            while (n.mod(primes.get(i)).equals(BigInteger.ZERO)) {
-                n = n.divide(primes.get(i));
+            while (n.mod(primes.get(i).bigIntValue()).equals(BigInteger.ZERO)) {
+                n = n.divide(primes.get(i).bigIntValue());
                 factor++;
             }
-            factors[i] = factor;
+            factors[i] = new NInteger(factor);
         }
 
         if (n.equals(BigInteger.ONE)) {
-            return factors;
+            return new NArray(factors);
         } else {
             throw new ArithmeticException(n + " unable to be factored completely");
         }
@@ -47,28 +46,29 @@ public class QuadraticSieve {
     Given a list of primes and a list of corresponding powers for each of those primes,
     return the BigInteger that is the product of each of those powers.
      */
-    public BigInteger evalPower(int[] powers, BigIntArray primes) {
+    public BigInteger evalPower(NArray powers, NArray primes) {
         BigInteger acc = BigInteger.ONE;
 
         // If invalid arrays, just return -1
-        if (primes.size() != powers.length) {
+        if (primes.length != powers.length) {
             return acc.negate();
         }
 
         // Otherwise, they are same length so evaluate powers
-        for (int i = 0; i < primes.size(); i++) {
-            acc = acc.multiply(primes.get(i).pow(powers[i]));
+        for (int i = 0; i < primes.length; i++) {
+            // Take product of BigInteger power value
+            acc = acc.multiply(primes.get(i).bigIntValue().pow(powers.get(i).intValue()));
         }
         return acc;
     }
 
     public static void main(String[] args) {
         QuadraticSieve qs = new QuadraticSieve();
-        BigIntArray primes = new BigIntArray(qs.firstN(10));
+        NArray primes = new NArray(qs.firstN(10));
 
         BigInteger a = new BigInteger("3703");
-        int[] powers = qs.factorIfSmooth(a, primes);
-        System.out.println(Arrays.toString(powers));
+        NArray powers = qs.factorIfSmooth(a, primes);
+        System.out.println(powers.toString());
         System.out.println(qs.evalPower(powers, primes));
     }
 }
