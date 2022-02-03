@@ -1,4 +1,8 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
 
 public class QuadraticSieve {
 
@@ -8,35 +12,26 @@ public class QuadraticSieve {
     BigInteger N;
     int B;
 
-    // All primes < 1000
-    private final String[] strPrimes = new String[]{"2", "3", "5", "7", "11", "13", "17", "19", "23", "29", "31", "37",
-            "41", "43", "47", "53", "59", "61", "67", "71", "73", "79", "83", "89", "97", "101", "103", "107", "109",
-            "113", "127", "131", "137", "139", "149", "151", "157", "163", "167", "173", "179", "181", "191", "193",
-            "197", "199", "211", "223", "227", "229", "233", "239", "241", "251", "257", "263", "269", "271", "277",
-            "281", "283", "293", "307", "311", "313", "317", "331", "337", "347", "349", "353", "359", "367", "373",
-            "379", "383", "389", "397", "401", "409", "419", "421", "431", "433", "439", "443", "449", "457", "461",
-            "463", "467", "479", "487", "491", "499", "503", "509", "521", "523", "541", "547", "557", "563", "569",
-            "571", "577", "587", "593", "599", "601", "607", "613", "617", "619", "631", "641", "643", "647", "653",
-            "659", "661", "673", "677", "683", "691", "701", "709", "719", "727", "733", "739", "743", "751", "757",
-            "761", "769", "773", "787", "797", "809", "811", "821", "823", "827", "829", "839", "853", "857", "859",
-            "863", "877", "881", "883", "887", "907", "911", "919", "929", "937", "941", "947", "953", "967", "971",
-            "977", "983", "991", "997"};
 
-
-    public QuadraticSieve(BigInteger N) {
+    public QuadraticSieve(BigInteger N) throws NoSuchElementException, FileNotFoundException {
         double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
         B = (int) (Math.pow(L, 1.0 / Math.sqrt(2)));
         A = new NArray(B);
         powersB = new NArray(B);
-        primes = new NArray(firstN(B));
+        primes = new NArray(B);
         this.N = N;
-    }
 
 
-    public String[] firstN(int n) {
-        String[] primes = new String[n];
-        System.arraycopy(strPrimes, 0, primes, 0, n);
-        return primes;
+        File file = new File(".\\primes.txt");
+        Scanner scanner = new Scanner(file);
+        for (int i = 0; i < B; i++) {
+            if (!scanner.hasNextLine()) {
+                throw new NoSuchElementException("Ran out of primes!");
+            } else {
+                primes.set(i, new NInteger(Integer.parseInt(scanner.nextLine())));
+            }
+        }
+
     }
 
     public NArray factorIfSmooth(BigInteger n, NArray primes) throws ArithmeticException {
@@ -83,12 +78,16 @@ public class QuadraticSieve {
     }
 
     public static void main(String[] args) {
-        BigInteger N = new BigInteger("3703");
-        QuadraticSieve qs = new QuadraticSieve(N);
+        try {
+            BigInteger N = new BigInteger("3703");
+            QuadraticSieve qs = new QuadraticSieve(N);
+            NArray powers = qs.factorIfSmooth(N, qs.primes);
 
-        BigInteger a = new BigInteger("3703");
-        NArray powers = qs.factorIfSmooth(a, qs.primes);
-        System.out.println(powers.toString());
-        System.out.println(qs.evalPower(powers, qs.primes));
+            System.out.println(powers.toString());
+            System.out.println(qs.evalPower(powers, qs.primes));
+        }
+        catch (FileNotFoundException | NoSuchElementException e) {
+            e.printStackTrace();
+        }
     }
 }
