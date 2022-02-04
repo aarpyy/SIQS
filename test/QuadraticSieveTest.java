@@ -1,8 +1,10 @@
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
-import java.util.NoSuchElementException;
+import java.util.LinkedList;
+import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,7 +14,28 @@ class QuadraticSieveTest {
     void factorIfSmooth() {
         try {
             BigInteger N = new BigInteger("3703");
-            QuadraticSieve qs = new QuadraticSieve(N);
+
+            File primesFile = new File(".\\primes.txt");
+            Scanner scanner = new Scanner(primesFile);
+
+            double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
+            int B = Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30);
+
+            LinkedList<Integer> primesLTB = new LinkedList<>();
+
+            // Read first B primes and load into primes array
+            int prime;
+            while (scanner.hasNextLine()) {
+                prime = Integer.parseInt(scanner.nextLine());
+                if (prime < B) {
+                    primesLTB.add(prime);
+                } else {
+                    break;
+                }
+            }
+
+            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
+
             NArray powers = qs.factorIfSmooth(N, qs.primes);
 
             // Confirm that these are the powers
@@ -24,7 +47,7 @@ class QuadraticSieveTest {
             // Confirm that when you take product of each of powers you get original number
             assertEquals(qs.evalPower(powers, qs.primes), N);
         }
-        catch (FileNotFoundException | NoSuchElementException e) {
+        catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
