@@ -131,6 +131,10 @@ public class NArray implements Iterable<INumber> {
         }
     }
 
+    public boolean equals(Iterable<INumber> other) {
+        
+    }
+
     public boolean equals(INumber[] other) {
         if (length == other.length) {
             for (int i = 0; i < length; i++) {
