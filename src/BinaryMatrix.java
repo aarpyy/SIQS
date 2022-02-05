@@ -79,10 +79,10 @@ public class BinaryMatrix implements Iterable<BinaryArray> {
         array = temp;
     }
 
-    public void rowReduce(int row, int column) {
+    public void rowReduce(int row) {
         for (int i = 0; i < h; i++) {
             if (i != row) {
-                array[i] = array[i].sub(array[row].mul(array[i].get(column)));
+                array[i] = array[i].add(array[row]);
             }
         }
     }
@@ -130,7 +130,7 @@ public class BinaryMatrix implements Iterable<BinaryArray> {
                         swap(i, pivotRow);
                     }
 
-                    T.rowReduce(pivotRow, j);
+                    T.rowReduce(pivotRow);
                     pivotRow++;
                 }
             }

@@ -74,6 +74,25 @@ public class QuadraticSieve {
         return acc;
     }
 
+    public static BigInteger powerMod(BigInteger a, BigInteger p, BigInteger n) {
+        BigInteger result = BigInteger.ONE;
+        while (!p.equals(BigInteger.ZERO)) {
+            if (!p.and(BigInteger.ONE).equals(BigInteger.ZERO)) {
+                p = p.subtract(BigInteger.ONE);
+                result = result.multiply(a).mod(n);
+            }
+            p = p.shiftRight(1);
+            a = a.multiply(a).mod(n);
+        }
+        return result;
+    }
+
+    public boolean quadraticResidue(BigInteger a, BigInteger n) {
+        // Returns a ^ ((p - 1) / 2) == 1, which tells us if there exists an integer c s.t.
+        // c^2 = a mod n
+        return powerMod(a, n.subtract(BigInteger.ONE).shiftRight(1), n).equals(BigInteger.ONE);
+    }
+
     public void findPolynomials() {
 
     }

@@ -51,4 +51,13 @@ class QuadraticSieveTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    void powerMod() {
+        BigInteger a = BigInteger.valueOf(6);
+        BigInteger b = BigInteger.valueOf(17);
+        BigInteger c = BigInteger.valueOf(11);
+
+        System.out.println("4^8 mod 9 = " + QuadraticSieve.powerMod(a, b, c));
+    }
 }
