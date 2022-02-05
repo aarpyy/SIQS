@@ -36,12 +36,12 @@ class QuadraticSieveTest {
 
             QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
 
-            NArray powers = qs.factorIfSmooth(N, qs.primes);
+            IntArray powers = qs.factorIfSmooth(N, qs.primes);
 
             // Confirm that these are the powers
             int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
             for (int i = 0; i < knownPowers.length; i++) {
-                assertEquals(knownPowers[i], powers.get(i).intValue());
+                assertEquals(knownPowers[i], powers.get(i));
             }
 
             // Confirm that when you take product of each of powers you get original number
