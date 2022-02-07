@@ -4,9 +4,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Scanner;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class QuadraticSieveTest {
 
@@ -59,5 +60,20 @@ class QuadraticSieveTest {
         BigInteger c = BigInteger.valueOf(11);
 
         System.out.println("4^8 mod 9 = " + QuadraticSieve.powerMod(a, b, c));
+    }
+
+    @Test
+    void randRange() {
+        BigInteger upper = BigInteger.valueOf(20);
+        BigInteger lower = BigInteger.valueOf(10);
+        Random rand = new Random();
+
+        BigInteger r;
+
+        for (int i = 0; i < 100; i++) {
+            r = QuadraticSieve.randRange(lower, upper, rand);
+            assertTrue(r.compareTo(lower) >= 0);
+            assertTrue(r.compareTo(upper) < 0);
+        }
     }
 }

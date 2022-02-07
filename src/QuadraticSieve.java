@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Scanner;
 
 public class QuadraticSieve {
@@ -37,7 +38,7 @@ public class QuadraticSieve {
 
     }
 
-    public IntArray factorIfSmooth(BigInteger n, IntArray primes) throws ArithmeticException {
+    public static IntArray factorIfSmooth(BigInteger n, IntArray primes) throws ArithmeticException {
         int[] factors = new int[primes.length];
         for (int i = 0; i < primes.length; i++) {
             factors[i] = 0;
@@ -58,7 +59,7 @@ public class QuadraticSieve {
     Given a list of primes and a list of corresponding powers for each of those primes,
     return the BigInteger that is the product of each of those powers.
      */
-    public BigInteger evalPower(IntArray powers, IntArray primes) {
+    public static BigInteger evalPower(IntArray powers, IntArray primes) {
         BigInteger acc = BigInteger.ONE;
 
         // If invalid arrays, just return -1
@@ -74,23 +75,120 @@ public class QuadraticSieve {
         return acc;
     }
 
-    public static BigInteger powerMod(BigInteger a, BigInteger p, BigInteger n) {
+    public static BigInteger powerMod(BigInteger a, BigInteger p, BigInteger m) {
         BigInteger result = BigInteger.ONE;
         while (!p.equals(BigInteger.ZERO)) {
             if (!p.and(BigInteger.ONE).equals(BigInteger.ZERO)) {
                 p = p.subtract(BigInteger.ONE);
-                result = result.multiply(a).mod(n);
+                result = result.multiply(a).mod(m);
             }
             p = p.shiftRight(1);
-            a = a.multiply(a).mod(n);
+            a = a.multiply(a).mod(m);
         }
         return result;
     }
 
-    public boolean quadraticResidue(BigInteger a, BigInteger n) {
+    public static BigInteger fastPower(BigInteger a, BigInteger p) {
+        BigInteger result = BigInteger.ONE;
+        while (!p.equals(BigInteger.ZERO)) {
+            if (!p.and(BigInteger.ONE).equals(BigInteger.ZERO)) {
+                p = p.subtract(BigInteger.ONE);
+                result = result.multiply(a);
+            }
+            p = p.shiftRight(1);
+            a = a.multiply(a);
+        }
+        return result;
+    }
+
+    public static BigInteger randRange(BigInteger l, BigInteger u, Random rand) {
+        int bits = u.bitLength();
+
+        // Creates new random BigInteger with bits as the number of bits
+        BigInteger result = new BigInteger(bits, rand);
+
+        /*
+        Since two numbers can have the same number of bits but be not equal,
+        check to see if this number is less than upper limit in addition to greater
+        than lower limit before returning.
+         */
+        while ((result.compareTo(l) < 0) || (result.compareTo(u) >= 0)) {
+            result = new BigInteger(bits, rand);
+        }
+        return result;
+    }
+
+    public static BigInteger sqrtMod(BigInteger a, BigInteger p) throws ArithmeticException {
+        BigInteger three = BigInteger.valueOf(3);
+
+        if (p.and(three).equals(three)) {
+            return a.modPow(p.add(BigInteger.ONE).shiftRight(2), p);
+        } else {
+            BigInteger q = p.subtract(BigInteger.ONE);
+            int s = 0;
+            while (!q.and(BigInteger.ONE).equals(BigInteger.ZERO)) {
+                q = q.shiftRight(1);
+                s++;
+            }
+
+            BigInteger two = BigInteger.valueOf(2);
+
+            Random rand = new Random();
+            BigInteger z = randRange(two, p, rand);
+            while (!quadraticNonResidue(z, p)) {
+                z = randRange(two, p, rand);
+            }
+
+            BigInteger c = z.modPow(q, p);
+            BigInteger t = a.modPow(q, p);
+            BigInteger r = a.modPow(q.add(BigInteger.ONE).shiftRight(1), p);
+            BigInteger b;
+
+            int i;
+            BigInteger x;
+            while (true) {
+                if (t.equals(BigInteger.ZERO)) {
+                    return BigInteger.ZERO;
+                } else if (t.equals(BigInteger.ONE)) {
+                    return r;
+                }
+
+                i = 0;
+                x = t;
+
+                while (!x.equals(BigInteger.ONE)) {
+                    x = x.multiply(x).mod(p);
+                    i++;
+
+                    if (i == s) {
+                        throw new ArithmeticException("i == m");
+                    }
+                }
+
+                b = c.modPow(two.pow(s - i - 1), p);
+                c = b.modPow(two, p);
+                s = i;
+
+                t = t.multiply(c);
+                if (t.compareTo(p) >= 0) {
+                    t = t.mod(p);
+                }
+                
+            }
+
+        }
+        return null;
+    }
+
+    public static boolean quadraticResidue(BigInteger a, BigInteger n) {
         // Returns a ^ ((p - 1) / 2) == 1, which tells us if there exists an integer c s.t.
         // c^2 = a mod n
         return powerMod(a, n.subtract(BigInteger.ONE).shiftRight(1), n).equals(BigInteger.ONE);
+    }
+
+    public static boolean quadraticNonResidue(BigInteger a, BigInteger n) {
+        BigInteger nSub1 = n.subtract(BigInteger.ONE);
+        return powerMod(a, nSub1.shiftRight(1), n).equals(nSub1);
     }
 
     public void findPolynomials() {
