@@ -1,24 +1,27 @@
+package QS;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.Scanner;
+import static Utils.Utils.*;
 
 public class QuadraticSieve {
 
     public BigIntArray A;
     public IntArray powersB;
-    public final IntArray primes;
+    public final BigIntArray primes;
     BigInteger N;
 
 
-    public QuadraticSieve(BigInteger N, LinkedList<Integer> primesLTB) {
+    public QuadraticSieve(BigInteger N, LinkedList<BigInteger> primesLTB) {
         this.N = N;
 
         int nPrimes = primesLTB.size();
 
         // All primes <= B
-        primes = new IntArray(nPrimes);
+        primes = new BigIntArray(nPrimes);
         // Array to hold a's for a^2 - n = b^2
         A = new BigIntArray(nPrimes);
 
@@ -26,7 +29,7 @@ public class QuadraticSieve {
         powersB = new IntArray(nPrimes);
         int i = 0;
         try {
-            for (int n : primesLTB) {
+            for (BigInteger n : primesLTB) {
                 primes.set(i, n);
                 i++;
             }
@@ -35,43 +38,6 @@ public class QuadraticSieve {
             System.out.println("Error initializing list of primes: LinkedList.size() does not match NArray length");
         }
 
-    }
-
-    public IntArray factorIfSmooth(BigInteger n, IntArray primes) throws ArithmeticException {
-        int[] factors = new int[primes.length];
-        for (int i = 0; i < primes.length; i++) {
-            factors[i] = 0;
-            while (n.mod(BigInteger.valueOf(primes.get(i))).equals(BigInteger.ZERO)) {
-                n = n.divide(BigInteger.valueOf(primes.get(i)));
-                factors[i]++;
-            }
-        }
-
-        if (n.equals(BigInteger.ONE)) {
-            return new IntArray(factors);
-        } else {
-            throw new ArithmeticException(n + " unable to be factored completely");
-        }
-    }
-
-    /*
-    Given a list of primes and a list of corresponding powers for each of those primes,
-    return the BigInteger that is the product of each of those powers.
-     */
-    public BigInteger evalPower(IntArray powers, IntArray primes) {
-        BigInteger acc = BigInteger.ONE;
-
-        // If invalid arrays, just return -1
-        if (primes.length != powers.length) {
-            return acc.negate();
-        }
-
-        // Otherwise, they are same length so evaluate powers
-        for (int i = 0; i < primes.length; i++) {
-            // Take product of BigInteger power value
-            acc = acc.multiply(BigInteger.valueOf((long) Math.pow(primes.get(i), (powers.get(i)))));
-        }
-        return acc;
     }
 
     public void findPolynomials() {
@@ -96,15 +62,15 @@ public class QuadraticSieve {
             double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
 
             // Minimum value is 30 just because if less primes than that there's no way you'll find it
-            int B = Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30);
+            BigInteger B = BigInteger.valueOf(Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30));
 
-            LinkedList<Integer> primesLTB = new LinkedList<>();
+            LinkedList<BigInteger> primesLTB = new LinkedList<>();
 
             // Read first B primes and load into primes array
-            int prime;
+            BigInteger prime;
             while (scanner.hasNextLine()) {
-                prime = Integer.parseInt(scanner.nextLine());
-                if (prime < B) {
+                prime = new BigInteger(scanner.nextLine());
+                if (prime.compareTo(B) < 0) {
                     primesLTB.add(prime);
                 } else {
                     break;
@@ -118,10 +84,10 @@ public class QuadraticSieve {
             System.out.println("Primes: " + qs.primes);
 
             // Tries to factor number given prime base, if it can get it to 1 then success, otherwise error
-            IntArray powers = qs.factorIfSmooth(N, qs.primes);
-            System.out.println("Powers: " + powers.toString());
+            IntArray powers = smoothFactor(N, qs.primes);
+            System.out.println("Powers: " + powers);
 
-            System.out.println("Evaluated: " + qs.evalPower(powers, qs.primes));
+            System.out.println("Evaluated: " + evalPower(qs.primes, powers));
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

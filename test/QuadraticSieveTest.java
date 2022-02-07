@@ -1,17 +1,22 @@
+import QS.IntArray;
+import QS.QuadraticSieve;
 import org.junit.jupiter.api.Test;
+import static Utils.Utils.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class QuadraticSieveTest {
 
     @Test
-    void factorIfSmooth() {
+    void _factorIfSmooth() {
         try {
             BigInteger N = new BigInteger("3703");
 
@@ -19,15 +24,15 @@ class QuadraticSieveTest {
             Scanner scanner = new Scanner(primesFile);
 
             double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
-            int B = Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30);
+            BigInteger B = BigInteger.valueOf(Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30));
 
-            LinkedList<Integer> primesLTB = new LinkedList<>();
+            LinkedList<BigInteger> primesLTB = new LinkedList<>();
 
             // Read first B primes and load into primes array
-            int prime;
+            BigInteger prime;
             while (scanner.hasNextLine()) {
-                prime = Integer.parseInt(scanner.nextLine());
-                if (prime < B) {
+                prime = new BigInteger(scanner.nextLine());
+                if (prime.compareTo(B) < 0) {
                     primesLTB.add(prime);
                 } else {
                     break;
@@ -36,7 +41,7 @@ class QuadraticSieveTest {
 
             QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
 
-            IntArray powers = qs.factorIfSmooth(N, qs.primes);
+            IntArray powers = smoothFactor(N, qs.primes);
 
             // Confirm that these are the powers
             int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
@@ -45,10 +50,25 @@ class QuadraticSieveTest {
             }
 
             // Confirm that when you take product of each of powers you get original number
-            assertEquals(qs.evalPower(powers, qs.primes), N);
+            assertEquals(evalPower(qs.primes, powers), N);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Test
+    void _randRange() {
+        BigInteger upper = BigInteger.valueOf(20);
+        BigInteger lower = BigInteger.valueOf(10);
+        Random rand = new Random();
+
+        BigInteger r;
+
+        for (int i = 0; i < 100; i++) {
+            r = randRange(lower, upper, rand);
+            assertTrue(r.compareTo(lower) >= 0);
+            assertTrue(r.compareTo(upper) < 0);
         }
     }
 }
