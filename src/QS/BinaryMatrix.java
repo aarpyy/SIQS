@@ -1,3 +1,5 @@
+package QS;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -161,7 +163,7 @@ public class BinaryMatrix implements Iterable<BinaryArray> {
             }
         }
 
-        // Make new array, add all arrays in kernel to this array, then return as BinaryMatrix
+        // Make new array, add all arrays in kernel to this array, then return as qs.BinaryMatrix
         BinaryArray[] basis = new BinaryArray[kernel.size()];
         int i = 0;
         for (BinaryArray a : kernel) {

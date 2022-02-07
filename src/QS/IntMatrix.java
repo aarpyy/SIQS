@@ -1,3 +1,5 @@
+package QS;
+
 import java.util.Iterator;
 
 public class IntMatrix implements Iterable<IntArray> {
