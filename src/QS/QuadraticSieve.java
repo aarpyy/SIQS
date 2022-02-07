@@ -30,8 +30,7 @@ public class QuadraticSieve {
         int i = 0;
         try {
             for (BigInteger n : primesLTB) {
-                if(quadraticResidue(N,n))
-                    primes.set(i, n);
+                primes.set(i, n);
                 i++;
             }
         }
