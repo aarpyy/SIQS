@@ -42,6 +42,13 @@ public class QuadraticSieve {
         catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Error initializing list of primes: LinkedList.size() does not match NArray length");
         }
+
+        //Guarantees that 2 is included in fBase
+        BigInteger two = new BigInteger("2");
+        if(!fbIdxs.get(0).equals(two))
+            fbIdxs.add(0, two);
+
+        //Factor Base: Primes p < B s.t. (N/p)=1
         fBase = new BigIntArray(fbIdxs.size());
         for(i = 0; i < fBase.length; i++)
         {
