@@ -3,6 +3,7 @@ package QS;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
 import static Utils.Utils.*;
@@ -12,6 +13,7 @@ public class QuadraticSieve {
     public BigIntArray A;
     public IntArray powersB;
     public final BigIntArray primes;
+    public BigIntArray fBase;
     BigInteger N;
 
 
@@ -28,16 +30,23 @@ public class QuadraticSieve {
         // Arrays to hold the prime powers of b
         powersB = new IntArray(nPrimes);
         int i = 0;
+        ArrayList<BigInteger> fbIdxs = new ArrayList<>();
         try {
             for (BigInteger n : primesLTB) {
                 primes.set(i, n);
+                if(quadraticResidue(N,n))
+                    fbIdxs.add(n);
                 i++;
             }
         }
         catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Error initializing list of primes: LinkedList.size() does not match NArray length");
         }
-
+        fBase = new BigIntArray(fbIdxs.size());
+        for(i = 0; i < fBase.length; i++)
+        {
+            fBase.set(i, fbIdxs.get(i));
+        }
     }
 
     public void findPolynomials() {
