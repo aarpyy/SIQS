@@ -1,11 +1,16 @@
 package Utils;
 
+import QS.IntArray;
+import QS.QuadraticSieve;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,6 +21,44 @@ class UtilsTest {
 
     @Test
     void smoothFactor() {
+        try {
+            BigInteger N = new BigInteger("3703");
+
+            File primesFile = new File(".\\primes.txt");
+            Scanner scanner = new Scanner(primesFile);
+
+            double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
+            BigInteger B = BigInteger.valueOf(Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30));
+
+            LinkedList<BigInteger> primesLTB = new LinkedList<>();
+
+            // Read first B primes and load into primes array
+            BigInteger prime;
+            while (scanner.hasNextLine()) {
+                prime = new BigInteger(scanner.nextLine());
+                if (prime.compareTo(B) < 0) {
+                    primesLTB.add(prime);
+                } else {
+                    break;
+                }
+            }
+
+            QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
+
+            IntArray powers = Utils.smoothFactor(N, qs.fBase);
+
+            // Confirm that these are the powers
+            int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
+            for (int i = 0; i < knownPowers.length; i++) {
+                assertEquals(knownPowers[i], powers.get(i));
+            }
+
+            // Confirm that when you take product of each of powers you get original number
+            assertEquals(Utils.evalPower(qs.fBase, powers), N);
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -82,17 +125,17 @@ class UtilsTest {
         LinkedList<BigInteger> squares = new LinkedList<>();
         for (int i = 1; i < modulus; i++) {
             a = BigInteger.valueOf(i);
-            squares.add(a.modPow(Utils.TWO, p));
+            squares.add(a.modPow(BigInteger.TWO, p));
         }
 
         BigInteger sq;
         for (BigInteger n : squares) {
             try {
                 sq = Utils.modSqrt(n, p);
-                assertEquals(sq.modPow(Utils.TWO, p), n);
+                assertEquals(sq.modPow(BigInteger.TWO, p), n);
 
                 if (print) {
-                    System.out.println("N: " + n + "; √n: " + sq + " ^2: " + sq.modPow(Utils.TWO, p));
+                    System.out.println("N: " + n + "; √n: " + sq + " ^2: " + sq.modPow(BigInteger.TWO, p));
                 }
             } catch (ArithmeticException e) {
                 System.out.println(n + " does not have a square root mod " + p);

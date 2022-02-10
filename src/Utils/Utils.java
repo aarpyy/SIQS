@@ -10,22 +10,7 @@ import java.util.Random;
 
 public final class Utils {
 
-    public static final BigInteger TWO = BigInteger.valueOf(2);
     public static final BigInteger THREE = BigInteger.valueOf(3);
-
-    /*
-    Helper function that divides n by the factor until it can't divide anymore, returning
-    the result after division and the number of times division was performed as a Pair
-     */
-    public static Pair<BigInteger, Integer> removeFactor(BigInteger n, BigInteger factor) {
-        BigInteger[] div;
-        int factorCount = 0;
-        while ((div = n.divideAndRemainder(factor))[1].equals(BigInteger.ZERO)) {
-            n = div[0];
-            factorCount++;
-        }
-        return new Pair<>(n, factorCount);
-    }
 
     /*
     Attempts to completely factor n using the given factor base, returning the powers of the factors
@@ -33,11 +18,15 @@ public final class Utils {
      */
     public static IntArray smoothFactor(BigInteger n, BigIntArray primes) throws ArithmeticException {
         int[] factors = new int[primes.length];
-        Pair<BigInteger, Integer> factor;
+        BigInteger[] div;
+        BigInteger prime;
         for (int i = 0; i < primes.length; i++) {
-            factor = removeFactor(n, primes.get(i));
-            n = factor.first();
-            factors[i] = factor.second();
+            factors[i] = 0;
+            prime = primes.get(i);
+            while ((div = n.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
+                n = div[0];
+                factors[i]++;
+            }
         }
 
         if (n.equals(BigInteger.ONE)) {
@@ -99,14 +88,19 @@ public final class Utils {
     }
 
     /*
-    Returns a random BigInteger >= l and < u. Essentially Python's randrange(l, u)
+    Returns a random BigInteger >= lower and < upper. Essentially Python's randrange(lower, upper)
      */
-    public static BigInteger randRange(BigInteger l, BigInteger u, Random rand) {
+    public static BigInteger randRange(BigInteger lower, BigInteger upper, Random rand)
+            throws ArithmeticException {
+        if (lower.compareTo(upper) <= 0) {
+            throw new ArithmeticException("Range of (" + lower + ", " + upper + ") is invalid");
+        }
+
         /*
         Subtract lower limit from upper limit so that we know the actual range that we
         have to generate the random BigInteger
          */
-        BigInteger range = u.subtract(l);
+        BigInteger range = upper.subtract(lower);
         int bits = range.bitLength();
 
         // Creates new random BigInteger with bits as the number of bits
@@ -115,12 +109,12 @@ public final class Utils {
         /*
         While it's greater, get a new one, then we guarantee we have a number that is within
         the designated range. Re-add lower limit so that the range isn't 0-range but is
-        l-u and then return
+        lower-upper and then return
          */
         while (result.compareTo(range) >= 0) {
             result = new BigInteger(bits, rand);
         }
-        return result.add(l);
+        return result.add(lower);
     }
 
     public static BigInteger sqrt(BigInteger a) {
@@ -134,19 +128,20 @@ public final class Utils {
     public static BigInteger modSqrt(BigInteger a, BigInteger p) throws ArithmeticException {
         if (!quadraticResidue(a, p)) {
             throw new ArithmeticException(a + " does not have a quadratic residue mod " + p);
-        }
-
-        if (p.and(THREE).equals(THREE)) {
+        } else if (p.and(THREE).equals(THREE)) {
             return a.modPow(p.add(BigInteger.ONE).shiftRight(2), p);
         } else {
-            Pair<BigInteger, Integer> div = removeFactor(p.subtract(BigInteger.ONE), TWO);
-            BigInteger Q = div.first();
-            int S = div.second();
+            BigInteger Q = p.subtract(BigInteger.ONE);
+            int S = 0;
+            while (!Q.testBit(0)) {
+                Q = Q.shiftRight(1);
+                S++;
+            }
 
             Random rand = new Random();
-            BigInteger z = randRange(TWO, p, rand);
+            BigInteger z = randRange(BigInteger.TWO, p, rand);
             while (!quadraticNonResidue(z, p)) {
-                z = randRange(TWO, p, rand);
+                z = randRange(BigInteger.TWO, p, rand);
             }
 
             BigInteger c = z.modPow(Q, p);
@@ -171,12 +166,13 @@ public final class Utils {
                     i++;
 
                     if (i == S) {
-                        throw new ArithmeticException("i == s");
+                        throw new ArithmeticException("Finding square root of " + a + " mod " + p + " failed " +
+                                "despite " + a + " being a quadratic residue mod " + p);
                     }
                 }
 
-                b = c.modPow(TWO.pow(S - i - 1), p);
-                c = b.modPow(TWO, p);
+                b = c.modPow(BigInteger.TWO.pow(S - i - 1), p);
+                c = b.modPow(BigInteger.TWO, p);
                 S = i;
 
                 t = t.multiply(c).mod(p);

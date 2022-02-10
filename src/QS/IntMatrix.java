@@ -18,7 +18,7 @@ public class IntMatrix implements Iterable<IntArray> {
 
     public IntMatrix(IntArray[] array) {
         h = array.length;
-        w = 0;
+        w = array[0].length;
         this.array = array;
     }
 

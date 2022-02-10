@@ -1,13 +1,15 @@
 package QS;
 
+import Utils.Pair;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
+
 import static Utils.Utils.*;
-import Utils.Pair;
 
 public class QuadraticSieve {
 
@@ -70,7 +72,7 @@ public class QuadraticSieve {
     /*
     This will take in a polynomial and sieve it across the range of final member M
      */
-    public Pair<IntMatrix, BigIntArray> sieve(QSPoly Q_x) {
+    public Pair<BigIntArray, IntMatrix> sieve(QSPoly Q_x) {
         return null;
     }
 
