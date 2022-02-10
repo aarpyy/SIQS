@@ -2,6 +2,7 @@ package QS;
 
 import java.math.BigInteger;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 public class BigIntArray implements Iterable<BigInteger> {
@@ -17,6 +18,16 @@ public class BigIntArray implements Iterable<BigInteger> {
     public BigIntArray(BigInteger[] array) {
         this.array = array;
         length = array.length;
+    }
+
+    public BigIntArray(List<BigInteger> list) {
+        length = list.size();
+        array = new BigInteger[length];
+        int i = 0;
+        for (BigInteger n : list) {
+            array[i] = n;
+            i++;
+        }
     }
 
     public BigIntArray(int[] array) {

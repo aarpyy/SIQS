@@ -7,57 +7,71 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
 import static Utils.Utils.*;
+import Utils.Pair;
 
 public class QuadraticSieve {
 
-    public BigIntArray A;
-    public IntArray powersB;
-    public final BigIntArray primes;
-    public BigIntArray fBase;
-    BigInteger N;
+    public final BigIntArray fBase;
+    public final BigInteger N, M;
 
 
-    public QuadraticSieve(BigInteger N, LinkedList<BigInteger> primesLTB) {
+    public QuadraticSieve(BigInteger N, BigInteger M, LinkedList<BigInteger> primesLTF) {
         this.N = N;
+        this.M = M;
 
-        int nPrimes = primesLTB.size();
+        // Remove 2 if in the list, otherwise don't do anything
+        if (primesLTF.get(0).equals(BigInteger.TWO)) {
+            primesLTF.pop();
+        }
 
-        // All primes <= B
-        primes = new BigIntArray(nPrimes);
-        // Array to hold a's for a^2 - n = b^2
-        A = new BigIntArray(nPrimes);
-
-        // Arrays to hold the prime powers of b
-        powersB = new IntArray(nPrimes);
-        int i = 0;
-        ArrayList<BigInteger> fbIdxs = new ArrayList<>();
-        try {
-            for (BigInteger n : primesLTB) {
-                primes.set(i, n);
-                if(quadraticResidue(N,n))
-                    fbIdxs.add(n);
-                i++;
+        ArrayList<BigInteger> fb = new ArrayList<>(primesLTF.size());
+        // Manually add 2 so that regardless of if it was in list, it now is
+        fb.add(BigInteger.TWO);
+        for (BigInteger p : primesLTF) {
+            if (quadraticResidue(N, p)) {
+                fb.add(p);
             }
         }
-        catch (ArrayIndexOutOfBoundsException e) {
-            System.out.println("Error initializing list of primes: LinkedList.size() does not match NArray length");
-        }
 
-        //Guarantees that 2 is included in fBase
-        BigInteger two = new BigInteger("2");
-        if(!fbIdxs.get(0).equals(two))
-            fbIdxs.add(0, two);
-
-        //Factor Base: Primes p < B s.t. (N/p)=1
-        fBase = new BigIntArray(fbIdxs.size());
-        for(i = 0; i < fBase.length; i++)
-        {
-            fBase.set(i, fbIdxs.get(i));
-        }
+        // Factor Base: Primes p < B s.t. (N/p) = 1
+        fBase = new BigIntArray(fb);
     }
 
-    public void findPolynomials() {
+    /*
+    Find n BigInteger's q s.t. (N/q) = 1. Here, n is how many polynomials we want to sieve
+     */
+    public BigIntArray findQ(int n) {
+        int found = 0;
 
+        // Get the first prime greater than √(√2n / m)
+        BigInteger q = sqrt(sqrt(N.multiply(BigInteger.TWO)).divide(M)).nextProbablePrime();
+        BigInteger[] arrQ = new BigInteger[n];
+        while (found < n) {
+
+            // Keep searching through primes. If quadratic residue, add
+            if (quadraticResidue(N, q)) {
+                arrQ[found] = q;
+                found++;
+            }
+            q = q.nextProbablePrime();
+        }
+        return new BigIntArray(arrQ);
+    }
+
+    // Given a q that is odd prime s.t. N is a quadratic residue mod q, find polynomial coefficient a, b, c
+    public QSPoly findPoly(BigInteger q) {
+        BigInteger a = q.modPow(BigInteger.TWO, N);
+
+        // Guaranteed to exist since all q exist s.t. (N/q) = 1
+        BigInteger sqN = modSqrt(N, q);
+        return null;
+    }
+
+    /*
+    This will take in a polynomial and sieve it across the range of final member M
+     */
+    public Pair<IntMatrix, BigIntArray> sieve(QSPoly Q_x) {
+        return null;
     }
 
     public static void main(String[] args) {
@@ -94,16 +108,16 @@ public class QuadraticSieve {
             }
 
             // Make new object which just creates arrays for process
-            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
+            QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
             System.out.println("N: " + N);
             System.out.println("B: " + B);
-            System.out.println("Primes: " + qs.primes);
+            System.out.println("Primes: " + qs.fBase);
 
             // Tries to factor number given prime base, if it can get it to 1 then success, otherwise error
-            IntArray powers = smoothFactor(N, qs.primes);
+            IntArray powers = smoothFactor(N, qs.fBase);
             System.out.println("Powers: " + powers);
 
-            System.out.println("Evaluated: " + evalPower(qs.primes, powers));
+            System.out.println("Evaluated: " + evalPower(qs.fBase, powers));
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

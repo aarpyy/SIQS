@@ -39,9 +39,9 @@ class QuadraticSieveTest {
                 }
             }
 
-            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
+            QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
 
-            IntArray powers = smoothFactor(N, qs.primes);
+            IntArray powers = smoothFactor(N, qs.fBase);
 
             // Confirm that these are the powers
             int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
@@ -50,7 +50,7 @@ class QuadraticSieveTest {
             }
 
             // Confirm that when you take product of each of powers you get original number
-            assertEquals(evalPower(qs.primes, powers), N);
+            assertEquals(evalPower(qs.fBase, powers), N);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
