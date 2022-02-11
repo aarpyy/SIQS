@@ -45,7 +45,7 @@ class UtilsTest {
 
             QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
 
-            IntArray powers = Utils.smoothFactor(N, qs.fBase);
+            IntArray powers = Utils.smoothFactor(N, qs.factorBase);
 
             // Confirm that these are the powers
             int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
@@ -54,7 +54,7 @@ class UtilsTest {
             }
 
             // Confirm that when you take product of each of powers you get original number
-            assertEquals(Utils.evalPower(qs.fBase, powers), N);
+            assertEquals(Utils.evalPower(qs.factorBase, powers), N);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

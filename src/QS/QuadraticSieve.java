@@ -13,7 +13,7 @@ import static Utils.Utils.*;
 
 public class QuadraticSieve {
 
-    public final BigIntArray fBase;
+    public final BigIntArray factorBase;
     public final BigInteger N, M;
 
 
@@ -36,7 +36,7 @@ public class QuadraticSieve {
         }
 
         // Factor Base: Primes p < B s.t. (N/p) = 1
-        fBase = new BigIntArray(fb);
+        factorBase = new BigIntArray(fb);
     }
 
     /*
@@ -113,13 +113,13 @@ public class QuadraticSieve {
             QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
             System.out.println("N: " + N);
             System.out.println("B: " + B);
-            System.out.println("Primes: " + qs.fBase);
+            System.out.println("Primes: " + qs.factorBase);
 
             // Tries to factor number given prime base, if it can get it to 1 then success, otherwise error
-            IntArray powers = smoothFactor(N, qs.fBase);
+            IntArray powers = smoothFactor(N, qs.factorBase);
             System.out.println("Powers: " + powers);
 
-            System.out.println("Evaluated: " + evalPower(qs.fBase, powers));
+            System.out.println("Evaluated: " + evalPower(qs.factorBase, powers));
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

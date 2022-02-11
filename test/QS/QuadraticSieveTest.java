@@ -42,7 +42,7 @@ class QuadraticSieveTest {
             QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, factorBase);
             System.out.println("N: " + N);
             System.out.println("B: " + B);
-            System.out.println("Factor base: " + qs.fBase);
+            System.out.println("Factor base: " + qs.factorBase);
 
 
             QSPoly Q_x = new QSPoly(BigInteger.ONE, BigInteger.ZERO, N.negate());

@@ -1,7 +1,6 @@
 import QS.IntArray;
 import QS.QuadraticSieve;
 import org.junit.jupiter.api.Test;
-import static Utils.Utils.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,6 +9,7 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 
+import static Utils.Utils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,7 +41,7 @@ class QuadraticSieveTest {
 
             QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
 
-            IntArray powers = smoothFactor(N, qs.fBase);
+            IntArray powers = smoothFactor(N, qs.factorBase);
 
             // Confirm that these are the powers
             int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
@@ -50,7 +50,7 @@ class QuadraticSieveTest {
             }
 
             // Confirm that when you take product of each of powers you get original number
-            assertEquals(evalPower(qs.fBase, powers), N);
+            assertEquals(evalPower(qs.factorBase, powers), N);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
