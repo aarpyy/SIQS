@@ -64,9 +64,12 @@ public class QuadraticSieve {
     public QSPoly findPoly(BigInteger q) {
         BigInteger a = q.modPow(BigInteger.TWO, N);
 
-        // Guaranteed to exist since all q exist s.t. (N/q) = 1
-        BigInteger sqN = modSqrt(N, q);
-        return null;
+        // modSqrt(N) guaranteed to exist since all q exist s.t. (N/q) = 1
+        BigInteger b = liftSqrt(modSqrt(N, q), N, q);
+
+        // c = (b^2 - N) / 4a
+        BigInteger c = b.pow(2).subtract(N).divide(a.multiply(BigInteger.valueOf(4)));
+        return new QSPoly(a, b, c);
     }
 
     /*

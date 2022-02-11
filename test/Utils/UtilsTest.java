@@ -144,6 +144,25 @@ class UtilsTest {
     }
 
     @Test
+    void liftSqrt() {
+        // Some composite
+        BigInteger N = BigInteger.valueOf(61234);
+
+        // Some prime s.t. (n/q) = 1
+        BigInteger q = BigInteger.valueOf(613);
+
+        assert Utils.quadraticResidue(N, q) : "N does not have modular square root mod q";
+
+        BigInteger x = Utils.modSqrt(N, q);
+        assertEquals(N.mod(q), x.modPow(BigInteger.TWO, q));
+
+        // x1 is a solution to modular square root of N mod q and mod q^2
+        BigInteger x1 = Utils.liftSqrt(x, N, q);
+        assertEquals(N.mod(q), x1.modPow(BigInteger.TWO, q));
+        assertEquals(N.mod(q.pow(2)), x1.modPow(BigInteger.TWO, q.pow(2)));
+    }
+
+    @Test
     void quadraticResidue() {
     }
 
