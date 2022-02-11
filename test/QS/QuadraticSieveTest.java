@@ -1,6 +1,7 @@
 package QS;
 
 import Utils.Pair;
+import Utils.Utils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -8,6 +9,9 @@ import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.Scanner;
+
+import static Utils.Utils.modSqrt;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class QuadraticSieveTest {
 
@@ -53,6 +57,36 @@ class QuadraticSieveTest {
         catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    void liftSqrt() {
+        // Some composite
+        BigInteger n = BigInteger.valueOf(61234);
+
+        // Some prime s.t. (n/q) = 1
+        BigInteger q = BigInteger.valueOf(613);
+
+        BigInteger a = q.modPow(BigInteger.TWO, n);
+        System.out.println("a: " + a);
+        System.out.println("a mod n: " + a.mod(n));
+        BigInteger x = modSqrt(n, q);
+        System.out.println("x: " + x);
+        assertEquals(x.modPow(BigInteger.TWO, q), n.mod(q));
+
+        // s = ((n - x^2) / q) * (2x)^-1 mod q
+        assertEquals(BigInteger.ZERO, n.subtract(x.pow(2)).mod(q));
+
+        BigInteger twoXInv = (BigInteger.TWO.multiply(x)).modInverse(q);
+        BigInteger s = n.subtract(x.pow(2)).divide(q).multiply(twoXInv).mod(q);
+        System.out.println("s: " + s);
+        BigInteger b = x.add(s.multiply(q));
+        System.out.println("b: " + b);
+
+        BigInteger r = b.modPow(BigInteger.TWO, a);
+        BigInteger sq = Utils.liftSqrt(x, n, q);
+        BigInteger qSq = q.pow(2);
+        assertEquals(sq.modPow(BigInteger.TWO, qSq), n.mod(qSq));
     }
 
     @Test

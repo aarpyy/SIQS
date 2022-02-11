@@ -92,7 +92,7 @@ public final class Utils {
      */
     public static BigInteger randRange(BigInteger lower, BigInteger upper, Random rand)
             throws ArithmeticException {
-        if (lower.compareTo(upper) <= 0) {
+        if (lower.compareTo(upper) >= 0) {
             throw new ArithmeticException("Range of (" + lower + ", " + upper + ") is invalid");
         }
 
@@ -179,6 +179,24 @@ public final class Utils {
                 r = r.multiply(b).mod(p);
             }
         }
+    }
+
+    /*
+    Given BigInteger root that is the modular square root of n mod q, returns the modular square root
+    of n mod q^2 via Hensel's Lemma (lifting)
+     */
+    public static BigInteger liftSqrt(BigInteger root, BigInteger n, BigInteger q) {
+
+        /*
+        Objective is to find s s.t. x = root + s*q. This allows x to be a solution mod q since the
+        s*q term goes away, but putting x into the equation x^2 = n mod q^2 we get
+        root^2 + 2*s*q*root + s^2*q^2 = n mod q^2 which simplifies to 2*s*root = (n - root^2) / q mod q and
+        since q is prime 2*root has a modular inverse mod q so s = ((n - root^2) / q) * (2*root)^-1 mod q
+
+        Returning root + s*q gives us a solution that is the modular square root of n mod q and mod q^2
+         */
+        BigInteger s = n.subtract(root.pow(2)).divide(q).multiply(root.multiply(BigInteger.TWO).modInverse(q)).mod(q);
+        return root.add(s.multiply(q)).mod(q.pow(2));
     }
 
     /*
