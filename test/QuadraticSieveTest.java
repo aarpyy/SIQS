@@ -39,7 +39,7 @@ class QuadraticSieveTest {
                 }
             }
 
-            QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
+            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
 
             IntArray powers = smoothFactor(N, qs.factorBase);
 

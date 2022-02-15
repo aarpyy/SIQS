@@ -15,11 +15,19 @@ public class QuadraticSieve {
 
     public final BigIntArray factorBase;
     public final BigInteger N, M;
+    public final int F;
+    public final double T;
+    public final int d;
 
 
-    public QuadraticSieve(BigInteger N, BigInteger M, LinkedList<BigInteger> primesLTF) {
+    public QuadraticSieve(BigInteger N, LinkedList<BigInteger> primesLTF) {
         this.N = N;
-        this.M = M;
+
+        d = (int)(N.bitLength()/(Math.log(10)/Math.log(2)));
+
+        T = 0.0268849 * d + 0.783929;
+        M = new BigInteger(Double.toString(386 * Math.pow(d,2) - 23209.3 * d + 352768));
+        F = (int)(2.92659 * Math.pow(d,2) - 164.385*d + 2455.36);
 
         // Remove 2 if in the list, otherwise don't do anything
         if (primesLTF.get(0).equals(BigInteger.TWO)) {
@@ -113,7 +121,7 @@ public class QuadraticSieve {
             }
 
             // Make new object which just creates arrays for process
-            QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
+            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
             System.out.println("N: " + N);
             System.out.println("B: " + B);
             System.out.println("Primes: " + qs.factorBase);

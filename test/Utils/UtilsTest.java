@@ -43,7 +43,7 @@ class UtilsTest {
                 }
             }
 
-            QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, primesLTB);
+            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
 
             IntArray powers = Utils.smoothFactor(N, qs.factorBase);
 
