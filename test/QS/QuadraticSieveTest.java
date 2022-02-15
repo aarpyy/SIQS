@@ -10,7 +10,8 @@ import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.Scanner;
 
-import static Utils.Utils.modSqrt;
+import static Utils.Utils.*;
+import static Utils.Utils.THREE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class QuadraticSieveTest {
@@ -87,6 +88,60 @@ class QuadraticSieveTest {
         BigInteger sq = Utils.liftSqrt(x, n, q, q);
         BigInteger qSq = q.pow(2);
         assertEquals(sq.modPow(BigInteger.TWO, qSq), n.mod(qSq));
+    }
+
+    @Test
+    void silvermanComputation() {
+        BigInteger N = BigInteger.valueOf(61234);
+        double d = N.bitLength()/(Math.log(10)/Math.log(2));
+
+        BigInteger M = BigInteger.valueOf((long) (386 * Math.pow(d, 2) - 23209.3 * d + 352768));
+
+        System.out.println("M = " + M);
+
+        BigInteger k = BigInteger.ONE;
+        if (N.and(THREE).equals(THREE)) {
+            while (!N.multiply(k).and(THREE).equals(BigInteger.ONE)) {
+                k = k.add(BigInteger.ONE);
+            }
+        }
+
+        System.out.println("k = " + k);
+
+        BigInteger kN = k.multiply(N);
+        BigInteger D = sqrt(sqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
+
+        System.out.println("kN = " + kN);
+
+        System.out.println("A approx = " + sqrt(kN.divide(BigInteger.TWO)).divide(M));
+
+        // Ensures D is a prime s.t. D = 3 mod 4 and (D/kN) = 1
+        while (!quadraticResidue(D, kN) || !D.and(THREE).equals(THREE)) {
+            D = D.nextProbablePrime();
+        }
+
+        System.out.println("D = " + D);
+
+        assertEquals(THREE, D.mod(BigInteger.valueOf(4)));
+
+        BigInteger A = D.pow(2);
+
+        System.out.println("A actual = " + A);
+
+        // h0 = (kN)^((D-3)/4); h1 = kNh0 = (kN)^((D+1)/4)
+        BigInteger h1 = kN.modPow(D.add(BigInteger.ONE).divide(BigInteger.valueOf(4)), D);
+        BigInteger h2_1 = kN.subtract(h1.pow(2));
+
+        assertEquals(BigInteger.ZERO, h2_1.mod(D));
+
+        BigInteger h2 = h1.multiply(BigInteger.TWO).modInverse(D).multiply(h2_1.divide(D)).mod(D);
+        BigInteger B = h1.add(h2.multiply(D)).mod(A);
+
+        assertEquals(kN.mod(A), B.modPow(BigInteger.TWO, A));
+
+        assertEquals(BigInteger.ZERO, B.pow(2).subtract(kN).mod(A));
+
+        BigInteger C = B.pow(2).subtract(kN).divide(A);
     }
 
     @Test

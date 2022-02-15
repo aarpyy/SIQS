@@ -119,7 +119,7 @@ public final class Utils {
 
     public static BigInteger sqrt(BigInteger a) {
         BigDecimal d = new BigDecimal(a);
-        return d.sqrt(MathContext.UNLIMITED).toBigInteger();
+        return d.sqrt(MathContext.DECIMAL128).toBigInteger();
     }
 
     /*

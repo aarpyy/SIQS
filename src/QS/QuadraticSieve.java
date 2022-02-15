@@ -86,6 +86,37 @@ public class QuadraticSieve {
         return new QSPoly(a, b, c);
     }
 
+    public QSPoly silvermanComputation() {
+
+        // k does not need to be BigInteger, it will be very small, but it needs to be
+        // multiplied against N so it's easier to have as BigInteger
+        BigInteger k = BigInteger.ONE;
+        if (N.and(THREE).equals(THREE)) {
+            while (!N.multiply(k).and(THREE).equals(BigInteger.ONE)) {
+                k = k.add(BigInteger.ONE);
+            }
+        }
+
+        BigInteger kN = k.multiply(N);
+        BigInteger D = sqrt(sqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
+
+        // Ensures D is a prime s.t. D = 3 mod 4 and (D/kN) = 1
+        while (!quadraticResidue(D, kN) || !D.and(THREE).equals(THREE)) {
+            D = D.nextProbablePrime();
+        }
+
+        BigInteger A = D.pow(2);
+
+        // h0 = (kN)^((D-3)/4); h1 = kNh0 = (kN)^((D+1)/4)
+        BigInteger h1 = kN.modPow(D.add(BigInteger.ONE).divide(BigInteger.valueOf(4)), D);
+        BigInteger h2 = h1.multiply(BigInteger.TWO).modInverse(D).multiply(kN.subtract(h1.pow(2)).divide(D)).mod(D);
+        BigInteger B = h1.add(h2.multiply(D)).mod(A);
+
+        // C = (B^2 - kN) / 4A in the paper but here it is just divided by A
+        BigInteger C = B.pow(2).subtract(kN).divide(A);
+        return new QSPoly(A, B, C);
+    }
+
     /*
     This will take in a polynomial and sieve it across the range of final member M
      */

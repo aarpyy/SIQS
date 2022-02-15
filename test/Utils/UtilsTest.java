@@ -145,6 +145,14 @@ class UtilsTest {
     }
 
     @Test
+    void sqrt() {
+        BigInteger a = BigInteger.valueOf(128034);
+        double db_a = a.doubleValue();
+
+        assertEquals(Utils.sqrt(a).doubleValue(), Math.floor(Math.sqrt(db_a)));
+    }
+
+    @Test
     void findPoly() {
         // Some composite
         BigInteger N = BigInteger.valueOf(61234);
@@ -160,15 +168,21 @@ class UtilsTest {
         // modSqrt(N) guaranteed to exist since all q exist s.t. (N/q) = 1
         BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
 
-        System.out.println("b^2 mod n: " + b.modPow(BigInteger.TWO, N));
+        System.out.println("b: " + b + "; b mod n = " + b.mod(N));
+        System.out.println("b^2 mod n = " + b.modPow(BigInteger.TWO, N));
 
         // q^2 = a mod n
         // b^2 = n mod q^2
 
         // b^2 = n mod a
-        assertEquals(b.modPow(BigInteger.TWO, a), N.mod(a));
 
-        assertEquals(BigInteger.ZERO, q.pow(2).mod(a));
+        System.out.println("n mod a = " + N.mod(a));
+        System.out.println("pow(b, 2, a) = " + b.modPow(BigInteger.TWO, a));
+        System.out.println("pow(b % n, 2, a) = " + b.mod(N).modPow(BigInteger.TWO, a));
+        System.out.println("pow(b, 2, n) % a = " + b.modPow(BigInteger.TWO, N).mod(a));
+        // assertEquals(b.modPow(BigInteger.TWO, a), N.mod(a));
+
+        // assertEquals(BigInteger.ZERO, q.pow(2).mod(a));
 
         // c = (b^2 - N) / 4a
 //        BigInteger fourA = a.multiply(BigInteger.valueOf(4));
