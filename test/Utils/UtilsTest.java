@@ -15,6 +15,7 @@ import java.util.Scanner;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+
 class UtilsTest {
 
     private static final boolean print = false;
@@ -144,22 +145,76 @@ class UtilsTest {
     }
 
     @Test
-    void liftSqrt() {
+    void findPoly() {
         // Some composite
         BigInteger N = BigInteger.valueOf(61234);
 
         // Some prime s.t. (n/q) = 1
         BigInteger q = BigInteger.valueOf(613);
 
-        assert Utils.quadraticResidue(N, q) : "N does not have modular square root mod q";
+        BigInteger a = q.modPow(BigInteger.TWO, N);
+        assertEquals(a, a.mod(N));
+
+        assert Utils.quadraticResidue(N, q) : "N does not have square root mod q";
+
+        // modSqrt(N) guaranteed to exist since all q exist s.t. (N/q) = 1
+        BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
+
+        System.out.println("b^2 mod n: " + b.modPow(BigInteger.TWO, N));
+
+        // q^2 = a mod n
+        // b^2 = n mod q^2
+
+        // b^2 = n mod a
+        assertEquals(b.modPow(BigInteger.TWO, a), N.mod(a));
+
+        assertEquals(BigInteger.ZERO, q.pow(2).mod(a));
+
+        // c = (b^2 - N) / 4a
+//        BigInteger fourA = a.multiply(BigInteger.valueOf(4));
+//        assertEquals(BigInteger.ZERO, b.pow(2).subtract(N).mod(a));
+    }
+
+    @Test
+    void liftSqrt() {
+
+        BigInteger N = BigInteger.valueOf(61234);
+
+        // Some prime s.t. (n/q) = 1
+        BigInteger q = BigInteger.valueOf(613);
 
         BigInteger x = Utils.modSqrt(N, q);
         assertEquals(N.mod(q), x.modPow(BigInteger.TWO, q));
 
+        BigInteger m;
+
         // x1 is a solution to modular square root of N mod q and mod q^2
-        BigInteger x1 = Utils.liftSqrt(x, N, q);
-        assertEquals(N.mod(q), x1.modPow(BigInteger.TWO, q));
-        assertEquals(N.mod(q.pow(2)), x1.modPow(BigInteger.TWO, q.pow(2)));
+        BigInteger x1 = Utils.liftSqrt(x, N, q, q);
+        for (int i = 1; i < 3; i++) {
+            m = q.pow(i);
+
+            // Assert that x^2 = N mod all factors of highest modulus
+            assertEquals(N.mod(m), x1.modPow(BigInteger.TWO, m));
+        }
+
+        // Testing lifting a second time to find solution mod q^3
+        BigInteger x2 = Utils.liftSqrt(x1, N, q.pow(2), q);
+        for (int i = 1; i < 4; i++) {
+            m = q.pow(i);
+
+            // Assert that x^2 = N mod all factors of highest modulus
+            assertEquals(N.mod(m), x2.modPow(BigInteger.TWO, m));
+        }
+
+        // Lifting a third time to find solution mod q^4
+        BigInteger x3 = Utils.liftSqrt(x2, N, q.pow(3), q);
+        for (int i = 1; i < 5; i++) {
+            m = q.pow(i);
+
+            // Assert that x^2 = N mod all factors of highest modulus
+            assertEquals(N.mod(m), x3.modPow(BigInteger.TWO, m));
+        }
+
     }
 
     @Test

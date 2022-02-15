@@ -73,7 +73,13 @@ public class QuadraticSieve {
         BigInteger a = q.modPow(BigInteger.TWO, N);
 
         // modSqrt(N) guaranteed to exist since all q exist s.t. (N/q) = 1
-        BigInteger b = liftSqrt(modSqrt(N, q), N, q);
+        BigInteger b = liftSqrt(modSqrt(N, q), N, q, q);
+
+        /*
+        we know: a = q^2 mod n
+        we found: b^2 = n mod q^2
+
+         */
 
         // c = (b^2 - N) / 4a
         BigInteger c = b.pow(2).subtract(N).divide(a.multiply(BigInteger.valueOf(4)));

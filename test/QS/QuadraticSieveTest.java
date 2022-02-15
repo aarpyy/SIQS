@@ -43,7 +43,7 @@ class QuadraticSieveTest {
             }
 
             // Make new object which just creates arrays for process
-            QuadraticSieve qs = new QuadraticSieve(N, BigInteger.ZERO, factorBase);
+            QuadraticSieve qs = new QuadraticSieve(N, factorBase);
             System.out.println("N: " + N);
             System.out.println("B: " + B);
             System.out.println("Factor base: " + qs.factorBase);
@@ -84,7 +84,7 @@ class QuadraticSieveTest {
         System.out.println("b: " + b);
 
         BigInteger r = b.modPow(BigInteger.TWO, a);
-        BigInteger sq = Utils.liftSqrt(x, n, q);
+        BigInteger sq = Utils.liftSqrt(x, n, q, q);
         BigInteger qSq = q.pow(2);
         assertEquals(sq.modPow(BigInteger.TWO, qSq), n.mod(qSq));
     }
