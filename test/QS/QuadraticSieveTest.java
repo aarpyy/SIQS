@@ -7,11 +7,9 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 import static Utils.Utils.*;
-import static Utils.Utils.THREE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class QuadraticSieveTest {
@@ -25,28 +23,9 @@ class QuadraticSieveTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
-            double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
-
-            // Minimum value is 30 just because if less primes than that there's no way you'll find it
-            BigInteger B = BigInteger.valueOf(Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30));
-
-            LinkedList<BigInteger> factorBase = new LinkedList<>();
-
-            // Read first B primes and load into primes array
-            BigInteger prime;
-            while (scanner.hasNextLine()) {
-                prime = new BigInteger(scanner.nextLine());
-                if (prime.compareTo(B) < 0) {
-                    factorBase.add(prime);
-                } else {
-                    break;
-                }
-            }
-
             // Make new object which just creates arrays for process
-            QuadraticSieve qs = new QuadraticSieve(N, factorBase);
+            QuadraticSieve qs = new QuadraticSieve(N, scanner);
             System.out.println("N: " + N);
-            System.out.println("B: " + B);
             System.out.println("Factor base: " + qs.factorBase);
 
 
@@ -93,7 +72,7 @@ class QuadraticSieveTest {
     @Test
     void silvermanComputation() {
         BigInteger N = BigInteger.valueOf(61234);
-        double d = N.bitLength()/(Math.log(10)/Math.log(2));
+        double d = BigLog(N, 10);
 
         BigInteger M = BigInteger.valueOf((long) (386 * Math.pow(d, 2) - 23209.3 * d + 352768));
 
@@ -109,11 +88,11 @@ class QuadraticSieveTest {
         System.out.println("k = " + k);
 
         BigInteger kN = k.multiply(N);
-        BigInteger D = sqrt(sqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
+        BigInteger D = BigSqrt(BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
 
         System.out.println("kN = " + kN);
 
-        System.out.println("A approx = " + sqrt(kN.divide(BigInteger.TWO)).divide(M));
+        System.out.println("A approx = " + BigSqrt(kN.divide(BigInteger.TWO)).divide(M));
 
         // Ensures D is a prime s.t. D = 3 mod 4 and (D/kN) = 1
         while (!quadraticResidue(D, kN) || !D.and(THREE).equals(THREE)) {

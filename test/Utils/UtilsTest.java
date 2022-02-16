@@ -28,23 +28,7 @@ class UtilsTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
-            double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
-            BigInteger B = BigInteger.valueOf(Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30));
-
-            LinkedList<BigInteger> primesLTB = new LinkedList<>();
-
-            // Read first B primes and load into primes array
-            BigInteger prime;
-            while (scanner.hasNextLine()) {
-                prime = new BigInteger(scanner.nextLine());
-                if (prime.compareTo(B) < 0) {
-                    primesLTB.add(prime);
-                } else {
-                    break;
-                }
-            }
-
-            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
+            QuadraticSieve qs = new QuadraticSieve(N, scanner);
 
             IntArray powers = Utils.smoothFactor(N, qs.factorBase);
 
@@ -149,7 +133,7 @@ class UtilsTest {
         BigInteger a = BigInteger.valueOf(128034);
         double db_a = a.doubleValue();
 
-        assertEquals(Utils.sqrt(a).doubleValue(), Math.floor(Math.sqrt(db_a)));
+        assertEquals(Utils.BigSqrt(a).doubleValue(), Math.floor(Math.sqrt(db_a)));
     }
 
     @Test

@@ -117,9 +117,12 @@ public final class Utils {
         return result.add(lower);
     }
 
-    public static BigInteger sqrt(BigInteger a) {
-        BigDecimal d = new BigDecimal(a);
-        return d.sqrt(MathContext.DECIMAL128).toBigInteger();
+    public static BigInteger BigSqrt(BigInteger a) {
+        return (new BigDecimal(a)).sqrt(MathContext.DECIMAL128).toBigInteger();
+    }
+
+    public static double BigLog(BigInteger a, double base) {
+        return a.bitLength() / (Math.log(base) / Math.log(2));
     }
 
     /*

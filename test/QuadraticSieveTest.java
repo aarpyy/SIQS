@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
-import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -23,23 +22,7 @@ class QuadraticSieveTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
-            double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
-            BigInteger B = BigInteger.valueOf(Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30));
-
-            LinkedList<BigInteger> primesLTB = new LinkedList<>();
-
-            // Read first B primes and load into primes array
-            BigInteger prime;
-            while (scanner.hasNextLine()) {
-                prime = new BigInteger(scanner.nextLine());
-                if (prime.compareTo(B) < 0) {
-                    primesLTB.add(prime);
-                } else {
-                    break;
-                }
-            }
-
-            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
+            QuadraticSieve qs = new QuadraticSieve(N, scanner);
 
             IntArray powers = smoothFactor(N, qs.factorBase);
 

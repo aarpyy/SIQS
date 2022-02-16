@@ -4,9 +4,9 @@ import Utils.Pair;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 import static Utils.Utils.*;
@@ -17,31 +17,41 @@ public class QuadraticSieve {
     public final BigInteger N, M;
     public final int F;
     public final double T;
-    public final int d;
 
 
-    public QuadraticSieve(BigInteger N, LinkedList<BigInteger> primesLTF) {
+    public QuadraticSieve(BigInteger N, Scanner primesScanner) {
         this.N = N;
 
-        d = (int)(N.bitLength()/(Math.log(10)/Math.log(2)));
+        // Get number of digits in N
+        double digits = BigLog(N, 10);
 
-        T = 0.0268849 * d + 0.783929;
-        M = new BigInteger(Double.toString(386 * Math.pow(d,2) - 23209.3 * d + 352768));
-        F = (int)(2.92659 * Math.pow(d,2) - 164.385*d + 2455.36);
+        // M = 386 * digits^2 - (23209.3 * digits) + 352768
+        M = BigDecimal.valueOf(386 * Math.pow(digits, 2)).subtract(
+                BigDecimal.valueOf(23209.3).multiply(BigDecimal.valueOf(digits).add(
+                        BigDecimal.valueOf(352768)))).toBigInteger();
 
-        // Remove 2 if in the list, otherwise don't do anything
-        if (primesLTF.get(0).equals(BigInteger.TWO)) {
-            primesLTF.pop();
-        }
+        // Size of factor base
+        F = (int) (2.92659 * Math.pow(digits, 2) - 164.385 * digits + 2455.36);
 
-        ArrayList<BigInteger> fb = new ArrayList<>(primesLTF.size());
-        // Manually add 2 so that regardless of if it was in list, it now is
+        // Tolerance value
+        T = 0.0268849 * digits + 0.783929;
+
+        BigInteger prime;
+        ArrayList<BigInteger> fb = new ArrayList<>(F);
+
+        // Make sure 2 is in factor base
         fb.add(BigInteger.TWO);
-        for (BigInteger p : primesLTF) {
-            if (quadraticResidue(N, p)) {
-                fb.add(p);
+
+        // Read through first prime (2)
+        primesScanner.nextLine();
+
+        while (primesScanner.hasNextLine() && (fb.size() < F)) {
+            prime = new BigInteger(primesScanner.nextLine());
+            if (quadraticResidue(N, prime)) {
+                fb.add(prime);
             }
         }
+        primesScanner.close();
 
         // Factor Base: Primes p < B s.t. (N/p) = 1
         factorBase = new BigIntArray(fb);
@@ -54,7 +64,7 @@ public class QuadraticSieve {
         int found = 0;
 
         // Get the first prime greater than √(√2n / m)
-        BigInteger q = sqrt(sqrt(N.multiply(BigInteger.TWO)).divide(M)).nextProbablePrime();
+        BigInteger q = BigSqrt(BigSqrt(N.multiply(BigInteger.TWO)).divide(M)).nextProbablePrime();
         BigInteger[] arrQ = new BigInteger[n];
         while (found < n) {
 
@@ -98,7 +108,7 @@ public class QuadraticSieve {
         }
 
         BigInteger kN = k.multiply(N);
-        BigInteger D = sqrt(sqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
+        BigInteger D = BigSqrt(BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
 
         // Ensures D is a prime s.t. D = 3 mod 4 and (D/kN) = 1
         while (!quadraticResidue(D, kN) || !D.and(THREE).equals(THREE)) {
@@ -139,28 +149,9 @@ public class QuadraticSieve {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
-            double L = Math.pow(Math.E, Math.sqrt(Math.log(N.doubleValue()) * Math.log(Math.log(N.doubleValue()))));
-
-            // Minimum value is 30 just because if less primes than that there's no way you'll find it
-            BigInteger B = BigInteger.valueOf(Math.max((int) (Math.pow(L, 1.0 / Math.sqrt(2))), 30));
-
-            LinkedList<BigInteger> primesLTB = new LinkedList<>();
-
-            // Read first B primes and load into primes array
-            BigInteger prime;
-            while (scanner.hasNextLine()) {
-                prime = new BigInteger(scanner.nextLine());
-                if (prime.compareTo(B) < 0) {
-                    primesLTB.add(prime);
-                } else {
-                    break;
-                }
-            }
-
             // Make new object which just creates arrays for process
-            QuadraticSieve qs = new QuadraticSieve(N, primesLTB);
+            QuadraticSieve qs = new QuadraticSieve(N, scanner);
             System.out.println("N: " + N);
-            System.out.println("B: " + B);
             System.out.println("Primes: " + qs.factorBase);
 
             // Tries to factor number given prime base, if it can get it to 1 then success, otherwise error
