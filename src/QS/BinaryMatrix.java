@@ -66,7 +66,7 @@ public class BinaryMatrix implements Iterable<BinaryArray> {
         if (h == 0) w = a.length;
         else if (w != a.length) {
             throw new IllegalArgumentException("Unable to append array of " +
-                    "length " + a.length + "to matrix of length " + w);
+                    "size " + a.length + "to matrix of size " + w);
         }
 
         // Make new array of extra row

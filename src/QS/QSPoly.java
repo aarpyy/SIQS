@@ -9,47 +9,24 @@ ax^2 + bx + c when applied to a BigInteger x
  */
 public class QSPoly implements Function<BigInteger, BigInteger> {
 
-    public final BigInteger A, B, C;
+    public final BigInteger A, B, N;
 
-    public QSPoly(BigInteger a, BigInteger b, BigInteger c) {
+    public QSPoly(BigInteger a, BigInteger b, BigInteger n) {
         A = a;
         B = b;
-        C = c;
+        N = n;
     }
 
     public String toString() {
-        StringBuilder str = new StringBuilder();
-        int c;
-        if (A.equals(BigInteger.ONE)) {
-            str.append("x^2");
-        } else if (A.equals(BigInteger.ONE.negate())) {
-            str.append("-x^2");
-        } else if (!A.equals(BigInteger.ZERO)) {
-            str.append(A).append("x^2");
-        }
-        if (B.equals(BigInteger.ONE)) {
-            str.append(" + x");
-        } else if (B.equals(BigInteger.ONE.negate())) {
-            str.append(" - x");
-        } else {
-            c = B.compareTo(BigInteger.ZERO);
-            switch (c) {
-                case -1 -> str.append(" - ").append(B.abs()).append("x");
-                case 1 -> str.append(" + ").append(B).append("x");
-            }
-        }
-
-        c = C.compareTo(BigInteger.ZERO);
-        switch (c) {
-            case -1 -> str.append(" - ").append(C.abs());
-            case 1 -> str.append(" + ").append(C);
-        }
-
-        return str.toString();
+        return "(" + A + "x + " + B + ")^2 - " + N;
     }
     
     @Override
     public BigInteger apply(BigInteger x) {
-        return A.multiply(x.multiply(x)).add(B.multiply(x)).add(C);
+        return A.multiply(x).add(B).pow(2).subtract(N);
+    }
+
+    public BigInteger apply(int x) {
+        return apply(BigInteger.valueOf(x));
     }
 }

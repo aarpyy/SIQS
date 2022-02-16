@@ -1,5 +1,7 @@
 package QS;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Iterator;
 
 public class IntMatrix implements Iterable<IntArray> {
@@ -16,31 +18,31 @@ public class IntMatrix implements Iterable<IntArray> {
         }
     }
 
-    public IntMatrix(IntArray[] array) {
+    public IntMatrix(IntArray @NotNull [] array) {
         h = array.length;
-        w = array[0].length;
+        w = array[0].size();
         this.array = array;
     }
 
-    public IntMatrix(int[][] array) {
+    public IntMatrix(int @NotNull [][] array) {
         h = array.length;
         w = array[0].length;
         this.array = new IntArray[h];
         for (int i = 0; i < h; i++) {
-            this.array[i] = new IntArray(array[i]);
+            this.array[i] = IntArray.fromArray(array[i]);
         }
     }
 
-    public IntMatrix(String[][] digits) {
+    public IntMatrix(String @NotNull [][] digits) {
         h = digits.length;
         w = digits[0].length;
         array = new IntArray[h];
         for (int i = 0; i < h; i++) {
-            array[i] = new IntArray(digits[i]);
+            array[i] = new IntArray(digits[i].length);
         }
     }
 
-    public IntMatrix(IntMatrix src) {
+    public IntMatrix(@NotNull IntMatrix src) {
         array = new IntArray[src.h];
         h = src.h;
         w = src.w;
@@ -62,10 +64,10 @@ public class IntMatrix implements Iterable<IntArray> {
     }
 
     public void append(IntArray a) throws IllegalArgumentException {
-        if (h == 0) w = a.length;
-        else if (w != a.length) {
+        if (h == 0) w = a.size();
+        else if (w != a.size()) {
             throw new IllegalArgumentException("Unable to append array of " +
-                    "length " + a.length + "to matrix of length " + w);
+                    "size " + a.size() + "to matrix of size " + w);
         }
 
         // Make new array of extra row

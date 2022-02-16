@@ -30,7 +30,7 @@ class UtilsTest {
 
             QuadraticSieve qs = new QuadraticSieve(N, scanner);
 
-            IntArray powers = Utils.smoothFactor(N, qs.factorBase);
+            IntArray powers = Utils.trialDivide(N, qs.bigFB);
 
             // Confirm that these are the powers
             int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
@@ -39,7 +39,7 @@ class UtilsTest {
             }
 
             // Confirm that when you take product of each of powers you get original number
-            assertEquals(Utils.evalPower(qs.factorBase, powers), N);
+            assertEquals(Utils.evalPower(qs.bigFB, powers), N);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -141,7 +141,7 @@ class UtilsTest {
         // Some composite
         BigInteger N = BigInteger.valueOf(61234);
 
-        // Some prime s.t. (n/q) = 1
+        // Some prime s.sqrtFB. (n/q) = 1
         BigInteger q = BigInteger.valueOf(613);
 
         BigInteger a = q.modPow(BigInteger.TWO, N);
@@ -149,7 +149,7 @@ class UtilsTest {
 
         assert Utils.quadraticResidue(N, q) : "N does not have square root mod q";
 
-        // modSqrt(N) guaranteed to exist since all q exist s.t. (N/q) = 1
+        // modSqrt(N) guaranteed to exist since all q exist s.sqrtFB. (N/q) = 1
         BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
 
         System.out.println("b: " + b + "; b mod n = " + b.mod(N));
@@ -178,7 +178,7 @@ class UtilsTest {
 
         BigInteger N = BigInteger.valueOf(61234);
 
-        // Some prime s.t. (n/q) = 1
+        // Some prime s.sqrtFB. (n/q) = 1
         BigInteger q = BigInteger.valueOf(613);
 
         BigInteger x = Utils.modSqrt(N, q);
@@ -217,6 +217,8 @@ class UtilsTest {
 
     @Test
     void quadraticResidue() {
+        int x = -5;
+        System.out.println("x % 6 = " + Math.floorMod(x, 6));
     }
 
     @Test

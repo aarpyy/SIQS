@@ -34,11 +34,11 @@ public final class Utils {
     Attempts to completely factor n using the given factor base, returning the powers of the factors
     if number was completely factored, throwing ArithmeticException if not
      */
-    public static IntArray smoothFactor(BigInteger n, BigIntArray primes) throws ArithmeticException {
-        int[] factors = new int[primes.length];
+    public static IntArray trialDivide(BigInteger n, BigIntArray primes) throws ArithmeticException {
+        int[] factors = new int[primes.size()];
         BigInteger[] div;
         BigInteger prime;
-        for (int i = 0; i < primes.length; i++) {
+        for (int i = 0; i < primes.size(); i++) {
             factors[i] = 0;
             prime = primes.get(i);
             while ((div = n.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
@@ -48,7 +48,7 @@ public final class Utils {
         }
 
         if (n.equals(BigInteger.ONE)) {
-            return new IntArray(factors);
+            return IntArray.fromArray(factors);
         } else {
             throw new ArithmeticException(n + " unable to be factored completely");
         }
@@ -73,14 +73,14 @@ public final class Utils {
     return the BigInteger that is the product of each of those powers.
      */
     public static BigInteger evalPower(BigIntArray primes, IntArray powers) {
-        if (primes.length != powers.length) {
+        if (primes.size() != powers.size()) {
             // If invalid arrays, just return 0
             return BigInteger.ZERO;
         } else {
 
             BigInteger acc = BigInteger.ONE;
-            // Otherwise, they are same length so evaluate powers
-            for (int i = 0; i < primes.length; i++) {
+            // Otherwise, they are same size so evaluate powers
+            for (int i = 0; i < primes.size(); i++) {
                 // Take product of BigInteger power value
                 acc = acc.multiply(primes.get(i).pow(powers.get(i)));
             }
@@ -95,7 +95,7 @@ public final class Utils {
     public static BigInteger fastPower(BigInteger a, BigInteger p) {
         BigInteger result = BigInteger.ONE;
         while (!p.equals(BigInteger.ZERO)) {
-            if (!p.and(BigInteger.ONE).equals(BigInteger.ZERO)) {
+            if (p.testBit(0)) {
                 p = p.subtract(BigInteger.ONE);
                 result = result.multiply(a);
             }
@@ -103,6 +103,39 @@ public final class Utils {
             a = a.multiply(a);
         }
         return result;
+    }
+
+    public static int powerMod(int a, int p, int m) {
+        int res = 1;
+        while (p != 0) {
+            if ((p & 1) != 0) {
+                p--;
+                res = (res * a) % m;
+            }
+            p <<= 1;
+            a = (a * a) % m;
+        }
+        return res;
+    }
+
+    public static int[] extendedGCD(int a, int b) {
+        if (a == 0) {
+            return new int[]{b, 0, 1};
+        } else {
+            int[] gcd = extendedGCD(b % a, a);
+            int x = gcd[1];
+            int y = gcd[2];
+            return new int[]{gcd[0], y - (b / a) * x, x};
+        }
+    }
+
+    public static int modularInverse(int a, int m) {
+        int[] gcd = extendedGCD(a, m);
+        if (gcd[0] != 1) {
+            throw new ArithmeticException(a + " has no modular inverse mod " + m);
+        } else {
+            return gcd[1];
+        }
     }
 
     /*
@@ -126,7 +159,7 @@ public final class Utils {
 
         /*
         While it's greater, get a new one, then we guarantee we have a number that is within
-        the designated range. Re-add lower limit so that the range isn't 0-range but is
+        the designated range. Re-add lower limit so that the range isn'sqrtFB 0-range but is
         lower-upper and then return
          */
         while (result.compareTo(range) >= 0) {
@@ -141,6 +174,10 @@ public final class Utils {
 
     public static double BigLog(BigInteger a, double base) {
         return a.bitLength() / (Math.log(base) / Math.log(2));
+    }
+
+    public static double BigLN(BigInteger a) {
+        return BigLog(a, Math.E);
     }
 
     /*
@@ -202,6 +239,62 @@ public final class Utils {
         }
     }
 
+    public static int modSqrt(int a, int p) throws ArithmeticException {
+        if (!quadraticResidue(a, p)) {
+            throw new ArithmeticException(a + " does not have a quadratic residue mod " + p);
+        } else if ((p & 3) == 3) {
+            return powerMod(a, (p + 1) >> 1, p);
+        } else {
+            int Q = p - 1;
+            int S = 0;
+            while ((Q & 1) != 0) {
+                Q >>= 1;
+                S++;
+            }
+
+            Random rand = new Random();
+            int range = p - 2;
+            int z = rand.nextInt(range) + 2;
+            while (!quadraticNonResidue(z, p)) {
+                z = rand.nextInt(range) + 2;
+            }
+
+            int c = powerMod(z, Q, p);
+            int t = powerMod(a, Q, p);
+            int r = powerMod(a, (Q + 1) >> 1, p);
+
+            int b, i, x;
+
+            while (true) {
+                if (t == 0) {
+                    return 0;
+                } else if (t == 1) {
+                    return r;
+                }
+
+                i = 0;
+                x = t;
+
+                while (x != 1) {
+                    x = (x * x) % p;
+                    i++;
+
+                    if (i == S) {
+                        throw new ArithmeticException("Finding square root of " + a + " mod " + p + " failed " +
+                                "despite " + a + " being a quadratic residue mod " + p);
+                    }
+                }
+
+                b = powerMod(c, (int) Math.pow(2, S - i - 1), p);
+                c = powerMod(b, 2, p);
+                S = i;
+
+                t = (t * c) % p;
+                r = (r * b) % p;
+            }
+        }
+    }
+
     /*
     Given BigInteger root that is the modular square root of n mod q, returns the modular square root
     of n mod q^2 via Hensel's Lemma (lifting)
@@ -209,7 +302,7 @@ public final class Utils {
     public static BigInteger liftSqrt(BigInteger root, BigInteger n, BigInteger baseQ, BigInteger q) {
 
         /*
-        Objective is to find s s.t. x = root + s*baseQ. This allows x to be a solution mod q since the
+        Objective is to find s s.sqrtFB. x = root + s*baseQ. This allows x to be a solution mod q since the
         s*q term goes away, but putting x into the equation x^2 = n mod baseQ*q we get
         root^2 + 2*s*baseQ*q*root + s^2*baseQ*q = n mod baseQ*q which simplifies to 2*s*root = (n - root^2) / baseQ mod q and
         since q is prime 2*root has a modular inverse mod q so s = ((n - root^2) / baseQ) * (2*root)^-1 mod q
@@ -221,19 +314,27 @@ public final class Utils {
     }
 
     /*
-    Returns whether a number c exists s.t. c^2 = a mod p
+    Returns whether a number c exists s.sqrtFB. c^2 = a mod p
      */
     public static boolean quadraticResidue(BigInteger a, BigInteger p) {
-        // Returns a ^ ((p - 1) / 2) == 1, which tells us if there exists an integer c s.t.
+        // Returns a ^ ((p - 1) / 2) == 1, which tells us if there exists an integer c s.sqrtFB.
         // c^2 = a mod p
         return a.modPow(p.subtract(BigInteger.ONE).shiftRight(1), p).equals(BigInteger.ONE);
     }
 
+    public static boolean quadraticResidue(int a, int p) {
+        return (powerMod(a, (p - 1) >> 1, p) == 1);
+    }
+
     /*
-    Returns whether a number c does NOT exist s.t. c^2 = a mod p
+    Returns whether a number c does NOT exist s.sqrtFB. c^2 = a mod p
      */
     public static boolean quadraticNonResidue(BigInteger a, BigInteger p) {
         BigInteger nSub1 = p.subtract(BigInteger.ONE);
         return a.modPow(nSub1.shiftRight(1), p).equals(nSub1);
+    }
+
+    public static boolean quadraticNonResidue(int a, int p) {
+        return (powerMod(a, ((p - 1) >> 1), p) == (p - 1));
     }
 }

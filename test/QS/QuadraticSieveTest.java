@@ -44,7 +44,7 @@ class QuadraticSieveTest {
         // Some composite
         BigInteger n = BigInteger.valueOf(61234);
 
-        // Some prime s.t. (n/q) = 1
+        // Some prime s.sqrtFB. (n/q) = 1
         BigInteger q = BigInteger.valueOf(613);
 
         BigInteger a = q.pow(2);
@@ -94,7 +94,7 @@ class QuadraticSieveTest {
 
         System.out.println("A approx = " + Utils.BigSqrt(kN.divide(BigInteger.TWO)).divide(M));
 
-        // Ensures D is a prime s.t. D = 3 mod 4 and (D/kN) = 1
+        // Ensures D is a prime s.sqrtFB. D = 3 mod 4 and (D/kN) = 1
         while (!Utils.quadraticResidue(D, kN) || !D.and(Utils.THREE).equals(Utils.THREE)) {
             D = D.nextProbablePrime();
         }

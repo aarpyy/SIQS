@@ -98,8 +98,8 @@ public class BinaryArray implements Iterable<Byte> {
     }
 
     public BigInteger dot(BigIntArray other) throws IllegalArgumentException {
-        if (length != other.length) {
-            throw new IllegalArgumentException("Array lengths differ: " + length + ", " + other.length);
+        if (length != other.size()) {
+            throw new IllegalArgumentException("Array lengths differ: " + length + ", " + other.size());
         } else {
             BigInteger dot = BigInteger.ZERO;
             for (int i = 0; i < length; i++) {

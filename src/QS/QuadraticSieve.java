@@ -13,7 +13,8 @@ import static Utils.Utils.*;
 
 public class QuadraticSieve {
 
-    public final BigIntArray factorBase;
+    public final IntArray factorBase;
+    public final BigIntArray bigFB;
     public final BigInteger N, M;
     public final int F;
     public final double T;
@@ -36,29 +37,31 @@ public class QuadraticSieve {
         // Tolerance value
         T = 0.0268849 * digits + 0.783929;
 
-        BigInteger prime;
-        ArrayList<BigInteger> fb = new ArrayList<>(F);
+        ArrayList<Integer> fb = new ArrayList<>(F);
 
         // Make sure 2 is in factor base
-        fb.add(BigInteger.TWO);
+        fb.add(2);
 
         // Read through first prime (2)
         primesScanner.nextLine();
 
+        int prime;
+        int int_N = N.intValue();
         while (primesScanner.hasNextLine() && (fb.size() < F)) {
-            prime = new BigInteger(primesScanner.nextLine());
-            if (quadraticResidue(N, prime)) {
+            prime = Integer.parseInt(primesScanner.nextLine());
+            if (quadraticResidue(int_N, prime)) {
                 fb.add(prime);
             }
         }
         primesScanner.close();
 
-        // Factor Base: Primes p < B s.t. (N/p) = 1
-        factorBase = new BigIntArray(fb);
+        // Factor Base: Primes p < B s.sqrtFB. (N/p) = 1
+        factorBase = new IntArray(fb);
+        bigFB = BigIntArray.fromIntArray(factorBase);
     }
 
     /*
-    Find n BigInteger's q s.t. (N/q) = 1. Here, n is how many polynomials we want to sieve
+    Find n BigInteger's q s.sqrtFB. (N/q) = 1. Here, n is how many polynomials we want to sieve
      */
     public BigIntArray findQ(int n) {
         int found = 0;
@@ -75,17 +78,17 @@ public class QuadraticSieve {
             }
             q = q.nextProbablePrime();
         }
-        return new BigIntArray(arrQ);
+        return BigIntArray.fromArray(arrQ);
     }
 
-    // Given a q that is odd prime s.t. N is a quadratic residue mod q, find polynomial coefficient a, b, c
+    // Given a q that is odd prime s.sqrtFB. N is a quadratic residue mod q, find polynomial coefficient a, b, c
     public QSPoly findPoly(BigInteger q) {
         BigInteger a = q.pow(2);
 
-        // modSqrt(N) guaranteed to exist since all q exist s.t. (N/q) = 1
+        // modSqrt(N) guaranteed to exist since all q exist s.sqrtFB. (N/q) = 1
         BigInteger b = liftSqrt(modSqrt(N, q), N, q, q);
 
-        // Use c s.t. b^2 - n = a*c
+        // Use c s.sqrtFB. b^2 - n = a*c
         BigInteger c = b.pow(2).subtract(N).divide(a);
         return new QSPoly(a, b, c);
     }
@@ -104,7 +107,7 @@ public class QuadraticSieve {
         BigInteger kN = k.multiply(N);
         // BigInteger D = BigSqrt(BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
 
-        // Ensures D is a prime s.t. D = 3 mod 4 and (D/kN) = 1
+        // Ensures D is a prime s.sqrtFB. D = 3 mod 4 and (D/kN) = 1
         while (!quadraticResidue(D, kN) || !D.and(THREE).equals(THREE)) {
             D = D.nextProbablePrime();
         }
@@ -116,7 +119,7 @@ public class QuadraticSieve {
         BigInteger h2 = h1.multiply(BigInteger.TWO).modInverse(D).multiply(kN.subtract(h1.pow(2)).divide(D)).mod(D);
         BigInteger B = h1.add(h2.multiply(D)).mod(A);
 
-        // C = (B^2 - kN) / 4A in the paper but here it is just divided by A
+        // N = (B^2 - kN) / 4A in the paper but here it is just divided by A
         BigInteger C = B.pow(2).subtract(kN).divide(A);
         return new QSPoly(A, B, C);
     }

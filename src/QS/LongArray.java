@@ -4,40 +4,40 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class IntArray extends AbstractList<Integer> implements List<Integer> {
+public class LongArray extends AbstractList<Long> implements List<Long> {
 
-    private int[] elementData;
+    private long[] elementData;
     private int size;
 
-    public IntArray(int size) {
-        elementData = new int[size];
+    public LongArray(int size) {
+        elementData = new long[size];
         this.size = 0;
     }
 
-    public IntArray(@NotNull List<Integer> list) {
+    public LongArray(@NotNull List<Long> list) {
         size = list.size();
-        elementData = new int[size];
+        elementData = new long[size];
         int i = 0;
-        for (Integer n : list) {
+        for (Long n : list) {
             elementData[i] = n;
             i++;
         }
     }
 
-    public static @NotNull IntArray fromArray(int @NotNull [] array) {
-        LinkedList<Integer> list = new LinkedList<>();
-        for (int n : array) list.add(n);
-        return new IntArray(list);
+    public static @NotNull LongArray fromArray(long @NotNull [] array) {
+        LinkedList<Long> list = new LinkedList<>();
+        for (long n : array) list.add(n);
+        return new LongArray(list);
     }
 
-    public static @NotNull IntArray fromArray(String @NotNull [] array) {
-        LinkedList<Integer> list = new LinkedList<>();
-        for (String n : array) list.add(Integer.parseInt(n));
-        return new IntArray(list);
+    public static @NotNull LongArray fromArray(String @NotNull [] array) {
+        LinkedList<Long> list = new LinkedList<>();
+        for (String n : array) list.add(Long.parseLong(n));
+        return new LongArray(list);
     }
 
     @Override
-    public Integer get(int index) {
+    public Long get(int index) {
         if ((index >= 0) && (index < size)) {
             return elementData[index];
         } else {
@@ -45,7 +45,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         }
     }
 
-    public Integer set(int index, int value) {
+    public Long set(int index, long value) {
         if ((index >= 0) && (index < size)) {
             elementData[index] = value;
             return value;
@@ -55,7 +55,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
     }
 
     @Override
-    public boolean add(Integer element) {
+    public boolean add(Long element) {
         if (size == elementData.length) {
             elementData = Arrays.copyOf(elementData, elementData.length << 1);
         }
@@ -64,61 +64,61 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         return true;
     }
 
-    public IntArray slice(int start, int stop) {
-        int[] temp = new int[stop - start];
+    public LongArray slice(int start, int stop) {
+        long[] temp = new long[stop - start];
         int j = 0;
         for (int i = start; i < stop; i++) {
             temp[j] = elementData[i];
             j++;
         }
-        return IntArray.fromArray(temp);
+        return LongArray.fromArray(temp);
     }
 
-    public IntArray vectorAdd(@NotNull IntArray other) throws IllegalArgumentException {
+    public LongArray vectorAdd(LongArray other) throws IllegalArgumentException {
         if (size != other.size) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size);
         } else {
-            int[] sum = new int[size];
+            long[] sum = new long[size];
             for (int i = 0; i < size; i++) {
                 sum[i] = elementData[i] + other.get(i);
             }
-            return IntArray.fromArray(sum);
+            return LongArray.fromArray(sum);
         }
     }
 
-    public IntArray vectorSubtract(@NotNull IntArray other) throws IllegalArgumentException {
+    public LongArray vectorSubtract(LongArray other) throws IllegalArgumentException {
         if (size != other.size) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size);
         } else {
-            int[] sum = new int[size];
+            long[] sum = new long[size];
             for (int i = 0; i < size; i++) {
                 sum[i] = elementData[i] - other.get(i);
             }
-            return IntArray.fromArray(sum);
+            return LongArray.fromArray(sum);
         }
     }
 
-    public IntArray multiply(int other) {
-        int[] prod = new int[size];
+    public LongArray multiply(long other) {
+        long[] prod = new long[size];
         for (int i = 0; i < size; i++) {
             prod[i] = elementData[i] * other;
         }
-        return IntArray.fromArray(prod);
+        return LongArray.fromArray(prod);
     }
 
-    public IntArray floorMod(int other) {
-        int[] res = new int[size];
+    public LongArray floorMod(long other) {
+        long[] res = new long[size];
         for (int i = 0; i < size; i++) {
             res[i] = Math.floorMod(elementData[i], other);
         }
-        return IntArray.fromArray(res);
+        return LongArray.fromArray(res);
     }
 
-    public Integer dotProduct(@NotNull IntArray other) throws IllegalArgumentException {
+    public Long dotProduct(LongArray other) throws IllegalArgumentException {
         if (size != other.size) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size);
         } else {
-            int dot = 0;
+            long dot = 0;
             for (int i = 0; i < size; i++) {
                 dot += elementData[i] * other.get(i);
             }
@@ -126,11 +126,11 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         }
     }
 
-    public Integer dotProduct(@NotNull BinaryArray other) throws IllegalArgumentException {
+    public Long dotProduct(BinaryArray other) throws IllegalArgumentException {
         if (size != other.length) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.length);
         } else {
-            int dot = 0;
+            long dot = 0;
             for (int i = 0; i < size; i++) {
                 dot += elementData[i] * other.get(i);
             }
@@ -139,7 +139,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
     }
 
     public void makePivot(int index) {
-        int n = elementData[index];
+        long n = elementData[index];
         for (int i = 0; i < size; i++) {
             if (i == index) {
                 elementData[i] = 1;
@@ -149,9 +149,9 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         }
     }
 
-    public boolean equals(Iterable<Integer> other) {
-        Iterator<Integer> iter1 = iterator();
-        Iterator<Integer> iter2 = other.iterator();
+    public boolean equals(Iterable<Long> other) {
+        Iterator<Long> iter1 = iterator();
+        Iterator<Long> iter2 = other.iterator();
         while (true) {
             if (iter1.hasNext() && iter2.hasNext()) {
                 if (!Objects.equals(iter1.next(), iter2.next())) {
@@ -171,8 +171,8 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
     }
 
     @Override
-    public Iterator<Integer> iterator() {
-        return new IntArrayIterator();
+    public Iterator<Long> iterator() {
+        return new LongArrayIterator();
     }
 
     @Override
@@ -180,11 +180,11 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         return size;
     }
 
-    class IntArrayIterator implements Iterator<Integer> {
+    class LongArrayIterator implements Iterator<Long> {
 
         int index;
 
-        public IntArrayIterator() {
+        public LongArrayIterator() {
             index = 0;
         }
 
@@ -194,7 +194,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         }
 
         @Override
-        public Integer next() {
+        public Long next() {
             return elementData[index++];
         }
     }
