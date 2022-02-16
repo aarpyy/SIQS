@@ -30,6 +30,7 @@ public class ContiniQS {
     private QSPoly Q_x;
     private IntArray soln1_p, soln2_p;
     private BigIntArray sieve_array;
+    private IntMatrix smooth_matrix;
 
     public ContiniQS(BigInteger n, int f, int m, IntArray factor_base, IntArray tmem_p, IntArray log_p) {
         F = f;
@@ -45,6 +46,7 @@ public class ContiniQS {
         soln1_p = new IntArray(F);
         soln2_p = new IntArray(F);
         sieve_array = null;
+        smooth_matrix = null;
     }
 
 
@@ -163,7 +165,12 @@ public class ContiniQS {
             }
         }
 
-        return (matrix.size() > F);
+        if (matrix.size() > F) {
+            smooth_matrix = new IntMatrix(matrix);
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }

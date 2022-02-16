@@ -66,7 +66,7 @@ public class BigIntArray extends AbstractList<BigInteger> implements List<BigInt
         if ((index >= 0) && (index < size)) {
             return elementData[index];
         } else {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of length " + size);
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + size);
         }
     }
 
@@ -76,7 +76,7 @@ public class BigIntArray extends AbstractList<BigInteger> implements List<BigInt
             elementData[index] = value;
             return value;
         } else {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of length " + size);
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + size);
         }
     }
 
@@ -85,7 +85,7 @@ public class BigIntArray extends AbstractList<BigInteger> implements List<BigInt
         if ((index >= 0) && (index < size)) {
             elementData[index] = elementData[index].add(BigInteger.valueOf(value));
         } else {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of length " + size);
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + size);
         }
     }
 
@@ -162,8 +162,8 @@ public class BigIntArray extends AbstractList<BigInteger> implements List<BigInt
     }
 
     public BigInteger dotProduct(BinaryArray other) throws IllegalArgumentException {
-        if (size != other.length) {
-            throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.length);
+        if (size != other.size()) {
+            throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size());
         } else {
             BigInteger dot = BigInteger.ZERO;
             for (int i = 0; i < size; i++) {

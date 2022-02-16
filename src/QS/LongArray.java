@@ -41,7 +41,7 @@ public class LongArray extends AbstractList<Long> implements List<Long> {
         if ((index >= 0) && (index < size)) {
             return elementData[index];
         } else {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of length " + size);
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + size);
         }
     }
 
@@ -50,7 +50,7 @@ public class LongArray extends AbstractList<Long> implements List<Long> {
             elementData[index] = value;
             return value;
         } else {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of length " + size);
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + size);
         }
     }
 
@@ -127,8 +127,8 @@ public class LongArray extends AbstractList<Long> implements List<Long> {
     }
 
     public Long dotProduct(BinaryArray other) throws IllegalArgumentException {
-        if (size != other.length) {
-            throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.length);
+        if (size != other.size()) {
+            throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size());
         } else {
             long dot = 0;
             for (int i = 0; i < size; i++) {

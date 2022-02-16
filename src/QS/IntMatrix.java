@@ -1,91 +1,82 @@
 package QS;
 
-import org.jetbrains.annotations.NotNull;
-
+import java.util.AbstractList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
-public class IntMatrix implements Iterable<IntArray> {
+public class IntMatrix extends AbstractList<IntArray> implements List<IntArray> {
 
-    public int h, w;
-    private IntArray[] array;
+    // 'Size' of matrix: number of rows, subject to change
+    private int h;
 
-    public IntMatrix(int height, int width) {
-        h = height;
+    // Width final because width of matrix cannot change, only add rows
+    public final int w;
+    private IntArray[] elementData;
+
+    public IntMatrix(List<IntArray> list) {
+        h = list.size();
+        w = list.get(0).size();
+        elementData = new IntArray[h];
+
+        int i = 0;
+        for (IntArray a : list) {
+            elementData[i] = a;
+            i++;
+        }
+    }
+
+    public IntMatrix(int width) {
         w = width;
-        array = new IntArray[height];
-        for (int i = 0; i < h; i++) {
-            array[i] = new IntArray(width);
+        h = 0;
+        elementData = new IntArray[0];
+    }
+
+    public IntArray get(int index) {
+        if ((index >= 0) && (index < h)) {
+            return elementData[index];
+        } else {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + h);
         }
     }
 
-    public IntMatrix(IntArray @NotNull [] array) {
-        h = array.length;
-        w = array[0].size();
-        this.array = array;
-    }
-
-    public IntMatrix(int @NotNull [][] array) {
-        h = array.length;
-        w = array[0].length;
-        this.array = new IntArray[h];
-        for (int i = 0; i < h; i++) {
-            this.array[i] = IntArray.fromArray(array[i]);
+    public IntArray set(int index, IntArray value) {
+        if ((index >= 0) && (index < h)) {
+            elementData[index] = value;
+            return value;
+        } else {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + h);
         }
-    }
-
-    public IntMatrix(String @NotNull [][] digits) {
-        h = digits.length;
-        w = digits[0].length;
-        array = new IntArray[h];
-        for (int i = 0; i < h; i++) {
-            array[i] = new IntArray(digits[i].length);
-        }
-    }
-
-    public IntMatrix(@NotNull IntMatrix src) {
-        array = new IntArray[src.h];
-        h = src.h;
-        w = src.w;
-        System.arraycopy(src.array, 0, array, 0, h);
-    }
-
-    public IntArray get(int i) {
-        return array[i];
-    }
-
-    public void set(int i, IntArray a) {
-        array[i] = a;
     }
 
     public void swap(int i, int j) {
-        IntArray temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
+        IntArray temp = elementData[i];
+        elementData[i] = elementData[j];
+        elementData[j] = temp;
     }
 
-    public void append(IntArray a) throws IllegalArgumentException {
-        if (h == 0) w = a.size();
-        else if (w != a.size()) {
-            throw new IllegalArgumentException("Unable to append array of " +
-                    "size " + a.size() + "to matrix of size " + w);
+    public void append(IntArray element) throws IllegalArgumentException {
+        if (w != element.size()) {
+            throw new IllegalArgumentException("Unable to append elementData of " +
+                    "size " + element.size() + "to matrix of size " + w);
+        } else {
+
+            // IntMatrix created so that it always has all rows filled, so to append we need to make room
+            elementData = Arrays.copyOf(elementData, elementData.length + 1);
+            elementData[h] = element;
+            h++;
         }
-
-        // Make new array of extra row
-        IntArray[] temp = new IntArray[h + 1];
-
-        // Copy over current matrix
-        System.arraycopy(array, 0, temp, 0, h);
-
-        // Final index is new row
-        temp[h] = a;
-        h++;
-        array = temp;
     }
 
 
     @Override
     public Iterator<IntArray> iterator() {
         return new IntMatrixIterator();
+    }
+
+    @Override
+    public int size() {
+        return h;
     }
 
     class IntMatrixIterator implements Iterator<IntArray> {
@@ -103,7 +94,7 @@ public class IntMatrix implements Iterable<IntArray> {
 
         @Override
         public IntArray next() {
-            return array[index++];
+            return elementData[index++];
         }
     }
 }

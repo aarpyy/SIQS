@@ -1,123 +1,108 @@
 package QS;
 
-import java.util.Iterator;
-import java.util.LinkedList;
+import org.jetbrains.annotations.NotNull;
 
-public class BinaryMatrix implements Iterable<BinaryArray> {
+import java.util.*;
 
-    public int h, w;
-    private BinaryArray[] array;
+public class BinaryMatrix extends AbstractList<BinaryArray> implements List<BinaryArray> {
 
-    public BinaryMatrix(int height, int width) {
-        h = height;
-        w = width;
-        array = new BinaryArray[height];
-        for (int i = 0; i < h; i++) {
-            array[i] = new BinaryArray(width);
+    // 'Size' of matrix: number of rows, subject to change
+    private int h;
+
+    // Width final because width of matrix cannot change, only add rows
+    public final int w;
+    private BinaryArray[] elementData;
+
+
+    public BinaryMatrix(List<BinaryArray> list) {
+        h = list.size();
+        w = list.get(0).size();
+        elementData = new BinaryArray[h];
+
+        int i = 0;
+        for (BinaryArray a : list) {
+            elementData[i] = a;
+            i++;
         }
     }
 
-    public BinaryMatrix(BinaryArray[] array) {
-        h = array.length;
-        w = 0;
-        this.array = array;
+    public static BinaryMatrix fromIntMatrix(IntMatrix src) {
+        ArrayList<BinaryArray> matrix = new ArrayList<>(src.size());
+        for (IntArray a : src) {
+            matrix.add(BinaryArray.fromIntArray(a));
+        }
+        return new BinaryMatrix(matrix);
     }
 
-    public BinaryMatrix(byte[][] array) {
-        h = array.length;
-        w = array[0].length;
-        this.array = new BinaryArray[h];
-        for (int i = 0; i < h; i++) {
-            this.array[i] = new BinaryArray(array[i]);
+    public BinaryArray get(int index) {
+        if ((index >= 0) && (index < h)) {
+            return elementData[index];
+        } else {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + h);
         }
     }
 
-    public BinaryMatrix(String[][] digits) {
-        h = digits.length;
-        w = digits[0].length;
-        array = new BinaryArray[h];
-        for (int i = 0; i < h; i++) {
-            array[i] = new BinaryArray(digits[i]);
+    public BinaryArray set(int index, BinaryArray value) {
+        if ((index >= 0) && (index < h)) {
+            elementData[index] = value;
+            return value;
+        } else {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + h);
         }
-    }
-
-    public BinaryMatrix(BinaryMatrix src) {
-        array = new BinaryArray[src.h];
-        h = src.h;
-        w = src.w;
-        System.arraycopy(src.array, 0, array, 0, h);
-    }
-
-    public BinaryArray get(int i) {
-        return array[i];
-    }
-
-    public void set(int i, BinaryArray a) {
-        array[i] = a;
     }
 
     public void swap(int i, int j) {
-        BinaryArray temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
+        BinaryArray temp = elementData[i];
+        elementData[i] = elementData[j];
+        elementData[j] = temp;
     }
 
-    public void append(BinaryArray a) throws IllegalArgumentException {
-        if (h == 0) w = a.length;
-        else if (w != a.length) {
-            throw new IllegalArgumentException("Unable to append array of " +
-                    "size " + a.length + "to matrix of size " + w);
+    public void append(@NotNull BinaryArray element) throws IllegalArgumentException {
+        if (w != element.size()) {
+            throw new IllegalArgumentException("Unable to append elementData of " +
+                    "size " + element.size() + "to matrix of size " + w);
+        } else {
+
+            // IntMatrix created so that it always has all rows filled, so to append we need to make room
+            elementData = Arrays.copyOf(elementData, elementData.length + 1);
+            elementData[h] = element;
+            h++;
         }
-
-        // Make new array of extra row
-        BinaryArray[] temp = new BinaryArray[h + 1];
-
-        // Copy over current matrix
-        System.arraycopy(array, 0, temp, 0, h);
-
-        // Final index is new row
-        temp[h] = a;
-        h++;
-        array = temp;
     }
 
     public void rowReduce(int row) {
         for (int i = 0; i < h; i++) {
             if (i != row) {
-                array[i] = array[i].add(array[row]);
+                elementData[i] = elementData[i].vectorAdd(elementData[row]);
             }
         }
     }
 
     public BinaryMatrix transpose() {
         byte[] column;
-        BinaryArray[] transposed = new BinaryArray[w];
+        ArrayList<BinaryArray> transposed = new ArrayList<>(w);
 
         for (int i = 0; i < w; i++) {
             column = new byte[h];
             for (int j = 0; j < h; j++) {
-                column[j] = array[j].get(i);
+                column[j] = elementData[j].get(i);
             }
-            transposed[i] = new BinaryArray(column);
+            transposed.add(new BinaryArray(column));
         }
         return new BinaryMatrix(transposed);
     }
 
     public BinaryMatrix kernel() {
-        byte[] row;
-        BinaryArray[] temp = new BinaryArray[h + w];
-        if (h >= 0) System.arraycopy(array, 0, temp, 0, h);
+        ArrayList<BinaryArray> temp = new ArrayList<>(h + w);
+        temp.addAll(Arrays.asList(elementData));
 
+        BinaryArray row;
         for (int i = 0; i < w; i++) {
 
             // Creates new row of all zeros except the i'th element is a one -- this is identity matrix
-            row = new byte[w];
-            for (int j = 0; j < w; j++) {
-                row[j] = 0;
-            }
-
-            row[i] = 1;
-            temp[i + h] = new BinaryArray(row);
+            row = BinaryArray.zeroes(w);
+            row.set(i, (byte) 1);
+            temp.add(row);
         }
 
         BinaryMatrix T = new BinaryMatrix(temp).transpose();
@@ -141,40 +126,25 @@ public class BinaryMatrix implements Iterable<BinaryArray> {
         BinaryArray[] right = new BinaryArray[h];
         BinaryArray[] left = new BinaryArray[h];
         for (int i = 0; i < h; i++) {
-            right[i] = array[i].slice(h, array.length);
-            left[i] = array[i].slice(0, h);
+            right[i] = elementData[i].slice(h, elementData.length);
+            left[i] = elementData[i].slice(0, h);
         }
 
         LinkedList<BinaryArray> kernel = new LinkedList<>();
 
         // Iterate through all rows, if the row up to index h has just zeroes, that row is in kernel
-        boolean isZero;
         for (int i = 0; i < h; i++) {
-            isZero = true;
-            for (byte n : right[i]) {
-                if (n != 0) {
-                    isZero = false;
-                    break;
-                }
-            }
-            // If just zeroes, add to kernel
-            if (isZero) {
+            if (right[i].isZeroes()) {
                 kernel.add(left[i]);
             }
         }
 
-        // Make new array, add all arrays in kernel to this array, then return as qs.BinaryMatrix
-        BinaryArray[] basis = new BinaryArray[kernel.size()];
-        int i = 0;
-        for (BinaryArray a : kernel) {
-            basis[i] = a;
-        }
-        return new BinaryMatrix(basis);
+        return new BinaryMatrix(kernel);
     }
 
     public String toString() {
         StringBuilder str = new StringBuilder();
-        for (BinaryArray a : array) {
+        for (BinaryArray a : elementData) {
             str.append(a).append("\n");
         }
         return str.toString();
@@ -183,6 +153,11 @@ public class BinaryMatrix implements Iterable<BinaryArray> {
     @Override
     public Iterator<BinaryArray> iterator() {
         return new ByteMatrixIterator();
+    }
+
+    @Override
+    public int size() {
+        return h;
     }
 
     class ByteMatrixIterator implements Iterator<BinaryArray> {
@@ -200,7 +175,7 @@ public class BinaryMatrix implements Iterable<BinaryArray> {
 
         @Override
         public BinaryArray next() {
-            return array[index++];
+            return elementData[index++];
         }
     }
 }
