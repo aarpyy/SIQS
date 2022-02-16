@@ -78,16 +78,17 @@ class QuadraticSieveTest {
 
         System.out.println("M = " + M);
 
-        BigInteger k = BigInteger.ONE;
+        BigInteger kN = N;
+        int k = 1;
         if (N.and(THREE).equals(THREE)) {
-            while (!N.multiply(k).and(THREE).equals(BigInteger.ONE)) {
-                k = k.add(BigInteger.ONE);
+            while (!kN.and(THREE).equals(BigInteger.ONE)) {
+                kN = kN.add(N);
+                k++;
             }
         }
 
         System.out.println("k = " + k);
-
-        BigInteger kN = k.multiply(N);
+        
         BigInteger D = BigSqrt(BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
 
         System.out.println("kN = " + kN);
