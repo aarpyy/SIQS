@@ -3,14 +3,32 @@ package Utils;
 import QS.BigIntArray;
 import QS.IntArray;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.Random;
+import java.util.Scanner;
 
 public final class Utils {
 
     public static final BigInteger THREE = BigInteger.valueOf(3);
+
+    public static BigInteger[] firstN(int n, File file) {
+        try {
+            Scanner scanner = new Scanner(file);
+            BigInteger[] array = new BigInteger[n];
+            int i = 0;
+            while (scanner.hasNextLine() && (i < n)) {
+                array[i] = new BigInteger(scanner.nextLine());
+                i++;
+            }
+            return array;
+        } catch (FileNotFoundException e) {
+            return new BigInteger[]{};
+        }
+    }
 
     /*
     Attempts to completely factor n using the given factor base, returning the powers of the factors

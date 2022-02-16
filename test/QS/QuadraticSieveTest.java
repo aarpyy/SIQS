@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.util.Random;
 import java.util.Scanner;
 
 import static Utils.Utils.*;
@@ -70,8 +71,7 @@ class QuadraticSieveTest {
     }
 
     @Test
-    void silvermanComputation() {
-        BigInteger N = BigInteger.valueOf(61234);
+    void silvermanComputation(BigInteger N) {
         double d = BigLog(N, 10);
 
         BigInteger M = BigInteger.valueOf((long) (386 * Math.pow(d, 2) - 23209.3 * d + 352768));
@@ -118,12 +118,51 @@ class QuadraticSieveTest {
 
         assertEquals(kN.mod(A), B.modPow(BigInteger.TWO, A));
 
-        assertEquals(BigInteger.ZERO, B.pow(2).subtract(kN).mod(A));
+        assertEquals(BigInteger.ZERO, B.pow(2).subtract(kN).mod(BigInteger.valueOf(4)));
 
         BigInteger C = B.pow(2).subtract(kN).divide(A);
     }
 
     @Test
     void main() {
+
+        // Approx number of digits
+        int nDigits = 10;
+
+        // Get number of bits in number with nDigits digits
+        int nBits = (int) (nDigits / (Math.log(2) / Math.log(10)));
+
+        Random rand = new Random();
+        BigInteger N = new BigInteger(nBits, rand);
+        if (N.isProbablePrime(80)) N = N.add(BigInteger.ONE);
+
+        System.out.println("N = " + N);
+
+        // Number of 2's in N
+        int factor2 = 0;
+        while (N.testBit(0)) {
+            N = N.shiftRight(1);
+            factor2++;
+        }
+
+        System.out.println("N = (2^s)Q; s = " + factor2 + "; Q = " + N);
+
+        try {
+            // Open file for primes
+            File primesFile = new File(".\\primes.txt");
+            Scanner scanner = new Scanner(primesFile);
+
+            // Make new object which just creates arrays for process
+            QuadraticSieve qs = new QuadraticSieve(N, scanner);
+
+            silvermanComputation(N);
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (ArithmeticException e) {
+            System.out.println(e + "\nTry using a bigger prime base!");
+        }
+
     }
 }

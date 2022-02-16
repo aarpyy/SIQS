@@ -134,31 +134,29 @@ public class QuadraticSieve {
         return null;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IllegalArgumentException {
 
         BigInteger N;
+        String fName;
 
-        if (args.length > 0) {
-            N = new BigInteger(args[0]);
+        if (args.length == 0) {
+            throw new IllegalArgumentException("Must provide composite integer to be factored");
         } else {
-            N = new BigInteger("3703");
+            N = new BigInteger(args[0]);
+            if (args.length > 1) {
+                fName = args[1];
+            } else {
+                fName = ".\\primes.txt";
+            }
         }
 
         try {
             // Open file for primes
-            File primesFile = new File(".\\primes.txt");
+            File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
             // Make new object which just creates arrays for process
             QuadraticSieve qs = new QuadraticSieve(N, scanner);
-            System.out.println("N: " + N);
-            System.out.println("Primes: " + qs.factorBase);
-
-            // Tries to factor number given prime base, if it can get it to 1 then success, otherwise error
-            IntArray powers = smoothFactor(N, qs.factorBase);
-            System.out.println("Powers: " + powers);
-
-            System.out.println("Evaluated: " + evalPower(qs.factorBase, powers));
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
