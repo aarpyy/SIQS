@@ -80,23 +80,17 @@ public class QuadraticSieve {
 
     // Given a q that is odd prime s.t. N is a quadratic residue mod q, find polynomial coefficient a, b, c
     public QSPoly findPoly(BigInteger q) {
-        BigInteger a = q.modPow(BigInteger.TWO, N);
+        BigInteger a = q.pow(2);
 
         // modSqrt(N) guaranteed to exist since all q exist s.t. (N/q) = 1
         BigInteger b = liftSqrt(modSqrt(N, q), N, q, q);
 
-        /*
-        we know: a = q^2 mod n
-        we found: b^2 = n mod q^2
-
-         */
-
-        // c = (b^2 - N) / 4a
-        BigInteger c = b.pow(2).subtract(N).divide(a.multiply(BigInteger.valueOf(4)));
+        // Use c s.t. b^2 - n = a*c
+        BigInteger c = b.pow(2).subtract(N).divide(a);
         return new QSPoly(a, b, c);
     }
 
-    public QSPoly silvermanComputation() {
+    public QSPoly silvermanComputation(BigInteger D) {
 
         // k does not need to be BigInteger, it will be very small, but it needs to be
         // multiplied against N so it's easier to have as BigInteger
@@ -108,7 +102,7 @@ public class QuadraticSieve {
         }
 
         BigInteger kN = k.multiply(N);
-        BigInteger D = BigSqrt(BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
+        // BigInteger D = BigSqrt(BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
 
         // Ensures D is a prime s.t. D = 3 mod 4 and (D/kN) = 1
         while (!quadraticResidue(D, kN) || !D.and(THREE).equals(THREE)) {

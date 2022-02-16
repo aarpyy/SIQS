@@ -10,7 +10,6 @@ import java.math.BigInteger;
 import java.util.Random;
 import java.util.Scanner;
 
-import static Utils.Utils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class QuadraticSieveTest {
@@ -41,75 +40,80 @@ class QuadraticSieveTest {
     }
 
     @Test
-    void liftSqrt() {
+    void findPoly() {
         // Some composite
         BigInteger n = BigInteger.valueOf(61234);
 
         // Some prime s.t. (n/q) = 1
         BigInteger q = BigInteger.valueOf(613);
 
-        BigInteger a = q.modPow(BigInteger.TWO, n);
-        System.out.println("a: " + a);
-        System.out.println("a mod n: " + a.mod(n));
-        BigInteger x = modSqrt(n, q);
-        System.out.println("x: " + x);
-        assertEquals(x.modPow(BigInteger.TWO, q), n.mod(q));
+        BigInteger a = q.pow(2);
+        System.out.println("a = " + a);
 
-        // s = ((n - x^2) / q) * (2x)^-1 mod q
-        assertEquals(BigInteger.ZERO, n.subtract(x.pow(2)).mod(q));
+        BigInteger x = Utils.modSqrt(n, q);
 
-        BigInteger twoXInv = (BigInteger.TWO.multiply(x)).modInverse(q);
-        BigInteger s = n.subtract(x.pow(2)).divide(q).multiply(twoXInv).mod(q);
-        System.out.println("s: " + s);
-        BigInteger b = x.add(s.multiply(q));
-        System.out.println("b: " + b);
+        System.out.println("sqrt(n) mod q = " + x);
+        assertEquals(n.mod(q), x.modPow(BigInteger.TWO, q));
 
-        BigInteger r = b.modPow(BigInteger.TWO, a);
-        BigInteger sq = Utils.liftSqrt(x, n, q, q);
-        BigInteger qSq = q.pow(2);
-        assertEquals(sq.modPow(BigInteger.TWO, qSq), n.mod(qSq));
+        BigInteger b = Utils.liftSqrt(x, n, q, q);
+
+        System.out.println("sqrt(n) mod a = " + b);
+        assertEquals(n.mod(a), b.modPow(BigInteger.TWO, a));
+
+        assertEquals(BigInteger.ZERO, b.pow(2).subtract(n).mod(a));
+        BigInteger c = b.pow(2).subtract(n).divide(a);
+
+        System.out.println("c = " + c);
     }
 
     @Test
-    void silvermanComputation(BigInteger N) {
-        double d = BigLog(N, 10);
+    void silvermanComputation() {
+        BigInteger N = BigInteger.valueOf(61234);
+        double d = Utils.BigLog(N, 10);
 
         BigInteger M = BigInteger.valueOf((long) (386 * Math.pow(d, 2) - 23209.3 * d + 352768));
+
+        BigInteger FOUR = BigInteger.valueOf(4);
 
         System.out.println("M = " + M);
 
         BigInteger kN = N;
         int k = 1;
-        if (N.and(THREE).equals(THREE)) {
-            while (!kN.and(THREE).equals(BigInteger.ONE)) {
+        if (N.and(Utils.THREE).equals(Utils.THREE)) {
+            while (!kN.and(Utils.THREE).equals(BigInteger.ONE)) {
                 kN = kN.add(N);
                 k++;
             }
         }
 
         System.out.println("k = " + k);
-        
-        BigInteger D = BigSqrt(BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
+
+        BigInteger D = Utils.BigSqrt(Utils.BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
 
         System.out.println("kN = " + kN);
 
-        System.out.println("A approx = " + BigSqrt(kN.divide(BigInteger.TWO)).divide(M));
+        System.out.println("A approx = " + Utils.BigSqrt(kN.divide(BigInteger.TWO)).divide(M));
 
         // Ensures D is a prime s.t. D = 3 mod 4 and (D/kN) = 1
-        while (!quadraticResidue(D, kN) || !D.and(THREE).equals(THREE)) {
+        while (!Utils.quadraticResidue(D, kN) || !D.and(Utils.THREE).equals(Utils.THREE)) {
             D = D.nextProbablePrime();
         }
 
         System.out.println("D = " + D);
 
-        assertEquals(THREE, D.mod(BigInteger.valueOf(4)));
+        assertEquals(Utils.THREE, D.mod(BigInteger.valueOf(4)));
 
         BigInteger A = D.pow(2);
 
         System.out.println("A actual = " + A);
 
         // h0 = (kN)^((D-3)/4); h1 = kNh0 = (kN)^((D+1)/4)
+        BigInteger h0 = kN.modPow(D.subtract(Utils.THREE).divide(FOUR), D);
         BigInteger h1 = kN.modPow(D.add(BigInteger.ONE).divide(BigInteger.valueOf(4)), D);
+
+        assertEquals(h1, kN.multiply(h0).mod(D));
+        System.out.println("h1 == kNh0");
+
         BigInteger h2_1 = kN.subtract(h1.pow(2));
 
         assertEquals(BigInteger.ZERO, h2_1.mod(D));
@@ -156,7 +160,7 @@ class QuadraticSieveTest {
             // Make new object which just creates arrays for process
             QuadraticSieve qs = new QuadraticSieve(N, scanner);
 
-            silvermanComputation(N);
+            silvermanComputation();
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
