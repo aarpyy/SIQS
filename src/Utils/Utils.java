@@ -234,18 +234,40 @@ public final class Utils {
         return a.bitLength() / (Math.log(base) / Math.log(2));
     }
 
+    /**
+     * Helper function for {@code BigLog()} that computes the natural log of {@code a}
+     * @param a number to take log of
+     * @return ln of a
+     */
     public static double BigLN(BigInteger a) {
         return BigLog(a, Math.E);
     }
 
-    /*
-    Returns the modular square root of a mod p, throwing ArithmeticException if none exist
+    /**
+     * Returns the modular square root of a mod p if it exists. First checks if a is a
+     * quadratic residue mod p, throwing an error if not. If {@code p % 4 == 3} then
+     * sqrt of a can be computed easily by taking sqrt = {@code a^((p+1)/2) mod p}. If
+     * {@code p % 8 == 5} then sqrt of a can again be easily computed by taking
+     * sqrt = {@code av(i - 1) mod p} where {@code v = (2a)^((p-5)/8) mod p} and
+     * {@code i = {@code 2av^2 mod p}}. Otherwise, {@code p % 4 == 1} and we can use the
+     * Tonelli-Shanks algorithm.
+     *
+     * Source for algorithm: https://en.wikipedia.org/wiki/Tonelli%E2%80%93Shanks_algorithm
+     *
+     * @param a number to take square root of
+     * @param p modulus
+     * @return BigInteger x s.t. x^2 = a mod p
+     * @throws ArithmeticException if {@code a^((p-1)/2) != 1} i.e. a is not a quadratic residue mod p
      */
     public static BigInteger modSqrt(BigInteger a, BigInteger p) throws ArithmeticException {
         if (!quadraticResidue(a, p)) {
             throw new ArithmeticException(a + " does not have a quadratic residue mod " + p);
         } else if (p.and(THREE).equals(THREE)) {
             return a.modPow(p.add(BigInteger.ONE).shiftRight(2), p);
+        } else if (p.and(BigInteger.valueOf(7)).equals(BigInteger.valueOf(5))) {
+            BigInteger v = a.multiply(BigInteger.TWO).modPow(p.subtract(BigInteger.valueOf(5).shiftRight(3)), p);
+            BigInteger i = a.multiply(BigInteger.TWO).multiply(v.pow(2)).mod(p);
+            return a.multiply(v).multiply(i.subtract(BigInteger.ONE)).mod(p);
         } else {
             BigInteger Q = p.subtract(BigInteger.ONE);
             int S = 0;
@@ -297,15 +319,27 @@ public final class Utils {
         }
     }
 
+    /**
+     * Function identical to {@code BigInteger modSqrt()} that accepts and returns
+     * Java ints instead of BigIntegers.
+     * @param a number to take square root of
+     * @param p modulus
+     * @return int x s.t. x^2 = a mod p
+     * @throws ArithmeticException if a^((p-1)/2) != 1 i.e. a is not a quadratic residue mod p
+     */
     public static int modSqrt(int a, int p) throws ArithmeticException {
         if (!quadraticResidue(a, p)) {
             throw new ArithmeticException(a + " does not have a quadratic residue mod " + p);
         } else if ((p & 3) == 3) {
-            return powerMod(a, (p + 1) >> 1, p);
+            return powerMod(a, (p + 1) >> 2, p);
+        } else if ((p & 7) == 5) {
+            int v = powerMod(2 * a, (p - 5) >> 3, p);
+            int i = (2 * a * v * v) % p;
+            return (a * v * (i - 1)) % p;
         } else {
             int Q = p - 1;
             int S = 0;
-            while ((Q & 1) != 0) {
+            while ((Q & 1) == 0) {
                 Q >>= 1;
                 S++;
             }
