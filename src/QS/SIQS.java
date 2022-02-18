@@ -143,17 +143,27 @@ public class SIQS {
         /*
         This is following the initialization algorithm detailed on p. 14 on Contini's thesis
          */
-        BigIntArray B_l = new BigIntArray(s);
-        BigInteger a_q_l, gamma, q_l;
+        BigIntArray B_products = new BigIntArray(s);
+        BigInteger a_l;     // a missing one of it's factors
+        BigInteger gamma, q;
         for (p = 0; p < F; p++) {
+
+            // If this prime is in the factor base of a i.e. prime | a
             if (a_factors.get(p) == 1) {
-                q_l = FactorBase.get(p);
-                a_q_l = a.divide(q_l);
-                gamma = BigInteger.valueOf(t_sqrt.get(p)).multiply(a_q_l.modInverse(q_l)).mod(q_l);
-                if (gamma.compareTo(q_l.shiftRight(1)) > 0) {
-                    gamma = q_l.subtract(gamma);
+
+                // Get BigInteger prime
+                q = FactorBase.get(p);
+                a_l = a.divide(q);
+
+                // gamma = t_mem_p * (a_l^-1) mod q
+                gamma = BigInteger.valueOf(t_sqrt.get(p)).multiply(a_l.modInverse(q)).mod(q);
+                
+                if (gamma.compareTo(q.shiftRight(1)) > 0) {
+                    gamma = q.subtract(gamma);
                 }
-                B_l.add(a_q_l.multiply(gamma));
+
+                // Add B_l to the products of b
+                B_products.add(a_l.multiply(gamma));
             }
         }
 
@@ -170,7 +180,7 @@ public class SIQS {
                 for (int j = 0; j < s; j++) {
 
                     // Add 2*B_j*a^-1 mod p
-                    temp = B_l.get(j).multiply(BigInteger.TWO).mod(FactorBase.get(p));
+                    temp = B_products.get(j).multiply(BigInteger.TWO).mod(FactorBase.get(p));
                     B_ainv2_j.add((temp.intValue() * a_inv_p) % factor_base.get(p));
                 }
                 B_ainv2.add(B_ainv2_j);
@@ -178,7 +188,7 @@ public class SIQS {
         }
 
         BigInteger b = BigInteger.ZERO;
-        for (BigInteger B : B_l) b = b.add(B);
+        for (BigInteger B : B_products) b = b.add(B);
 
         for (p = 0; p < F; p++) {
             if (a_factors.get(p) == 0) {
