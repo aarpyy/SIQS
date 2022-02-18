@@ -157,7 +157,7 @@ public class SIQS {
 
                 // gamma = t_mem_p * (a_l^-1) mod q
                 gamma = BigInteger.valueOf(t_sqrt.get(p)).multiply(a_l.modInverse(q)).mod(q);
-                
+
                 if (gamma.compareTo(q.shiftRight(1)) > 0) {
                     gamma = q.subtract(gamma);
                 }
