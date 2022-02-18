@@ -1,7 +1,7 @@
 package Utils;
 
 import QS.IntArray;
-import QS.QuadraticSieve;
+import QS.MPQS;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -28,9 +28,9 @@ class UtilsTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
-            QuadraticSieve qs = new QuadraticSieve(N, scanner);
+            MPQS qs = new MPQS(N, scanner);
 
-            IntArray powers = Utils.trialDivide(N, qs.bigFB);
+            IntArray powers = Utils.trialDivide(N, qs.FactorBase);
 
             // Confirm that these are the powers
             int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
@@ -39,7 +39,7 @@ class UtilsTest {
             }
 
             // Confirm that when you take product of each of powers you get original number
-            assertEquals(Utils.evalPower(qs.bigFB, powers), N);
+            assertEquals(Utils.evalPower(qs.FactorBase, powers), N);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

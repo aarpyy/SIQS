@@ -24,7 +24,7 @@ class QuadraticSieveTest {
             Scanner scanner = new Scanner(primesFile);
 
             // Make new object which just creates arrays for process
-            QuadraticSieve qs = new QuadraticSieve(N, scanner);
+            MPQS qs = new MPQS(N, scanner);
             System.out.println("N: " + N);
             System.out.println("Factor base: " + qs.factorBase);
 
@@ -158,7 +158,7 @@ class QuadraticSieveTest {
             Scanner scanner = new Scanner(primesFile);
 
             // Make new object which just creates arrays for process
-            QuadraticSieve qs = new QuadraticSieve(N, scanner);
+            MPQS qs = new MPQS(N, scanner);
 
             silvermanComputation();
         }

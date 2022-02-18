@@ -9,7 +9,8 @@ import java.util.Scanner;
 
 import static Utils.Utils.quadraticResidue;
 
-public class ContiniQS {
+// Self Initializing Quadratic Sieve
+public class SIQS {
 
     // Based of thesis of Scott Contini:
     // https://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=53C827A542A8A950780D34E79261FF99?doi=10.1.1.26.6924&rep=rep1&type=pdf
@@ -34,7 +35,7 @@ public class ContiniQS {
     private BigIntArray sieve_array;
     private IntMatrix smooth_matrix;
 
-    public ContiniQS(BigInteger n, int f, int m, IntArray factor_base, IntArray tmem_p, IntArray log_p) {
+    public SIQS(BigInteger n, int f, int m, IntArray factor_base, IntArray tmem_p, IntArray log_p) {
         F = f;
         this.factor_base = factor_base;
         FactorBase = BigIntArray.fromIntArray(factor_base);
@@ -53,16 +54,20 @@ public class ContiniQS {
     }
 
 
-    public static ContiniQS fromN(BigInteger N, int M, Scanner primesScanner) {
+    public static SIQS fromN(BigInteger N, int M, Scanner primesScanner) {
+
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
         int B = (int) (Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
 
-        int prime;
         LinkedList<Integer> fb = new LinkedList<>();
 
+        int prime;
+        // Read in all primes less than limit, adding those for which N is a quadratic residue
         while (primesScanner.hasNextLine() && (fb.size() < B)) {
             prime = Integer.parseInt(primesScanner.nextLine());
-            if (quadraticResidue(N.intValue(), prime)) {
+
+            // We can take N % p as int since p is int and N and N % p have the same residues mod p
+            if (quadraticResidue(Utils.intMod(N, prime), prime)) {
                 fb.add(prime);
             }
         }
@@ -70,55 +75,33 @@ public class ContiniQS {
 
         IntArray factor_base = new IntArray(fb);
         int F = factor_base.size();
-        IntArray tmem_p = new IntArray(F);
+
+        // Array of square roots of N mod p
+        IntArray t_sqrt = new IntArray(F);
+
+        // Array of log base e of p (rounded)
         IntArray log_p = new IntArray(F);
 
+        // For each prime in factor base, add the modular square root and the log
         for (int p : factor_base) {
-            tmem_p.add(Utils.modSqrt(N.intValue(), p));
+            t_sqrt.add(Utils.modSqrt(N.intValue(), p));
             log_p.add((int) Math.round(Math.log(p)));
         }
 
-        return new ContiniQS(N, F, M, factor_base, tmem_p, log_p);
-    }
-
-    public void initializeMPQS(BigInteger q) {
-
-        // Assert that q is prime s.t. (N/q) = 1
-        assert q.isProbablePrime(80) : q + " is not prime";
-        assert Utils.quadraticResidue(N, q) : N + " is not a quadratic residue mod " + q;
-
-        BigInteger a = q.pow(2);
-        BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
-        Q_x = new QSPoly(a, b, N);
-
-        int int_a = a.intValue();
-        int int_b = b.intValue();
-
-        int p, t, a_inv, b_mod_p;
-        for (int i = 0; i < F; i++) {
-            p = factor_base.get(i);
-            t = t_sqrt.get(i);
-
-            a_inv = Utils.modularInverse(int_a, p);
-            b_mod_p = int_b % p;
-
-            // soln1 = a^-1 * (tmem_p - b ) mod p
-            soln1.add(Math.floorMod(a_inv * (t - b_mod_p), p));
-
-            // soln2 = a^-1 * (-tmem_p - b ) mod p
-            soln2.add(Math.floorMod(a_inv * (-t - b_mod_p), p));
-        }
+        return new SIQS(N, F, M, factor_base, t_sqrt, log_p);
     }
 
     public void initializeSIQS() {
         BigInteger a_approx = Utils.BigSqrt(N.multiply(BigInteger.TWO)).divide(M);
         BigInteger a = BigInteger.ONE;
 
+        // Number of primes in that a factors into -- each are power of 1
         int s = 0;
 
         // Suggested min from https://www.rieselprime.de/ziki/Self-initializing_quadratic_sieve
         int min = 2000;
 
+        // BinaryArray representing if a given prime from the factor base is a factor of a
         BinaryArray a_factors = BinaryArray.zeroes(F);
 
         int p = 0;
@@ -134,6 +117,8 @@ public class ContiniQS {
         }
 
         BigInteger Prime;
+
+        // While a is not at where it approximately should be, keep taking product of primes
         while (a.compareTo(a_approx) < 0) {
             Prime = FactorBase.get(p);
             a = a.multiply(Prime);

@@ -1,30 +1,34 @@
 package QS;
 
 import Utils.Pair;
+import Utils.Utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Scanner;
 
-import static Utils.Utils.*;
-
-public class QuadraticSieve {
+// Multiple Polynomial Quadratic Sieve
+public class MPQS {
 
     public final IntArray factorBase;
-    public final BigIntArray bigFB;
+    public final BigIntArray FactorBase;
     public final BigInteger N, M;
     public final int F;
-    public final double T;
+
+    public QSPoly Q_x;
+
+    public final IntArray t_sqrt, log_p;
+    private IntArray soln1, soln2;
 
 
-    public QuadraticSieve(BigInteger N, Scanner primesScanner) {
+    public MPQS(BigInteger N, Scanner primesScanner) {
         this.N = N;
 
         // Get number of digits in N
-        double digits = BigLog(N, 10);
+        double digits = Utils.BigLog(N, 10);
 
         // M = 386 * digits^2 - (23209.3 * digits) + 352768
         M = BigDecimal.valueOf(386 * Math.pow(digits, 2)).subtract(
@@ -32,12 +36,14 @@ public class QuadraticSieve {
                         BigDecimal.valueOf(352768)))).toBigInteger();
 
         // Size of factor base
-        F = (int) (2.92659 * Math.pow(digits, 2) - 164.385 * digits + 2455.36);
+        // F = (int) (2.92659 * Math.pow(digits, 2) - 164.385 * digits + 2455.36);
+
+        int B = (int) (Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
 
         // Tolerance value
-        T = 0.0268849 * digits + 0.783929;
+        // T = 0.0268849 * digits + 0.783929;
 
-        ArrayList<Integer> fb = new ArrayList<>(F);
+        LinkedList<Integer> fb = new LinkedList<>();
 
         // Make sure 2 is in factor base
         fb.add(2);
@@ -47,9 +53,9 @@ public class QuadraticSieve {
 
         int prime;
         int int_N = N.intValue();
-        while (primesScanner.hasNextLine() && (fb.size() < F)) {
+        while (primesScanner.hasNextLine() && (fb.size() < B)) {
             prime = Integer.parseInt(primesScanner.nextLine());
-            if (quadraticResidue(int_N, prime)) {
+            if (Utils.quadraticResidue(int_N, prime)) {
                 fb.add(prime);
             }
         }
@@ -57,7 +63,15 @@ public class QuadraticSieve {
 
         // Factor Base: Primes p < B s.sqrtFB. (N/p) = 1
         factorBase = new IntArray(fb);
-        bigFB = BigIntArray.fromIntArray(factorBase);
+        F = factorBase.size();
+        t_sqrt = new IntArray(F);
+        log_p = new IntArray(F);
+
+        for (int p : factorBase) {
+            t_sqrt.add(Utils.modSqrt(N.intValue(), p));
+            log_p.add((int) Math.round(Math.log(p)));
+        }
+        FactorBase = BigIntArray.fromIntArray(factorBase);
     }
 
     /*
@@ -67,12 +81,12 @@ public class QuadraticSieve {
         int found = 0;
 
         // Get the first prime greater than √(√2n / m)
-        BigInteger q = BigSqrt(BigSqrt(N.multiply(BigInteger.TWO)).divide(M)).nextProbablePrime();
+        BigInteger q = Utils.BigSqrt(Utils.BigSqrt(N.multiply(BigInteger.TWO)).divide(M)).nextProbablePrime();
         BigInteger[] arrQ = new BigInteger[n];
         while (found < n) {
 
             // Keep searching through primes. If quadratic residue, add
-            if (quadraticResidue(N, q)) {
+            if (Utils.quadraticResidue(N, q)) {
                 arrQ[found] = q;
                 found++;
             }
@@ -86,11 +100,40 @@ public class QuadraticSieve {
         BigInteger a = q.pow(2);
 
         // modSqrt(N) guaranteed to exist since all q exist s.sqrtFB. (N/q) = 1
-        BigInteger b = liftSqrt(modSqrt(N, q), N, q, q);
+        BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
 
         // Use c s.sqrtFB. b^2 - n = a*c
         BigInteger c = b.pow(2).subtract(N).divide(a);
         return new QSPoly(a, b, c);
+    }
+
+    public void initializeMPQS(BigInteger q) {
+
+        // Assert that q is prime s.t. (N/q) = 1
+        assert q.isProbablePrime(80) : q + " is not prime";
+        assert Utils.quadraticResidue(N, q) : N + " is not a quadratic residue mod " + q;
+
+        BigInteger a = q.pow(2);
+        BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
+        Q_x = new QSPoly(a, b, N);
+
+        int int_a = a.intValue();
+        int int_b = b.intValue();
+
+        int p, t, a_inv, b_mod_p;
+        for (int i = 0; i < F; i++) {
+            p = factorBase.get(i);
+            t = t_sqrt.get(i);
+
+            a_inv = Utils.modularInverse(int_a, p);
+            b_mod_p = int_b % p;
+
+            // soln1 = a^-1 * (tmem_p - b ) mod p
+            soln1.add(Math.floorMod(a_inv * (t - b_mod_p), p));
+
+            // soln2 = a^-1 * (-tmem_p - b ) mod p
+            soln2.add(Math.floorMod(a_inv * (-t - b_mod_p), p));
+        }
     }
 
     public QSPoly silvermanComputation(BigInteger D) {
@@ -98,8 +141,8 @@ public class QuadraticSieve {
         // k does not need to be BigInteger, it will be very small, but it needs to be
         // multiplied against N so it's easier to have as BigInteger
         BigInteger k = BigInteger.ONE;
-        if (N.and(THREE).equals(THREE)) {
-            while (!N.multiply(k).and(THREE).equals(BigInteger.ONE)) {
+        if (N.and(Utils.THREE).equals(Utils.THREE)) {
+            while (!N.multiply(k).and(Utils.THREE).equals(BigInteger.ONE)) {
                 k = k.add(BigInteger.ONE);
             }
         }
@@ -108,7 +151,7 @@ public class QuadraticSieve {
         // BigInteger D = BigSqrt(BigSqrt(kN.divide(BigInteger.TWO)).divide(M)).nextProbablePrime();
 
         // Ensures D is a prime s.sqrtFB. D = 3 mod 4 and (D/kN) = 1
-        while (!quadraticResidue(D, kN) || !D.and(THREE).equals(THREE)) {
+        while (!Utils.quadraticResidue(D, kN) || !D.and(Utils.THREE).equals(Utils.THREE)) {
             D = D.nextProbablePrime();
         }
 
@@ -153,7 +196,7 @@ public class QuadraticSieve {
             Scanner scanner = new Scanner(primesFile);
 
             // Make new object which just creates arrays for process
-            QuadraticSieve qs = new QuadraticSieve(N, scanner);
+            MPQS qs = new MPQS(N, scanner);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

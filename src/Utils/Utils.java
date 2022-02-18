@@ -168,6 +168,10 @@ public final class Utils {
         return result.add(lower);
     }
 
+    public static int intMod(BigInteger n, int m) {
+        return n.mod(BigInteger.valueOf(m)).intValue();
+    }
+
     public static BigInteger BigSqrt(BigInteger a) {
         return (new BigDecimal(a)).sqrt(MathContext.DECIMAL128).toBigInteger();
     }
