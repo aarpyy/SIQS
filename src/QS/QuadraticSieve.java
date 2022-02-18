@@ -6,6 +6,11 @@ import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.Scanner;
 
+/**
+ * This class is base class for both {@code SIQS} and {@code MPQS} as both share the same computation
+ * of startup data, sieve process, and trial division process, only differing in their
+ * initialization ({@code SIQS} needing an additional instance variable to initialize).
+ */
 public abstract class QuadraticSieve {
 
 
@@ -89,6 +94,9 @@ public abstract class QuadraticSieve {
 
     public abstract void initialize();
 
+    /**
+     * Sieve along the range of (-M, M), filling {@code this.sieve_array} in the process.
+     */
     public void sieve() {
         sieve_array = BigIntArray.filledArray((2 * m) + 1, BigInteger.ZERO);
 
@@ -136,6 +144,14 @@ public abstract class QuadraticSieve {
 
     }
 
+    /**
+     * Perform trial division, attempting to divide each result returned by {@code this.Q_x}, adding
+     * it to the matrix if successful. If more trial divisions were successful than the number
+     * of factors in the factor base, save the {@code LinkedList<IntArray>} as an {@code IntMatrix}
+     * via {@code this.smooth_matrix} and return {@code true} otherwise return {@code false}.
+     * @param error margin of error for minimum value of input for {@code Q_x}
+     * @return {@code true} iff matrix has more rows than columns, otherwise {@code false}
+     */
     public boolean trialDivision(int error) {
         BigInteger min_val = BigInteger.valueOf((long) (Math.log(m * Utils.BigSqrt(N).longValue()) - error));
 
