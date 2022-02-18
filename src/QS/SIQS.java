@@ -15,8 +15,6 @@ import java.util.Scanner;
  */
 public class SIQS {
 
-    public final int F;         // Size of factor base
-
     public final IntArray factor_base;
 
     // Same array as factor_base but BigInteger's for separate uses
@@ -36,8 +34,7 @@ public class SIQS {
     private BigIntArray sieve_array;
     private IntMatrix smooth_matrix;
 
-    public SIQS(BigInteger n, int f, int m, IntArray factor_base, IntArray t_sqrt, IntArray log_p) {
-        F = f;
+    public SIQS(BigInteger n, int m, IntArray factor_base, IntArray t_sqrt, IntArray log_p) {
         this.factor_base = factor_base;
         FactorBase = BigIntArray.fromIntArray(factor_base);
         this.t_sqrt = t_sqrt;
@@ -48,47 +45,50 @@ public class SIQS {
 
         // These are all variables that will be set during initialization stage
         Q_x = null;
-        soln1 = new IntArray(F);
-        soln2 = new IntArray(F);
+        soln1 = new IntArray(SIQS.this.factor_base.size());
+        soln2 = new IntArray(SIQS.this.factor_base.size());
         sieve_array = null;
         smooth_matrix = null;
     }
 
-    public static SIQS fromN(BigInteger N, int M, Scanner primesScanner) {
-
+    /**
+     * Computes startup data for quadratic sieve, returning as an array: factor base,
+     * solutions to modular square root of n mod p for each prime p in factor base, and
+     * integer value of log p for each prime p in factor base. This should be called once
+     * and used multiple times to create multiple instances of SIQS.
+     * @param N number to be factored using quadratic sieve
+     * @param primesScanner {@code Scanner} opened on file containing primes
+     * @return {@code IntArray[]} containing: {factor base, sqrt N mod p, log p}
+     */
+    public static IntArray[] startup(BigInteger N, Scanner primesScanner) {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
-        int B = (int) (Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
+        int F = (int) (Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
 
         LinkedList<Integer> fb = new LinkedList<>();
 
         int prime;
         // Read in all primes less than limit, adding those for which N is a quadratic residue
-        while (primesScanner.hasNextLine() && (fb.size() < B)) {
-            prime = Integer.parseInt(primesScanner.nextLine());
+        while (primesScanner.hasNextLine()) {
+            if ((prime = Integer.parseInt(primesScanner.nextLine())) >= F) break;
 
             // We can take N % p as int since p is int and N and N % p have the same residues mod p
-            if (Utils.quadraticResidue(Utils.intMod(N, prime), prime)) {
-                fb.add(prime);
-            }
+            else if (Utils.quadraticResidue(Utils.intMod(N, prime), prime)) fb.add(prime);
         }
         primesScanner.close();
 
-        IntArray factor_base = new IntArray(fb);
-        int F = factor_base.size();
-
         // Array of square roots of N mod p
-        IntArray t_sqrt = new IntArray(F);
+        IntArray t_sqrt = new IntArray(fb.size());
 
         // Array of log base e of p (rounded)
-        IntArray log_p = new IntArray(F);
+        IntArray log_p = new IntArray(fb.size());
 
         // For each prime in factor base, add the modular square root and the log
-        for (int p : factor_base) {
+        for (int p : fb) {
             t_sqrt.add(Utils.modSqrt(Utils.intMod(N, p), p));
             log_p.add((int) Math.round(Math.log(p)));
         }
 
-        return new SIQS(N, F, M, factor_base, t_sqrt, log_p);
+        return new IntArray[]{new IntArray(fb), t_sqrt, log_p};
     }
 
     public void initializeSIQS() {
@@ -102,7 +102,7 @@ public class SIQS {
         int min = 2000;
 
         // BinaryArray representing if a given prime from the factor base is a factor of a
-        BinaryArray a_factors = BinaryArray.zeroes(F);
+        BinaryArray a_factors = BinaryArray.zeroes(factor_base.size());
 
         int p = 0;
         // Get first prime in factor base >= 2000
@@ -110,7 +110,7 @@ public class SIQS {
             p++;
 
             // If there aren't enough primes to reach 2000, just start from beginning
-            if (p >= F) {
+            if (p >= factor_base.size()) {
                 p = 0;
                 break;
             }
@@ -127,7 +127,7 @@ public class SIQS {
             p++;
 
             // If ran out of primes, start back again
-            if (p >= F) p = 0;
+            if (p >= factor_base.size()) p = 0;
         }
 
         Prime = FactorBase.get(p);
@@ -139,14 +139,12 @@ public class SIQS {
             a_factors.flip(p);
             s--;
         }
-
-        /*
-        This is following the initialization algorithm detailed on p. 14 on Contini's thesis
-         */
+        
+        // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
         BigIntArray B_products = new BigIntArray(s);
         BigInteger a_l;     // a missing one of it's factors
         BigInteger gamma, q;
-        for (p = 0; p < F; p++) {
+        for (p = 0; p < factor_base.size(); p++) {
 
             // If this prime is in the factor base of a i.e. prime | a
             if (a_factors.get(p) == 1) {
@@ -173,7 +171,7 @@ public class SIQS {
 
         BigInteger B_j, a_inv_p;
         IntArray B_ainv2_j;
-        for (p = 0; p < F; p++) {
+        for (p = 0; p < factor_base.size(); p++) {
             if (a_factors.get(p) == 0) {
                 B_ainv2_j = new IntArray(s);
 
@@ -194,7 +192,7 @@ public class SIQS {
 
         // This iteration cannot be combined with loop above since b needs to be calculated before this
         BigInteger T;
-        for (p = 0; p < F; p++) {
+        for (p = 0; p < factor_base.size(); p++) {
             if (a_factors.get(p) == 0) {
                 a_inv_p = a.modInverse(FactorBase.get(p));
                 T = BigInteger.valueOf(t_sqrt.get(p));
@@ -230,7 +228,7 @@ public class SIQS {
         }
 
         int prime;
-        for (int p = 1; p < F; p++) {
+        for (int p = 1; p < factor_base.size(); p++) {
             prime = factor_base.get(p);
 
             // Start soln at the top of soln1 + ip <= M
@@ -271,7 +269,7 @@ public class SIQS {
             }
         }
 
-        if (matrix.size() > F) {
+        if (matrix.size() > factor_base.size()) {
             smooth_matrix = new IntMatrix(matrix);
             return true;
         } else {
