@@ -1,7 +1,5 @@
 package QS;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.math.BigInteger;
 import java.util.*;
 
@@ -28,7 +26,7 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
         return new BinaryArray(array);
     }
 
-    public static BinaryArray fromIntArray(@NotNull IntArray array) {
+    public static BinaryArray fromIntArray(IntArray array) {
         byte[] data = new byte[array.size()];
         for (int i = 0; i < array.size(); i++) {
             data[i] = (byte) Math.floorMod(array.get(i), 2);
@@ -54,6 +52,14 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
         }
     }
 
+    public void flip(int index) {
+        if ((index >= 0) && (index < size)) {
+            elementData[index] ^= 1;
+        } else {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + size);
+        }
+    }
+
     public BinaryArray slice(int start, int stop) {
         byte[] temp = new byte[stop - start];
         int j = 0;
@@ -64,7 +70,7 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
         return new BinaryArray(temp);
     }
 
-    public BinaryArray vectorAdd(@NotNull BinaryArray other) throws IllegalArgumentException {
+    public BinaryArray vectorAdd(BinaryArray other) throws IllegalArgumentException {
         if (size != other.size) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size);
         } else {
@@ -86,7 +92,7 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
         return new BinaryArray(temp);
     }
 
-    public byte dotProduct(@NotNull BinaryArray other) throws IllegalArgumentException {
+    public byte dotProduct(BinaryArray other) throws IllegalArgumentException {
         if (size != other.size) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size);
         } else {

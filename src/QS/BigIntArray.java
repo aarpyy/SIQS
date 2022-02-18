@@ -1,7 +1,5 @@
 package QS;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.math.BigInteger;
 import java.util.*;
 
@@ -15,7 +13,7 @@ public class BigIntArray extends AbstractList<BigInteger> implements List<BigInt
         this.size = 0;
     }
 
-    public BigIntArray(@NotNull List<BigInteger> list) {
+    public BigIntArray(List<BigInteger> list) {
         size = list.size();
         elementData = new BigInteger[size];
         int i = 0;
@@ -25,35 +23,35 @@ public class BigIntArray extends AbstractList<BigInteger> implements List<BigInt
         }
     }
 
-    public static @NotNull BigIntArray fromArray(BigInteger @NotNull [] array) {
+    public static BigIntArray fromArray(BigInteger [] array) {
         return new BigIntArray(new LinkedList<>(Arrays.asList(array)));
     }
 
-    public static @NotNull BigIntArray fromArray(long @NotNull [] array) {
+    public static BigIntArray fromArray(long [] array) {
         LinkedList<BigInteger> list = new LinkedList<>();
         for (long n : array) list.add(BigInteger.valueOf(n));
         return new BigIntArray(list);
     }
 
-    public static @NotNull BigIntArray fromArray(int @NotNull [] array) {
+    public static BigIntArray fromArray(int [] array) {
         LinkedList<BigInteger> list = new LinkedList<>();
         for (int n : array) list.add(BigInteger.valueOf(n));
         return new BigIntArray(list);
     }
 
-    public static @NotNull BigIntArray fromArray(String @NotNull [] array) {
+    public static BigIntArray fromArray(String [] array) {
         LinkedList<BigInteger> list = new LinkedList<>();
         for (String n : array) list.add(new BigInteger(n));
         return new BigIntArray(list);
     }
 
-    public static @NotNull BigIntArray fromIntArray(@NotNull IntArray array) {
+    public static BigIntArray fromIntArray(IntArray array) {
         LinkedList<BigInteger> list = new LinkedList<>();
         for (int n : array) list.add(BigInteger.valueOf(n));
         return new BigIntArray(list);
     }
 
-    public static @NotNull BigIntArray filledArray(int size, BigInteger filler) {
+    public static BigIntArray filledArray(int size, BigInteger filler) {
         BigIntArray a = new BigIntArray(size);
         for (int i = 0; i < size; i++) {
             a.elementData[i] = filler;

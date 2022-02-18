@@ -1,7 +1,5 @@
 package QS;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
 
 public class BinaryMatrix extends AbstractList<BinaryArray> implements List<BinaryArray> {
@@ -57,7 +55,7 @@ public class BinaryMatrix extends AbstractList<BinaryArray> implements List<Bina
         elementData[j] = temp;
     }
 
-    public void append(@NotNull BinaryArray element) throws IllegalArgumentException {
+    public void append(BinaryArray element) throws IllegalArgumentException {
         if (w != element.size()) {
             throw new IllegalArgumentException("Unable to append elementData of " +
                     "size " + element.size() + "to matrix of size " + w);

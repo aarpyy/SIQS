@@ -1,7 +1,5 @@
 package QS;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
 
 public class LongArray extends AbstractList<Long> implements List<Long> {
@@ -14,7 +12,7 @@ public class LongArray extends AbstractList<Long> implements List<Long> {
         this.size = 0;
     }
 
-    public LongArray(@NotNull List<Long> list) {
+    public LongArray(List<Long> list) {
         size = list.size();
         elementData = new long[size];
         int i = 0;
@@ -24,13 +22,13 @@ public class LongArray extends AbstractList<Long> implements List<Long> {
         }
     }
 
-    public static @NotNull LongArray fromArray(long @NotNull [] array) {
+    public static LongArray fromArray(long [] array) {
         LinkedList<Long> list = new LinkedList<>();
         for (long n : array) list.add(n);
         return new LongArray(list);
     }
 
-    public static @NotNull LongArray fromArray(String @NotNull [] array) {
+    public static LongArray fromArray(String [] array) {
         LinkedList<Long> list = new LinkedList<>();
         for (String n : array) list.add(Long.parseLong(n));
         return new LongArray(list);

@@ -1,7 +1,5 @@
 package QS;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
 
 public class IntArray extends AbstractList<Integer> implements List<Integer> {
@@ -14,7 +12,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         this.size = 0;
     }
 
-    public IntArray(@NotNull List<Integer> list) {
+    public IntArray(List<Integer> list) {
         size = list.size();
         elementData = new int[size];
         int i = 0;
@@ -24,13 +22,13 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         }
     }
 
-    public static @NotNull IntArray fromArray(int @NotNull [] array) {
+    public static IntArray fromArray(int [] array) {
         LinkedList<Integer> list = new LinkedList<>();
         for (int n : array) list.add(n);
         return new IntArray(list);
     }
 
-    public static @NotNull IntArray fromArray(String @NotNull [] array) {
+    public static IntArray fromArray(String [] array) {
         LinkedList<Integer> list = new LinkedList<>();
         for (String n : array) list.add(Integer.parseInt(n));
         return new IntArray(list);
@@ -74,7 +72,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         return IntArray.fromArray(temp);
     }
 
-    public IntArray vectorAdd(@NotNull IntArray other) throws IllegalArgumentException {
+    public IntArray vectorAdd(IntArray other) throws IllegalArgumentException {
         if (size != other.size) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size);
         } else {
@@ -86,7 +84,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         }
     }
 
-    public IntArray vectorSubtract(@NotNull IntArray other) throws IllegalArgumentException {
+    public IntArray vectorSubtract(IntArray other) throws IllegalArgumentException {
         if (size != other.size) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size);
         } else {
@@ -114,7 +112,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         return IntArray.fromArray(res);
     }
 
-    public Integer dotProduct(@NotNull IntArray other) throws IllegalArgumentException {
+    public Integer dotProduct(IntArray other) throws IllegalArgumentException {
         if (size != other.size) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size);
         } else {
@@ -126,7 +124,7 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         }
     }
 
-    public Integer dotProduct(@NotNull BinaryArray other) throws IllegalArgumentException {
+    public Integer dotProduct(BinaryArray other) throws IllegalArgumentException {
         if (size != other.size()) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size());
         } else {

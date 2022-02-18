@@ -217,11 +217,38 @@ class UtilsTest {
 
     @Test
     void quadraticResidue() {
-        int x = -5;
-        System.out.println("x % 6 = " + Math.floorMod(x, 6));
+        int digits = 70;
+        int bits = (int) (digits / (Math.log(2) / Math.log(10)));
+        System.out.println("Bits in " + digits + " digit number = " + bits);
     }
 
     @Test
     void quadraticNonResidue() {
+    }
+
+    @Test
+    void BigInteger_valueOf() {
+        BigInteger n;
+        double iters = 10000;
+        long start = System.nanoTime();
+        for (int i = 0; i < iters; i++) {
+            n = BigInteger.valueOf(91898214);
+        }
+
+        double t_per = (System.nanoTime() - start) / iters;
+        System.out.println("BigInteger.valueOf() took " + t_per + "ns on average");
+    }
+
+    @Test
+    void BigInteger_intValue() {
+        BigInteger n = BigInteger.valueOf(91898214);
+        double iters = 10000;
+        long start = System.nanoTime();
+        for (int i = 0; i < iters; i++) {
+            n.intValue();
+        }
+
+        double t_per = (System.nanoTime() - start) / iters;
+        System.out.println("BigInteger.intValue() took " + t_per + "ns on average");
     }
 }
