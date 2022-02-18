@@ -13,7 +13,6 @@ import java.util.Scanner;
  */
 public abstract class QuadraticSieve {
 
-
     // Both integer and BigInteger versions of factor base are public as well as N
     public final BigInteger N;
 
@@ -86,7 +85,9 @@ public abstract class QuadraticSieve {
         // For each prime in factor base, add the modular square root and the log
         for (int p : fb) {
             t_sqrt.add(Utils.modSqrt(Utils.intMod(N, p), p));
-            log_p.add((int) Math.round(Math.log(p)));
+
+            // Take log base 2 of prime p
+            log_p.add((int) Math.round(Math.log(p) / Utils.log2));
         }
 
         return new IntArray[]{new IntArray(fb), t_sqrt, log_p};

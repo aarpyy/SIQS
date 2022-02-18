@@ -20,6 +20,16 @@ public final class Utils {
     public static final BigInteger THREE = BigInteger.valueOf(3);
 
     /**
+     * Log base 2 is needed to get number of digits in base-10 representation of
+     * number and for taking log base 2 of each prime in factor base.
+     */
+    public static final double log2 = Math.log(2);
+
+    public static int nDigits(BigInteger n) {
+        return (int) Math.round(n.bitLength() / (Math.log(10) / log2));
+    }
+
+    /**
      * Returns array of BigIntegers containing the first {@code n} BigIntegers read
      * from {@code file} parsed by line. Returns empty array if a {@code Scanner} was
      * unable to be opened on {@code file}

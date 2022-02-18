@@ -2,7 +2,10 @@ package QS;
 
 import Utils.Utils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.util.Scanner;
 
 /**
  * Self Initializing Quadratic Sieve.
@@ -118,6 +121,7 @@ public class SIQS extends QuadraticSieve {
 
         BigInteger b = BigInteger.ZERO;
         for (BigInteger B : B_products) b = b.add(B);
+        b = b.mod(a);
 
         // This iteration cannot be combined with loop above since b needs to be calculated before this
         BigInteger T;
@@ -139,5 +143,48 @@ public class SIQS extends QuadraticSieve {
 
     }
 
+    /**
+     * Function to choose sieve range M. Credit to
+     * https://github.com/skollmann/PyFactorise/blob/master/factorise.py for
+     * the selection, which itself is based off msieve-1.52.
+     * @param digits number of digits in base-10 representation of N
+     * @return sieve range
+     */
+    public static int chooseSieveRange(int digits) {
+        if (digits < 52) return 65536;
+        else if (digits < 88) return 196608;
+        else return 589824;
+    }
+
+    public static void main(String[] args) {
+        BigInteger N;
+        String fName;
+
+        if (args.length == 0) {
+            throw new IllegalArgumentException("Must provide composite integer to be factored");
+        } else {
+            N = new BigInteger(args[0]);
+            if (args.length > 1) {
+                fName = args[1];
+            } else {
+                fName = ".\\primes.txt";
+            }
+        }
+
+        try {
+            // Open file for primes
+            File primesFile = new File(fName);
+            Scanner scanner = new Scanner(primesFile);
+
+            IntArray[] start = QuadraticSieve.startup(N, scanner);
+
+            // Make new object which just creates arrays for process
+            SIQS qs = new SIQS(N, chooseSieveRange(Utils.nDigits(N)), start[0], start[1], start[2]);
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.err.println("File not found");
+        }
+    }
 
 }
