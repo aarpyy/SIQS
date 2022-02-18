@@ -13,8 +13,21 @@ import java.util.Scanner;
 
 public final class Utils {
 
+    /**
+     * Mod 4 is used semi-frequently and seeing if the result is three is also helpful,
+     *     so using BigInteger & THREE as well as BigInteger.equals(THREE) is made easier with this.
+     */
     public static final BigInteger THREE = BigInteger.valueOf(3);
 
+    /**
+     * Returns array of BigIntegers containing the first {@code n} BigIntegers read
+     * from {@code file} parsed by line. Returns empty array if a {@code Scanner} was
+     * unable to be opened on {@code file}
+     *
+     * @param n number of BigIntegers to be read from file
+     * @param file source file for BigIntegers
+     * @return array of BigIntegers of length n, or empty array if {@code file} not found
+     */
     public static BigInteger[] firstN(int n, File file) {
         try {
             Scanner scanner = new Scanner(file);
@@ -30,9 +43,13 @@ public final class Utils {
         }
     }
 
-    /*
-    Attempts to completely factor n using the given factor base, returning the powers of the factors
-    if number was completely factored, throwing ArithmeticException if not
+    /**
+     * Attempts to completely factor n using the given factor base, returning the powers of the factors
+     * if number was completely factored, throwing ArithmeticException if not.
+     * @param n BigInteger to be factored
+     * @param primes BigIntArray of factor base
+     * @return IntArray of the powers of each of the factors in the factor base if {@code n} was completely factored
+     * @throws ArithmeticException if {@code n} is not a product of just the factors in {@code primes}
      */
     public static IntArray trialDivide(BigInteger n, BigIntArray primes) throws ArithmeticException {
         int[] factors = new int[primes.size()];
@@ -54,28 +71,20 @@ public final class Utils {
         }
     }
 
-    /*
-    Returns boolean of if number can be factored by factor base. This is identical in
-    function to attempting smoothFactor and returning false if error thrown, otherwise true
-     */
-    public static boolean smoothQ(BigInteger n, BigIntArray primes) {
-        BigInteger[] div;
-        for (BigInteger p : primes) {
-            while ((div = n.divideAndRemainder(p))[1].equals(BigInteger.ZERO)) {
-                n = div[0];
-            }
-        }
-        return n.equals(BigInteger.ONE);
-    }
-
-    /*
-    Given a list of primes and a list of corresponding powers for each of those primes,
-    return the BigInteger that is the product of each of those powers.
+    /**
+     * Given a list of primes and a list of corresponding powers for each of those primes,
+     * return the BigInteger that is the product of each of those powers.
+     *
+     * @param primes BigIntArray of factor base
+     * @param powers IntArray of powers of each of the factors in the factor base
+     * @return BigInteger result of taking the product of each of the primes raised to each of the
+     * powers of corresponding indices.
+     *
+     * @throws ArithmeticException if the lengths of the two arrays differ
      */
     public static BigInteger evalPower(BigIntArray primes, IntArray powers) {
         if (primes.size() != powers.size()) {
-            // If invalid arrays, just return 0
-            return BigInteger.ZERO;
+            throw new ArithmeticException("Array lengths differ: " + primes.size() + ", " + powers.size());
         } else {
 
             BigInteger acc = BigInteger.ONE;
@@ -88,23 +97,14 @@ public final class Utils {
         }
     }
 
-    /*
-    Performs fast power algorithm with BigInteger as a power (as opposed to BigIntegers'
-    usual .pow() method which only accepts integer exponents
+    /**
+     * Performs the fast power algorithm raising a to the power of p mod m.
+     * Equivalent to Python's pow(a, p, m)
+     * @param a integer base
+     * @param p integer power
+     * @param m integer modulus
+     * @return a^p mod m
      */
-    public static BigInteger fastPower(BigInteger a, BigInteger p) {
-        BigInteger result = BigInteger.ONE;
-        while (!p.equals(BigInteger.ZERO)) {
-            if (p.testBit(0)) {
-                p = p.subtract(BigInteger.ONE);
-                result = result.multiply(a);
-            }
-            p = p.shiftRight(1);
-            a = a.multiply(a);
-        }
-        return result;
-    }
-
     public static int powerMod(int a, int p, int m) {
         int res = 1;
         while (p != 0) {
@@ -118,6 +118,17 @@ public final class Utils {
         return res;
     }
 
+    /**
+     * Extended Euclidean algorithm for finding the greatest common divisor of two positive
+     * integers. Returns an array with the first value being the gcd, and the second and
+     * third values being the coefficients applied to the first and second integer arguments
+     * respectively that sum to return the gcd. If gcd == 1, the second and third array
+     * values are equivalent to the modular inverses of a mod b and b mod a respectively.
+     *
+     * @param a first integer
+     * @param b second integer
+     * @return integer array: [GCD, x, y] that satisfies the equation GCD = ax + by
+     */
     public static int[] extendedGCD(int a, int b) {
         if (a == 0) {
             return new int[]{b, 0, 1};
@@ -129,17 +140,35 @@ public final class Utils {
         }
     }
 
+    /**
+     * Returns the modular inverse of a mod m, assuming that a and m are co-prime.
+     * @param a integer whose inverse is being computed
+     * @param m modulus of modular inverse
+     * @return a^-1 mod m
+     *
+     * @throws ArithmeticException if {@code a} shares a common factor with {@code m} other than 1
+     */
     public static int modularInverse(int a, int m) {
         int[] gcd = extendedGCD(a, m);
         if (gcd[0] != 1) {
             throw new ArithmeticException(a + " has no modular inverse mod " + m);
         } else {
-            return gcd[1];
+
+            // Return Math.floorMod() so that inverse is positive integer
+            return Math.floorMod(gcd[1], m);
         }
     }
 
-    /*
-    Returns a random BigInteger >= lower and < upper. Essentially Python's randrange(lower, upper)
+    /**
+     * Returns a random BigInteger >= lower and < upper. Essentially Python's randrange(lower, upper)
+     *
+     * @param lower Lower bound of range for random number
+     * @param upper Upper bound of range
+     * @param rand Java random object used for generating random BigInteger
+     * @return new random BigInteger n where lower <= n < upper
+     *
+     * @throws ArithmeticException if {@code lower} >= {@code upper}
+     *
      */
     public static BigInteger randRange(BigInteger lower, BigInteger upper, Random rand)
             throws ArithmeticException {
@@ -168,14 +197,39 @@ public final class Utils {
         return result.add(lower);
     }
 
+    /**
+     * Returns an int that is the result of taking the modulus of a BigInteger by an int.
+     * Mostly intended when BigInteger is used in an operation that is eventually taken
+     * modulo m, allowing for a Java int to be used in its place prior to the final reduction.
+     *
+     * @param n BigInteger operand
+     * @param m int modulus
+     * @return integer value of n mod m
+     */
     public static int intMod(BigInteger n, int m) {
         return n.mod(BigInteger.valueOf(m)).intValue();
     }
 
+    /**
+     * Computes the BigInteger result of taking the square root of {@code a}
+     *
+     * @param a BigInteger to be square-rooted
+     * @return BigInteger square root of a
+     */
     public static BigInteger BigSqrt(BigInteger a) {
         return (new BigDecimal(a)).sqrt(MathContext.DECIMAL128).toBigInteger();
     }
 
+    /**
+     * Computes the log {@code base} of {@code a}, returning it as a double. Since
+     * this is done using {@code a.bitLength()} which returns an int, converting to a double
+     * and returning ensures that this operation is not affected by the input being a
+     * BigInteger. Equivalent to {@code Math.log(a) / Math.log(base)}
+     *
+     * @param a number to take log of
+     * @param base base of log
+     * @return log base of a
+     */
     public static double BigLog(BigInteger a, double base) {
         return a.bitLength() / (Math.log(base) / Math.log(2));
     }

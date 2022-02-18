@@ -68,7 +68,7 @@ public class MPQS {
         log_p = new IntArray(F);
 
         for (int p : factorBase) {
-            t_sqrt.add(Utils.modSqrt(N.intValue(), p));
+            t_sqrt.add(Utils.modSqrt(Utils.intMod(N, p), p));
             log_p.add((int) Math.round(Math.log(p)));
         }
         FactorBase = BigIntArray.fromIntArray(factorBase);

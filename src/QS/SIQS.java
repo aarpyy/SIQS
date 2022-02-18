@@ -35,11 +35,11 @@ public class SIQS {
     private BigIntArray sieve_array;
     private IntMatrix smooth_matrix;
 
-    public SIQS(BigInteger n, int f, int m, IntArray factor_base, IntArray tmem_p, IntArray log_p) {
+    public SIQS(BigInteger n, int f, int m, IntArray factor_base, IntArray t_sqrt, IntArray log_p) {
         F = f;
         this.factor_base = factor_base;
         FactorBase = BigIntArray.fromIntArray(factor_base);
-        this.t_sqrt = tmem_p;
+        this.t_sqrt = t_sqrt;
         this.log_p = log_p;
         N = n;
         this.m = m;
@@ -52,7 +52,6 @@ public class SIQS {
         sieve_array = null;
         smooth_matrix = null;
     }
-
 
     public static SIQS fromN(BigInteger N, int M, Scanner primesScanner) {
 
@@ -84,7 +83,7 @@ public class SIQS {
 
         // For each prime in factor base, add the modular square root and the log
         for (int p : factor_base) {
-            t_sqrt.add(Utils.modSqrt(N.intValue(), p));
+            t_sqrt.add(Utils.modSqrt(Utils.intMod(N, p), p));
             log_p.add((int) Math.round(Math.log(p)));
         }
 
