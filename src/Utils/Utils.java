@@ -387,9 +387,14 @@ public final class Utils {
         }
     }
 
-    /*
-    Given BigInteger root that is the modular square root of n mod q, returns the modular square root
-    of n mod q^2 via Hensel's Lemma (lifting)
+    /**
+     * Given root that is the modular square root of n mod baseQ, returns the modular square root
+     * of n mod q^2 via Hensel's Lemma (lifting).
+     * @param root square root of n mod baseQ
+     * @param n square of root mod baseQ
+     * @param baseQ base modulus (unlifted)
+     * @param q prime modulus to increment baseQ by
+     * @return x s.t. x^2 = n mod baseQ and x^2 = n mod (baseQ * q)
      */
     public static BigInteger liftSqrt(BigInteger root, BigInteger n, BigInteger baseQ, BigInteger q) {
 
@@ -403,6 +408,11 @@ public final class Utils {
          */
         BigInteger s = n.subtract(root.pow(2)).divide(baseQ).multiply(root.multiply(BigInteger.TWO).modInverse(q)).mod(q);
         return root.add(s.multiply(baseQ)).mod(baseQ.multiply(q));
+    }
+
+    public static int liftSqrt(int root, int n, int baseQ, int q) {
+        int s = (((n - (root * root)) / baseQ) * modularInverse(root * 2, q)) % q;
+        return (root + (s * baseQ)) % (baseQ * q);
     }
 
     /*
