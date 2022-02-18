@@ -1,6 +1,5 @@
 package QS;
 
-import Utils.Pair;
 import Utils.Utils;
 import org.junit.jupiter.api.Test;
 
@@ -23,15 +22,17 @@ class QuadraticSieveTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
+            IntArray[] start = QuadraticSieve.startup(N, scanner);
+            long[] constants = MPQS.calculateConstants(N);
+
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, scanner);
+            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
             System.out.println("N: " + N);
-            System.out.println("Factor base: " + qs.factorBase);
+            System.out.println("Factor base: " + qs.factor_base);
 
 
             QSPoly Q_x = new QSPoly(BigInteger.ONE, BigInteger.ZERO, N.negate());
             System.out.println("Polynomial: " + Q_x);
-            Pair<BigIntArray, IntMatrix> r = qs.sieve(Q_x);
 
         }
         catch (FileNotFoundException e) {
@@ -157,8 +158,11 @@ class QuadraticSieveTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
+            IntArray[] start = QuadraticSieve.startup(N, scanner);
+            long[] constants = MPQS.calculateConstants(N);
+
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, scanner);
+            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
 
             silvermanComputation();
         }

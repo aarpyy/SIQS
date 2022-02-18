@@ -1,77 +1,30 @@
 package QS;
 
-import Utils.Pair;
 import Utils.Utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 // Multiple Polynomial Quadratic Sieve
-public class MPQS {
+public class MPQS extends QuadraticSieve {
 
-    public final IntArray factorBase;
-    public final BigIntArray FactorBase;
-    public final BigInteger N, M;
-    public final int F;
+    public MPQS(BigInteger n, int m, IntArray factor_base, IntArray t_sqrt, IntArray log_p) {
+        super(n, m, factor_base, t_sqrt, log_p);
+    }
 
-    public QSPoly Q_x;
-
-    public final IntArray t_sqrt, log_p;
-    private IntArray soln1, soln2;
-
-
-    public MPQS(BigInteger N, Scanner primesScanner) {
-        this.N = N;
-
-        // Get number of digits in N
+    public static long[] calculateConstants(BigInteger N) {
         double digits = Utils.BigLog(N, 10);
 
         // M = 386 * digits^2 - (23209.3 * digits) + 352768
-        M = BigDecimal.valueOf(386 * Math.pow(digits, 2)).subtract(
+        long m = BigDecimal.valueOf(386 * Math.pow(digits, 2)).subtract(
                 BigDecimal.valueOf(23209.3).multiply(BigDecimal.valueOf(digits).add(
-                        BigDecimal.valueOf(352768)))).toBigInteger();
+                        BigDecimal.valueOf(352768)))).toBigInteger().longValue();
+        long f = (long) (2.92659 * Math.pow(digits, 2) - 164.385 * digits + 2455.36);
 
-        // Size of factor base
-        // F = (int) (2.92659 * Math.pow(digits, 2) - 164.385 * digits + 2455.36);
-
-        int B = (int) (Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
-
-        // Tolerance value
-        // T = 0.0268849 * digits + 0.783929;
-
-        LinkedList<Integer> fb = new LinkedList<>();
-
-        // Make sure 2 is in factor base
-        fb.add(2);
-
-        // Read through first prime (2)
-        primesScanner.nextLine();
-
-        int prime;
-        int int_N = N.intValue();
-        while (primesScanner.hasNextLine() && (fb.size() < B)) {
-            prime = Integer.parseInt(primesScanner.nextLine());
-            if (Utils.quadraticResidue(int_N, prime)) {
-                fb.add(prime);
-            }
-        }
-        primesScanner.close();
-
-        // Factor Base: Primes p < B s.sqrtFB. (N/p) = 1
-        factorBase = new IntArray(fb);
-        F = factorBase.size();
-        t_sqrt = new IntArray(F);
-        log_p = new IntArray(F);
-
-        for (int p : factorBase) {
-            t_sqrt.add(Utils.modSqrt(Utils.intMod(N, p), p));
-            log_p.add((int) Math.round(Math.log(p)));
-        }
-        FactorBase = BigIntArray.fromIntArray(factorBase);
+        return new long[]{m, f};
     }
 
     /*
@@ -107,11 +60,10 @@ public class MPQS {
         return new QSPoly(a, b, c);
     }
 
-    public void initializeMPQS(BigInteger q) {
+    public void initialize() {
 
-        // Assert that q is prime s.t. (N/q) = 1
-        assert q.isProbablePrime(80) : q + " is not prime";
-        assert Utils.quadraticResidue(N, q) : N + " is not a quadratic residue mod " + q;
+        BigInteger q = Utils.BigSqrt(Utils.BigSqrt(N.add(N)).divide(M)).nextProbablePrime();
+        while (!Utils.quadraticResidue(N, q)) q = q.nextProbablePrime();
 
         BigInteger a = q.pow(2);
         BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
@@ -121,8 +73,8 @@ public class MPQS {
         int int_b = b.intValue();
 
         int p, t, a_inv, b_mod_p;
-        for (int i = 0; i < F; i++) {
-            p = factorBase.get(i);
+        for (int i = 0; i < factor_base.size(); i++) {
+            p = factor_base.get(i);
             t = t_sqrt.get(i);
 
             a_inv = Utils.modularInverse(int_a, p);
@@ -167,13 +119,6 @@ public class MPQS {
         return new QSPoly(A, B, C);
     }
 
-    /*
-    This will take in a polynomial and sieve it across the range of final member M
-     */
-    public Pair<BigIntArray, IntMatrix> sieve(QSPoly Q_x) {
-        return null;
-    }
-
     public static void main(String[] args) throws IllegalArgumentException {
 
         BigInteger N;
@@ -195,8 +140,11 @@ public class MPQS {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
+            IntArray[] start = QuadraticSieve.startup(N, scanner);
+            long[] constants = MPQS.calculateConstants(N);
+
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, scanner);
+            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
