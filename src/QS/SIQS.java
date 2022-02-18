@@ -3,17 +3,17 @@ package QS;
 import Utils.Utils;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
 
-import static Utils.Utils.quadraticResidue;
-
-// Self Initializing Quadratic Sieve
+/**
+ * Self Initializing Quadratic Sieve.
+ *
+ * Algorithm source:
+ * https://citeseerx.ist.psu.edu/viewdoc/download;
+ * jsessionid=53C827A542A8A950780D34E79261FF99?doi=10.1.1.26.6924&rep=rep1&type=pdf
+ */
 public class SIQS {
-
-    // Based of thesis of Scott Contini:
-    // https://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=53C827A542A8A950780D34E79261FF99?doi=10.1.1.26.6924&rep=rep1&type=pdf
 
     public final int F;         // Size of factor base
 
@@ -32,6 +32,7 @@ public class SIQS {
 
     private QSPoly Q_x;
     private IntArray soln1, soln2;
+    private IntArray[] B_ainv2;
     private BigIntArray sieve_array;
     private IntMatrix smooth_matrix;
 
@@ -66,7 +67,7 @@ public class SIQS {
             prime = Integer.parseInt(primesScanner.nextLine());
 
             // We can take N % p as int since p is int and N and N % p have the same residues mod p
-            if (quadraticResidue(Utils.intMod(N, prime), prime)) {
+            if (Utils.quadraticResidue(Utils.intMod(N, prime), prime)) {
                 fb.add(prime);
             }
         }
@@ -166,51 +167,48 @@ public class SIQS {
             }
         }
 
-        ArrayList<IntArray> B_ainv2 = new ArrayList<>(factor_base.size() - s);
+        // B_ainv2 = new ArrayList<>(factor_base.size() - s);
+        B_ainv2 = new IntArray[factor_base.size() - s];
+        int b_idx = 0;
 
-        BigInteger temp;
+        BigInteger B_j, a_inv_p;
         IntArray B_ainv2_j;
-        int a_inv_p;
         for (p = 0; p < F; p++) {
             if (a_factors.get(p) == 0) {
                 B_ainv2_j = new IntArray(s);
 
-                a_inv_p = a.modInverse(FactorBase.get(p)).intValue();
+                a_inv_p = a.modInverse(FactorBase.get(p));
                 for (int j = 0; j < s; j++) {
+                    B_j = B_products.get(j);
 
                     // Add 2*B_j*a^-1 mod p
-                    temp = B_products.get(j).multiply(BigInteger.TWO).mod(FactorBase.get(p));
-                    B_ainv2_j.add((temp.intValue() * a_inv_p) % factor_base.get(p));
+                    B_ainv2_j.add(Utils.intMod(B_j.add(B_j).multiply(a_inv_p), FactorBase.get(p)));
                 }
-                B_ainv2.add(B_ainv2_j);
+                B_ainv2[b_idx] = B_ainv2_j;
+                b_idx++;
             }
         }
 
         BigInteger b = BigInteger.ZERO;
         for (BigInteger B : B_products) b = b.add(B);
 
+        // This iteration cannot be combined with loop above since b needs to be calculated before this
+        BigInteger T;
         for (p = 0; p < F; p++) {
             if (a_factors.get(p) == 0) {
-                a_inv_p = a.modInverse(FactorBase.get(p)).intValue();
+                a_inv_p = a.modInverse(FactorBase.get(p));
+                T = BigInteger.valueOf(t_sqrt.get(p));
 
                 // soln1 = ainv * (tmem_p - b) mod p
-                soln1.set(p, (a_inv_p * (
-                        BigInteger.valueOf(t_sqrt.get(p)).subtract(b).mod(
-                                FactorBase.get(p)).intValue())) % factor_base.get(p));
+                soln1.set(p, Utils.intMod(a_inv_p.multiply(T.subtract(b)), FactorBase.get(p)));
 
 
-                // soln1 = ainv * (-tmem_p - b) mod p
-                soln2.set(p, (a_inv_p * (
-                        BigInteger.valueOf(t_sqrt.get(p)).negate().subtract(b).mod(
-                                FactorBase.get(p)).intValue())) % factor_base.get(p));
+                // soln2 = ainv * (-tmem_p - b) mod p
+                soln2.set(p, Utils.intMod(a_inv_p.multiply(T.negate().subtract(b)), FactorBase.get(p)));
             }
         }
 
         Q_x = new QSPoly(a, b, N);
-
-        /*
-        TODO: Confirm that everything here is right. Save B_ainv_p as instance variable for use in init next polys
-         */
 
     }
 
@@ -218,10 +216,11 @@ public class SIQS {
         sieve_array = BigIntArray.filledArray((2 * m) + 1, BigInteger.ZERO);
 
         int soln;
+        int _2m = m + m;
 
         // For 2, just sieve with soln1 not soln2
-        soln = soln1.get(0) + (2 * m);
-        while (soln > (2 * m)) {
+        soln = soln1.get(0) + _2m;
+        while (soln > _2m) {
             soln -= 2;
         }
 
@@ -235,8 +234,8 @@ public class SIQS {
             prime = factor_base.get(p);
 
             // Start soln at the top of soln1 + ip <= M
-            soln = soln1.get(p) + (2 * m);
-            while (soln > (2 * m)) {
+            soln = soln1.get(p) + _2m;
+            while (soln > _2m) {
                 soln -= prime;
             }
 
@@ -247,8 +246,8 @@ public class SIQS {
             }
 
             // Do the same for soln2 + ip
-            soln = soln2.get(p) + (2 * m);
-            while (soln > (2 * m)) {
+            soln = soln2.get(p) + _2m;
+            while (soln > _2m) {
                 soln -= prime;
             }
 

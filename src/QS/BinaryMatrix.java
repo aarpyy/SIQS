@@ -68,6 +68,11 @@ public class BinaryMatrix extends AbstractList<BinaryArray> implements List<Bina
         }
     }
 
+    /**
+     * Iterates over all rows in matrix, subtracting the given row from each,
+     * excluding the given row.
+     * @param row index of given row
+     */
     public void rowReduce(int row) {
         for (int i = 0; i < h; i++) {
             if (i != row) {
@@ -90,6 +95,10 @@ public class BinaryMatrix extends AbstractList<BinaryArray> implements List<Bina
         return new BinaryMatrix(transposed);
     }
 
+    /**
+     * Computes the kernel of {@code this}
+     * @return BinaryMatrix where each of the rows is a basis vector of the kernel
+     */
     public BinaryMatrix kernel() {
         ArrayList<BinaryArray> temp = new ArrayList<>(h + w);
         temp.addAll(Arrays.asList(elementData));

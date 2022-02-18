@@ -100,12 +100,18 @@ public final class Utils {
     /**
      * Performs the fast power algorithm raising a to the power of p mod m.
      * Equivalent to Python's pow(a, p, m)
-     * @param a integer base
-     * @param p integer power
-     * @param m integer modulus
+     * @param a base
+     * @param p power
+     * @param m modulus
      * @return a^p mod m
+     * @throws ArithmeticException if power is negative
      */
     public static int powerMod(int a, int p, int m) {
+        if (p < 0) throw new ArithmeticException("Exponent " + p + " must be positive");
+
+        // Make sure that a is positive
+        a = Math.floorMod(a, m);
+
         int res = 1;
         while (p != 0) {
             if ((p & 1) != 0) {
@@ -123,7 +129,7 @@ public final class Utils {
      * integers. Returns an array with the first value being the gcd, and the second and
      * third values being the coefficients applied to the first and second integer arguments
      * respectively that sum to return the gcd. If gcd == 1, the second and third array
-     * values are equivalent to the modular inverses of a mod b and b mod a respectively.
+     * values are equivalent to the modular inverses of {@code a mod b} and {@code b mod a} respectively.
      *
      * @param a first integer
      * @param b second integer
@@ -198,12 +204,24 @@ public final class Utils {
     }
 
     /**
-     * Returns an int that is the result of taking the modulus of a BigInteger by an int.
+     * Returns an int that is the result of taking the modulus of a BigInteger by something of int value.
      * Mostly intended when BigInteger is used in an operation that is eventually taken
      * modulo m, allowing for a Java int to be used in its place prior to the final reduction.
      *
-     * @param n BigInteger operand
-     * @param m int modulus
+     * @param n operand
+     * @param m modulus
+     * @return integer value of n mod m
+     */
+    public static int intMod(BigInteger n, BigInteger m) {
+        return n.mod(m).intValue();
+    }
+
+    /**
+     * Function identical to {@code intMod(BigInteger n, BigInteger m)} that accepts a Java int
+     * as the modulus
+     *
+     * @param n operand
+     * @param m modulus
      * @return integer value of n mod m
      */
     public static int intMod(BigInteger n, int m) {
@@ -392,7 +410,7 @@ public final class Utils {
      * of n mod q^2 via Hensel's Lemma (lifting).
      * @param root square root of n mod baseQ
      * @param n square of root mod baseQ
-     * @param baseQ base modulus (unlifted)
+     * @param baseQ base modulus
      * @param q prime modulus to increment baseQ by
      * @return x s.t. x^2 = n mod baseQ and x^2 = n mod (baseQ * q)
      */
@@ -410,13 +428,27 @@ public final class Utils {
         return root.add(s.multiply(baseQ)).mod(baseQ.multiply(q));
     }
 
+    /**
+     * Function identical to {@code BigInteger liftSqrt()} that accepts and returns Java ints instead of
+     * BigIntegers.
+     * @param root square root of n mod baseQ
+     * @param n square of root mod baseQ
+     * @param baseQ base modulus
+     * @param q prime modulus to increment baseQ by
+     * @return x s.t. x^2 = n mod baseQ and x^2 = n mod (baseQ * q)
+     */
     public static int liftSqrt(int root, int n, int baseQ, int q) {
         int s = (((n - (root * root)) / baseQ) * modularInverse(root * 2, q)) % q;
         return (root + (s * baseQ)) % (baseQ * q);
     }
 
-    /*
-    Returns whether a number c exists s.sqrtFB. c^2 = a mod p
+    /**
+     * Returns true iff a number {@code c} exists s.t. {@code c^2 = a mod p}, false otherwise. If returns
+     * false, {@code c} either does not exist, {@code a} is 0, or {@code p} is composite
+     * (determining quadratic residue using this method is undefined for a composite modulus).
+     * @param a square
+     * @param p prime modulus
+     * @return true iff exists {@code c} s.t. {@code c^2 = a mod p}, false otherwise
      */
     public static boolean quadraticResidue(BigInteger a, BigInteger p) {
         // Returns a ^ ((p - 1) / 2) == 1, which tells us if there exists an integer c s.sqrtFB.
@@ -424,18 +456,35 @@ public final class Utils {
         return a.modPow(p.subtract(BigInteger.ONE).shiftRight(1), p).equals(BigInteger.ONE);
     }
 
+    /**
+     * Function identical to {@code quadraticResidue(BigInteger a, BigInteger p)} that accepts
+     * Java ints instead of BigIntegers.
+     * @param a square
+     * @param p prime modulus
+     * @return true iff exists {@code c} s.t. {@code c^2 = a mod p}, false otherwise
+     */
     public static boolean quadraticResidue(int a, int p) {
         return (powerMod(a, (p - 1) >> 1, p) == 1);
     }
 
-    /*
-    Returns whether a number c does NOT exist s.sqrtFB. c^2 = a mod p
+    /**
+     * Returns true iff a number {@code c} does NOT exist s.t. {@code c^2 = a mod p}, false otherwise.
+     * @param a square
+     * @param p prime modulus
+     * @return true iff exists {@code c} s.t. {@code c^2 = a mod p}, false otherwise
      */
     public static boolean quadraticNonResidue(BigInteger a, BigInteger p) {
         BigInteger nSub1 = p.subtract(BigInteger.ONE);
         return a.modPow(nSub1.shiftRight(1), p).equals(nSub1);
     }
 
+    /**
+     * Function identical to {@code quadraticNonResidue(BigInteger a, BigInteger p)} that accepts
+     * Java ints instead of BigIntegers.
+     * @param a square
+     * @param p prime modulus
+     * @return true iff exists {@code c} s.t. {@code c^2 = a mod p}, false otherwise
+     */
     public static boolean quadraticNonResidue(int a, int p) {
         return (powerMod(a, ((p - 1) >> 1), p) == (p - 1));
     }
