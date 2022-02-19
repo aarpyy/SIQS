@@ -1,7 +1,4 @@
-package Utils;
-
-import QS.BigIntArray;
-import QS.IntArray;
+package QS;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -279,9 +276,7 @@ public final class Utils {
      * sqrt = {@code av(i - 1) mod p} where {@code v = (2a)^((p-5)/8) mod p} and
      * {@code i = {@code 2av^2 mod p}}. Otherwise, {@code p % 4 == 1} and we can use the
      * Tonelli-Shanks algorithm.
-     *
-     * Source for algorithm: https://en.wikipedia.org/wiki/Tonelli%E2%80%93Shanks_algorithm
-     *
+     * <p>Source for algorithm: https://en.wikipedia.org/wiki/Tonelli%E2%80%93Shanks_algorithm</p>
      * @param a number to take square root of
      * @param p modulus
      * @return BigInteger x s.t. x^2 = a mod p

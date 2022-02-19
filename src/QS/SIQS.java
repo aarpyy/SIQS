@@ -1,20 +1,28 @@
 package QS;
 
-import Utils.Utils;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
 import java.util.Scanner;
 
 /**
- * Self Initializing Quadratic Sieve.
- *
+ * Self Initializing Quadratic Sieve
+ * <p></p>
  * Algorithm source:
  * https://citeseerx.ist.psu.edu/viewdoc/download;
  * jsessionid=53C827A542A8A950780D34E79261FF99?doi=10.1.1.26.6924&rep=rep1&type=pdf
  */
 public class SIQS extends QuadraticSieve {
+
+    // Suggested min/max from https://www.rieselprime.de/ziki/Self-initializing_quadratic_sieve
+    private static int minFactor = 2000;
+    private static int maxFactor = 4000;
+
+    // Suggested minimum number of factors from skollman PyFactorise project
+    private static int minNFactors = 20;
 
     private IntArray[] B_ainv2;
 
@@ -23,63 +31,96 @@ public class SIQS extends QuadraticSieve {
         B_ainv2 = null;
     }
 
-    public void initialize() {
-        BigInteger a_approx = Utils.BigSqrt(N.multiply(BigInteger.TWO)).divide(M);
-        BigInteger a = BigInteger.ONE;
+    /**
+     * Function to choose sieve range M. <p>Credit to
+     * https://github.com/skollmann/PyFactorise/blob/master/factorise.py for
+     * the selection, which itself is based off msieve-1.52.</p>
+     * @param digits number of digits in base-10 representation of N
+     * @return sieve range
+     * @throws ArithmeticException if not enough primes in factor base to produce {@code a}
+     * approximately equal to {@code sqrt(2N) / M}
+     */
+    public static int chooseSieveRange(int digits) {
+        if (digits < 52) return 65536;
+        else if (digits < 88) return 196608;
+        else return 589824;
+    }
 
-        // Number of primes in that a factors into -- each are power of 1
-        int s = 0;
+    public void initialize() throws ArithmeticException {
+        // array representing if a given prime from the factor base is a factor of a
+        byte[] a_factors = new byte[factor_base.size()];
+        Arrays.fill(a_factors, (byte) 0);
 
-        // Suggested min from https://www.rieselprime.de/ziki/Self-initializing_quadratic_sieve
-        int min = 2000;
-
-        // BinaryArray representing if a given prime from the factor base is a factor of a
-        BinaryArray a_factors = BinaryArray.zeroes(factor_base.size());
-
-        int p = 0;
+        int min = 0;
         // Get first prime in factor base >= 2000
-        while (factor_base.get(p) < min) {
-            p++;
+        while (factor_base.get(min) < minFactor) {
+            min++;
 
             // If there aren't enough primes to reach 2000, just start from beginning
-            if (p >= factor_base.size()) {
-                p = 0;
+            if (min >= factor_base.size()) {
+                min = 0;
+                break;
+            }
+        }
+        int max = min;
+        while(factor_base.get(max) < maxFactor) {
+            max++;
+
+            if (max >= factor_base.size()) {
+                max = factor_base.size();
                 break;
             }
         }
 
-        BigInteger Prime;
+        // Number of primes in that a factors into -- each are power of 1
+        int s = 0;
 
-        // While a is not at where it approximately should be, keep taking product of primes
-        while (a.compareTo(a_approx) < 0) {
-            Prime = FactorBase.get(p);
-            a = a.multiply(Prime);
-            a_factors.flip(p);
-            s++;
-            p++;
+        // Approximately what a should be
+        BigInteger a_approx = Utils.BigSqrt(N.add(N)).divide(M);
+        BigInteger a = BigInteger.ONE;
 
-            // If ran out of primes, start back again
-            if (p >= factor_base.size()) p = 0;
+        Random rand = new Random();
+        int range = max - min;
+        if (range < minNFactors) {
+            throw new ArithmeticException("Less than " + minNFactors + " in range of factor base");
+        }
+        int i;
+
+        // Randomly choose factors in the given range
+        for (i = rand.nextInt(range) + min; a.compareTo(a_approx) < 0; i = rand.nextInt(range) + min) {
+            if (a_factors[i] == 0) {
+                a = a.multiply(FactorBase.get(i));
+                a_factors[i]++;
+                s++;
+            }
         }
 
-        Prime = FactorBase.get(p);
-        // Figure out if a would be closer to a_approx if the last prime wasn't added to product
         BigInteger diff1 = a.subtract(a_approx).abs();
-        BigInteger diff2 = a.divide(Prime).subtract(a_approx).abs();
-        if (diff1.compareTo(diff2) > 0) {
-            a = a.divide(Prime);
-            a_factors.flip(p);
-            s--;
+        BigInteger diff2;
+        int r = -1;
+
+        /*
+        Iterate through all factors used to make a. Find which one, when removed, gets a closest
+        to a_approx. If removing none gets a closest, don't remove, otherwise remove optimal.
+         */
+        for (int j = 0; j < a_factors.length; j++) {
+            if (a_factors[j] == 1) {
+                diff2 = a.divide(FactorBase.get(j)).subtract(a_approx).abs();
+                if (diff2.compareTo(diff1) < 0) r = j;
+            }
+        }
+        if (r >= 0) {
+            a = a.divide(FactorBase.get(r));
         }
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
-        BigIntArray B_products = new BigIntArray(s);
+        ArrayList<BigInteger> B_products = new ArrayList<>(s);
         BigInteger a_l;     // a missing one of it's factors
         BigInteger gamma, q;
-        for (p = 0; p < factor_base.size(); p++) {
+        for (int p = 0; p < factor_base.size(); p++) {
 
             // If this prime is in the factor base of a i.e. prime | a
-            if (a_factors.get(p) == 1) {
+            if (a_factors[p] == 1) {
 
                 // Get BigInteger prime
                 q = FactorBase.get(p);
@@ -88,7 +129,8 @@ public class SIQS extends QuadraticSieve {
                 // gamma = t_mem_p * (a_l^-1) mod q
                 gamma = BigInteger.valueOf(t_sqrt.get(p)).multiply(a_l.modInverse(q)).mod(q);
 
-                if (gamma.compareTo(q.shiftRight(1)) > 0) {
+                // If gamma > q/2 but here comparing if 2*gamma > q so that if q is odd nothing is lost
+                if (gamma.shiftLeft(1).compareTo(q) > 0) {
                     gamma = q.subtract(gamma);
                 }
 
@@ -103,8 +145,8 @@ public class SIQS extends QuadraticSieve {
 
         BigInteger B_j, a_inv_p;
         IntArray B_ainv2_j;
-        for (p = 0; p < factor_base.size(); p++) {
-            if (a_factors.get(p) == 0) {
+        for (int p = 0; p < factor_base.size(); p++) {
+            if (a_factors[0] == 0) {
                 B_ainv2_j = new IntArray(s);
 
                 a_inv_p = a.modInverse(FactorBase.get(p));
@@ -125,8 +167,8 @@ public class SIQS extends QuadraticSieve {
 
         // This iteration cannot be combined with loop above since b needs to be calculated before this
         BigInteger T;
-        for (p = 0; p < factor_base.size(); p++) {
-            if (a_factors.get(p) == 0) {
+        for (int p = 0; p < factor_base.size(); p++) {
+            if (a_factors[0] == 0) {
                 a_inv_p = a.modInverse(FactorBase.get(p));
                 T = BigInteger.valueOf(t_sqrt.get(p));
 
@@ -141,19 +183,6 @@ public class SIQS extends QuadraticSieve {
 
         Q_x = new QSPoly(a, b, N);
 
-    }
-
-    /**
-     * Function to choose sieve range M. Credit to
-     * https://github.com/skollmann/PyFactorise/blob/master/factorise.py for
-     * the selection, which itself is based off msieve-1.52.
-     * @param digits number of digits in base-10 representation of N
-     * @return sieve range
-     */
-    public static int chooseSieveRange(int digits) {
-        if (digits < 52) return 65536;
-        else if (digits < 88) return 196608;
-        else return 589824;
     }
 
     public static void main(String[] args) {

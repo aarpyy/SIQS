@@ -3,9 +3,11 @@ package QS;
 import java.math.BigInteger;
 import java.util.function.Function;
 
-/*
-Quadratic Sieve Polynomial - a function that is constructed based on 3 coefficients and computes
-ax^2 + bx + c when applied to a BigInteger x
+/**
+ * Quadratic Sieve Polynomial
+ *
+ * <p>A function that is constructed based on 2 coefficients and computes
+ * {@code (ax + b)^2 - N} when applied to a BigInteger x</p>
  */
 public class QSPoly implements Function<BigInteger, BigInteger> {
 

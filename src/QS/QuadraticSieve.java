@@ -1,7 +1,5 @@
 package QS;
 
-import Utils.Utils;
-
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.Scanner;

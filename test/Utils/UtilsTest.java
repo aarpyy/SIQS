@@ -3,6 +3,7 @@ package Utils;
 import QS.IntArray;
 import QS.MPQS;
 import QS.QuadraticSieve;
+import QS.Utils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
