@@ -170,4 +170,6 @@ public abstract class QuadraticSieve {
             return false;
         }
     }
+
+    public abstract boolean solve();
 }

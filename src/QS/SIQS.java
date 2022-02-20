@@ -18,17 +18,23 @@ import java.util.Scanner;
 public class SIQS extends QuadraticSieve {
 
     // Suggested min/max from https://www.rieselprime.de/ziki/Self-initializing_quadratic_sieve
-    private static int minFactor = 2000;
-    private static int maxFactor = 4000;
+    private static final int minFactor = 2000;
+    private static final int maxFactor = 4000;
 
     // Suggested minimum number of factors from skollman PyFactorise project
-    private static int minNFactors = 20;
+    private static final int minNFactors = 20;
 
     private IntArray[] B_ainv2;
+    private ArrayList<BigInteger> B;
+    private int s;
 
     public SIQS(BigInteger n, int m, IntArray factor_base, IntArray t_sqrt, IntArray log_p) {
         super(n, m, factor_base, t_sqrt, log_p);
         B_ainv2 = null;
+        B = null;
+
+        // Number of primes in that a factors into -- each are power of 1
+        s = 0;
     }
 
     /**
@@ -72,9 +78,6 @@ public class SIQS extends QuadraticSieve {
             }
         }
 
-        // Number of primes in that a factors into -- each are power of 1
-        int s = 0;
-
         // Approximately what a should be
         BigInteger a_approx = Utils.BigSqrt(N.add(N)).divide(M);
         BigInteger a = BigInteger.ONE;
@@ -114,7 +117,7 @@ public class SIQS extends QuadraticSieve {
         }
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
-        ArrayList<BigInteger> B_products = new ArrayList<>(s);
+        B = new ArrayList<>(s);
         BigInteger a_l;     // a missing one of it's factors
         BigInteger gamma, q;
         for (int p = 0; p < factor_base.size(); p++) {
@@ -135,7 +138,7 @@ public class SIQS extends QuadraticSieve {
                 }
 
                 // Add B_l to the products of b
-                B_products.add(a_l.multiply(gamma));
+                B.add(a_l.multiply(gamma));
             }
         }
 
@@ -151,7 +154,7 @@ public class SIQS extends QuadraticSieve {
 
                 a_inv_p = a.modInverse(FactorBase.get(p));
                 for (int j = 0; j < s; j++) {
-                    B_j = B_products.get(j);
+                    B_j = B.get(j);
 
                     // Add 2*B_j*a^-1 mod p
                     B_ainv2_j.add(Utils.intMod(B_j.add(B_j).multiply(a_inv_p), FactorBase.get(p)));
@@ -162,7 +165,7 @@ public class SIQS extends QuadraticSieve {
         }
 
         BigInteger b = BigInteger.ZERO;
-        for (BigInteger B : B_products) b = b.add(B);
+        for (BigInteger B_i : B) b = b.add(B_i);
         b = b.mod(a);
 
         // This iteration cannot be combined with loop above since b needs to be calculated before this
@@ -183,6 +186,45 @@ public class SIQS extends QuadraticSieve {
 
         Q_x = new QSPoly(a, b, N);
 
+    }
+
+    public void nextPoly(int i) {
+        if ((Q_x != null) && (B_ainv2 != null)) {
+
+            assert (1 <= i) && (i <= (Math.pow(2, s - 1) - 1)) : "Invalid polynomial index of " + i;
+
+            BigInteger b  = Q_x.B;
+
+            // v is the highest power of 2 that divides 2*i
+            int v = 0;
+            int j = i + i;
+            while ((j & 1) == 0) {
+                j >>= 1;
+                v++;
+            }
+
+            byte sign = (byte) (((j & 1) == 1) ? -1 : 1);
+
+            b = b.add(BigInteger.valueOf(sign).multiply(BigInteger.TWO).multiply(B.get(v)));
+            Q_x = new QSPoly(Q_x.A, b, N);
+
+            for (int p = 0; p < factor_base.size(); p++) {
+                // solnj[p] = solnj[p] + (-1 ^ (i / 2^v)) * B_ainv2[v][p] mod p
+                soln1.set(p, (soln1.get(p) + sign * B_ainv2[v].get(p)) % factor_base.get(p));
+                soln2.set(p, (soln2.get(p) + sign * B_ainv2[v].get(p)) % factor_base.get(p));
+            }
+
+        }
+    }
+
+    public boolean solve() {
+        assert (smooth_matrix != null) : "Trial division must be performed before solving!";
+
+        BinaryMatrix matrixMod2 = BinaryMatrix.fromIntMatrix(smooth_matrix);
+        BinaryMatrix kernel = matrixMod2.kernel();
+        for (BinaryArray a : kernel) {
+            
+        }
     }
 
     public static void main(String[] args) {

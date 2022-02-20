@@ -104,6 +104,18 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
         }
     }
 
+    public int dotProduct(IntArray other) throws IllegalArgumentException {
+        if (size != other.size()) {
+            throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size());
+        } else {
+            int dot = 0;
+            for (int i = 0; i < size; i++) {
+                dot += elementData[i] * other.get(i);
+            }
+            return dot;
+        }
+    }
+
     public BigInteger dotProduct(BigIntArray other) throws IllegalArgumentException {
         if (size != other.size()) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size());
