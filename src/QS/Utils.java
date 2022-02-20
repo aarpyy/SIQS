@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -48,6 +49,20 @@ public final class Utils {
         } catch (FileNotFoundException e) {
             return new BigInteger[]{};
         }
+    }
+
+    public static int[][] transpose(int[][] matrix) {
+        int[] column;
+        int[][] transposed = new int[matrix[0].length][matrix.length];
+
+        for (int i = 0; i < matrix[0].length; i++) {
+            column = new int[matrix.length];
+            for (int j = 0; j < matrix.length; j++) {
+                column[j] = matrix[j][i];
+            }
+            transposed[i] = column;
+        }
+        return transposed;
     }
 
     /**

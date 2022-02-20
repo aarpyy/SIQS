@@ -31,6 +31,7 @@ public abstract class QuadraticSieve {
     protected IntArray soln1, soln2;
     protected BigIntArray sieve_array;
     protected IntMatrix smooth_matrix;
+    protected BigIntArray polynomialInput;
 
     public QuadraticSieve(BigInteger n, int m, IntArray factor_base, IntArray t_sqrt, IntArray log_p) {
         this.factor_base = factor_base;
@@ -47,6 +48,7 @@ public abstract class QuadraticSieve {
         soln2 = new IntArray(factor_base.size());
         sieve_array = null;
         smooth_matrix = null;
+        polynomialInput = null;
     }
 
     /**
@@ -155,21 +157,26 @@ public abstract class QuadraticSieve {
         BigInteger min_val = BigInteger.valueOf((long) (Math.log(m * Utils.BigSqrt(N).longValue()) - error));
 
         LinkedList<IntArray> matrix = new LinkedList<>();
+        LinkedList<BigInteger> input = new LinkedList<>();
+        BigInteger X;
         for (int x = 0; x < sieve_array.size(); x++) {
             if (sieve_array.get(x).compareTo(min_val) >= 0) {
                 try {
-                    matrix.add(Utils.trialDivide(Q_x.apply(x), FactorBase));
+                    X = BigInteger.valueOf(x);
+                    matrix.add(Utils.trialDivide(Q_x.apply(X), FactorBase));
+                    input.add(X);
                 } catch (ArithmeticException ignored) { }
             }
         }
 
         if (matrix.size() > FactorBase.size()) {
             smooth_matrix = new IntMatrix(matrix);
+            polynomialInput = new BigIntArray(input);
             return true;
         } else {
             return false;
         }
     }
 
-    public abstract boolean solve();
+    public abstract BigInteger solve();
 }

@@ -1,18 +1,12 @@
 package QS;
 
-import java.util.AbstractList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class IntMatrix extends AbstractList<IntArray> implements List<IntArray> {
 
-    // 'Size' of matrix: number of rows, subject to change
-    private int h;
-
-    // Width final because width of matrix cannot change, only add rows
-    public final int w;
-    private IntArray[] elementData;
+    public final int w, h;
+    private final IntArray[] elementData;
+    public final IntArray[] T;
 
     public IntMatrix(List<IntArray> list) {
         h = list.size();
@@ -24,12 +18,21 @@ public class IntMatrix extends AbstractList<IntArray> implements List<IntArray> 
             elementData[i] = a;
             i++;
         }
+        T = IntMatrix.transpose(elementData);
     }
 
-    public IntMatrix(int width) {
-        w = width;
-        h = 0;
-        elementData = new IntArray[0];
+    public static IntArray[] transpose(IntArray[] matrix) {
+        IntArray column;
+        IntArray[] transposed = new IntArray[matrix[0].size()];
+
+        for (int i = 0; i < matrix[0].size(); i++) {
+            column = new IntArray(matrix.length);
+            for (IntArray row : matrix) {
+                column.add(row.get(i));
+            }
+            transposed[i] = column;
+        }
+        return transposed;
     }
 
     public IntArray get(int index) {
@@ -40,34 +43,11 @@ public class IntMatrix extends AbstractList<IntArray> implements List<IntArray> 
         }
     }
 
-    public IntArray set(int index, IntArray value) {
-        if ((index >= 0) && (index < h)) {
-            elementData[index] = value;
-            return value;
-        } else {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for list of size " + h);
-        }
-    }
-
     public void swap(int i, int j) {
         IntArray temp = elementData[i];
         elementData[i] = elementData[j];
         elementData[j] = temp;
     }
-
-    public void append(IntArray element) throws IllegalArgumentException {
-        if (w != element.size()) {
-            throw new IllegalArgumentException("Unable to append elementData of " +
-                    "size " + element.size() + "to matrix of size " + w);
-        } else {
-
-            // IntMatrix created so that it always has all rows filled, so to append we need to make room
-            elementData = Arrays.copyOf(elementData, elementData.length + 1);
-            elementData[h] = element;
-            h++;
-        }
-    }
-
 
     @Override
     public Iterator<IntArray> iterator() {

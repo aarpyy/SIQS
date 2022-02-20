@@ -217,14 +217,28 @@ public class SIQS extends QuadraticSieve {
         }
     }
 
-    public boolean solve() {
+    public BigInteger solve() {
         assert (smooth_matrix != null) : "Trial division must be performed before solving!";
 
         BinaryMatrix matrixMod2 = BinaryMatrix.fromIntMatrix(smooth_matrix);
         BinaryMatrix kernel = matrixMod2.kernel();
-        for (BinaryArray a : kernel) {
-            
+        IntArray powers;
+        BigInteger g_x, a, p, q;
+        for (BinaryArray array : kernel) {
+            powers = array.matmul(smooth_matrix).divide(2);
+            g_x = Utils.evalPower(FactorBase, powers);
+            a = array.dotProduct(polynomialInput);
+
+            p = a.add(g_x).gcd(N);
+            q = a.subtract(g_x).gcd(N);
+
+            if ((p.compareTo(N) < 0) && (p.compareTo(BigInteger.ONE) > 0)) {
+                return p;
+            } else if ((q.compareTo(N) < 0) && (q.compareTo(BigInteger.ONE) > 0)) {
+                return q;
+            }
         }
+        return null;
     }
 
     public static void main(String[] args) {
@@ -251,6 +265,19 @@ public class SIQS extends QuadraticSieve {
 
             // Make new object which just creates arrays for process
             SIQS qs = new SIQS(N, chooseSieveRange(Utils.nDigits(N)), start[0], start[1], start[2]);
+            qs.initialize();
+            int i = 1;
+            BigInteger factor;
+            while (true) {
+                qs.sieve();
+                if (!qs.trialDivision(50)) {
+                    qs.nextPoly(i);
+                } else if ((factor = qs.solve()) != null) {
+                    System.out.println("Factor: " + factor);
+                    break;
+                }
+            }
+
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

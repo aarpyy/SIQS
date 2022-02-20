@@ -117,8 +117,8 @@ public class MPQS extends QuadraticSieve {
         return new QSPoly(A, B, C);
     }
 
-    public boolean solve() {
-        return false;
+    public BigInteger solve() {
+        return null;
     }
 
     public static void main(String[] args) throws IllegalArgumentException {

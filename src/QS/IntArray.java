@@ -104,6 +104,14 @@ public class IntArray extends AbstractList<Integer> implements List<Integer> {
         return IntArray.fromArray(prod);
     }
 
+    public IntArray divide(int other) {
+        int[] res = new int[size];
+        for (int i = 0; i < size; i++) {
+            res[i] = elementData[i] / other;
+        }
+        return IntArray.fromArray(res);
+    }
+
     public IntArray floorMod(int other) {
         int[] res = new int[size];
         for (int i = 0; i < size; i++) {

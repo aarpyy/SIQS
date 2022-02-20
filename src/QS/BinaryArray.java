@@ -110,7 +110,7 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
         } else {
             int dot = 0;
             for (int i = 0; i < size; i++) {
-                dot += elementData[i] * other.get(i);
+                if (elementData[i] == 1) dot += other.get(i);
             }
             return dot;
         }
@@ -125,6 +125,18 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
                 dot = dot.add(other.get(i).multiply(BigInteger.valueOf(elementData[i])));
             }
             return dot;
+        }
+    }
+
+    public IntArray matmul(IntMatrix other) throws IllegalArgumentException {
+        if (size != other.size()) {
+            throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size());
+        } else {
+            IntArray array = new IntArray(size);
+            for (IntArray row : other.T) {
+                array.add(this.dotProduct(row));
+            }
+            return array;
         }
     }
 
