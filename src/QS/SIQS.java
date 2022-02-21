@@ -2,7 +2,9 @@ package QS;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
@@ -23,10 +25,13 @@ public class SIQS extends QuadraticSieve {
     // Suggested minimum number of factors from skollman PyFactorise project
     private static final int minNFactors = 20;
 
+    // Number of trials to randomly choose polynomial coefficient 'a'
+    private static final int trialsA = 10;
+
     private IntArray[] B_ainv2;
     private BigInteger[] B;
     private BigInteger a;
-    private int s;
+    private int n_a_factors;
 
     public SIQS(BigInteger n, int m, BigIntArray fb, IntArray[] precomp) {
         super(n, m, fb, precomp[0], precomp[1]);
@@ -34,8 +39,8 @@ public class SIQS extends QuadraticSieve {
         B = null;
 
         // Number of primes in that a factors into -- each are power of 1
-        s = 0;
-        a = BigInteger.ONE;
+        n_a_factors = 0;
+        a = null;
     }
 
     /**
@@ -83,41 +88,65 @@ public class SIQS extends QuadraticSieve {
         if (range < minNFactors) {
             throw new ArithmeticException("Less than " + minNFactors + " in range of factor base");
         }
+
+        int F = FactorBase.size();
+
         // array representing if a given prime from the factor base is a factor of a
-        byte[] a_factors = new byte[FactorBase.size()];
-        Arrays.fill(a_factors, (byte) 0);
+        byte[] a_factors = null;
+        byte[] a_temp;
+        BigInteger A;
+
+        BigDecimal ratio = null;
+        BigDecimal ratio_temp, diff;
 
         // Approximately what a should be
         BigInteger target = Utils.BigSqrt(N.add(N)).divide(M);
 
-        // Randomly choose factors in the given range
-        for (int i = rand.nextInt(range) + min; a.compareTo(target) < 0; i = rand.nextInt(range) + min) {
-            if (a_factors[i] == 0) {
-                a = a.multiply(FactorBase.get(i));
-                a_factors[i]++;
-                s++;
+        MathContext precision = MathContext.DECIMAL128;
+        BigDecimal d_target = new BigDecimal(target);
+
+        System.err.println("target a = " + target + "; ndigits = " + Utils.nDigits(target));
+        System.err.println("target a = " + d_target + "; ndigits = " + Utils.nDigits(d_target));
+
+        int s;
+
+        for (int j = 0; j < trialsA; j++) {
+
+            s = 0;
+            A = BigInteger.ONE;
+
+            a_temp = new byte[F];
+            Arrays.fill(a_temp, (byte) 0);
+
+            // Randomly choose factors in the given range
+            for (int i = rand.nextInt(range) + min; A.compareTo(target) < 0; i = rand.nextInt(range) + min) {
+                if (a_temp[i] == 0) {
+                    A = A.multiply(FactorBase.get(i));
+                    a_temp[i]++;
+                    s++;
+                }
+            }
+
+            diff = new BigDecimal(A.subtract(target).abs());
+            ratio_temp = diff.divide(d_target, BigDecimal.ROUND_HALF_UP);
+
+            System.out.println("diff <=> d_target = " + diff.compareTo(d_target));
+
+            System.out.println("ndigits a = " + Utils.nDigits(A));
+            System.out.println("diff = " + diff + "; ratio = " + ratio_temp +
+                    "; ndigits diff = " + Utils.nDigits(diff.toBigInteger()));
+
+            if ((ratio == null) || (ratio_temp.compareTo(ratio) < 0)) {
+                a = A;
+                n_a_factors = s;
+                ratio = ratio_temp;
+                a_factors = a_temp;
             }
         }
 
-        BigInteger diff1 = a.subtract(target).abs();
-        BigInteger diff2;
-        int r = -1;
+        System.err.println("chosen a = " + a);
 
-        /*
-        Iterate through all factors used to make a. Find which one, when removed, gets a closest
-        to target. If removing none gets a closest, don't remove, otherwise remove optimal.
-         */
-        for (int j = 0; j < a_factors.length; j++) {
-            if (a_factors[j] == 1) {
-                diff2 = a.divide(FactorBase.get(j)).subtract(target).abs();
-                if (diff2.compareTo(diff1) < 0) r = j;
-            }
-        }
-        if (r >= 0) {
-            a = a.divide(FactorBase.get(r));
-            a_factors[r]--;
-            s--;
-        }
+        System.exit(1);
 
         return a_factors;
     }
@@ -125,7 +154,8 @@ public class SIQS extends QuadraticSieve {
     public void initialize() throws ArithmeticException {
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
-        B = new BigInteger[s];
+        B = new BigInteger[n_a_factors];
+        byte[] a_factors = smoothA();
         int b_index = 0;
         BigInteger a_l;     // a missing one of it's factors
         BigInteger gamma, q;
@@ -152,17 +182,17 @@ public class SIQS extends QuadraticSieve {
         }
 
         // B_ainv2 = new ArrayList<>(factor_base.size() - s);
-        B_ainv2 = new IntArray[factor_base.size() - s];
+        B_ainv2 = new IntArray[factor_base.size() - n_a_factors];
         b_index = 0;
 
         BigInteger B_j, a_inv_p;
         IntArray B_ainv2_j;
         for (int p = 0; p < factor_base.size(); p++) {
             if (a_factors[p] == 0) {
-                B_ainv2_j = new IntArray(s);
+                B_ainv2_j = new IntArray(n_a_factors);
 
                 a_inv_p = a.modInverse(FactorBase.get(p));
-                for (int j = 0; j < s; j++) {
+                for (int j = 0; j < n_a_factors; j++) {
                     B_j = B[j];
 
                     // Add 2*B_j*a^-1 mod p
@@ -203,7 +233,7 @@ public class SIQS extends QuadraticSieve {
     public void nextPoly(int i) {
         if ((Q_x != null) && (B_ainv2 != null)) {
 
-            assert (1 <= i) && (i <= (Math.pow(2, s - 1) - 1)) : "Invalid polynomial index of " + i;
+            assert (1 <= i) && (i <= (Math.pow(2, n_a_factors - 1) - 1)) : "Invalid polynomial index of " + i;
 
             BigInteger b  = Q_x.B;
 
@@ -261,7 +291,12 @@ public class SIQS extends QuadraticSieve {
             if (args.length > 1) {
                 fName = args[1];
             } else {
-                fName = ".\\primes.txt";
+                String os = System.getProperty("os.name");
+                if (os.startsWith("Windows")) {
+                    fName = ".\\primes.txt";
+                } else {
+                    fName = "./primes.txt";
+                }
             }
         }
 

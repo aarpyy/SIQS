@@ -26,6 +26,10 @@ public final class Utils {
         return (int) Math.round(n.bitLength() / (Math.log(10) / log2));
     }
 
+    public static int nDigits(BigDecimal n) {
+        return nDigits(n.toBigInteger());
+    }
+
     /**
      * Returns array of BigIntegers containing the first {@code n} BigIntegers read
      * from {@code file} parsed by line. Returns empty array if a {@code Scanner} was
