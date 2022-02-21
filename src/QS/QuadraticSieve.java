@@ -22,8 +22,8 @@ public abstract class QuadraticSieve {
     // Everything else is protected so that both MPQS and SIQS can have access, but they are not needed outside
 
     // Solutions to modSqrt(N, p) for each p (N/p) in factor base
-    protected final IntArray t_sqrt;
-    protected final IntArray log_p;
+    protected final BigIntArray t_sqrt;
+    protected final BigIntArray log_p;
 
     protected final int m;
     protected final BigInteger M;
@@ -34,7 +34,7 @@ public abstract class QuadraticSieve {
     protected IntMatrix smooth_matrix;
     protected BigIntArray polynomialInput;
 
-    public QuadraticSieve(BigInteger n, int m, BigIntArray FactorBase, IntArray t_sqrt, IntArray log_p) {
+    public QuadraticSieve(BigInteger n, int m, BigIntArray FactorBase, BigIntArray t_sqrt, BigIntArray log_p) {
         this.FactorBase = FactorBase;
         this.factor_base = FactorBase.toIntArray();
         this.t_sqrt = t_sqrt;
@@ -61,7 +61,7 @@ public abstract class QuadraticSieve {
      * @param primesScanner {@code Scanner} opened on file containing primes
      * @return {@code IntArray[]} containing: {factor base, sqrt N mod p, log p}
      */
-    public static Pair<BigIntArray, IntArray[]> startup(BigInteger N, Scanner primesScanner) {
+    public static BigIntArray[] startup(BigInteger N, Scanner primesScanner) {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
         BigInteger F = BigInteger.valueOf((long) Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
 
@@ -81,20 +81,20 @@ public abstract class QuadraticSieve {
         }
 
         // Array of square roots of N mod p
-        IntArray t_sqrt = new IntArray(fb.size());
+        BigIntArray t_sqrt = new BigIntArray(fb.size());
 
         // Array of log base e of p (rounded)
-        IntArray log_p = new IntArray(fb.size());
+        BigIntArray log_p = new BigIntArray(fb.size());
 
         // For each prime in factor base, add the modular square root and the log
         for (BigInteger p : fb) {
-            t_sqrt.add(Utils.modSqrt(N, p).intValue());
+            t_sqrt.add(Utils.modSqrt(N, p));
 
             // Take log base 2 of prime p
-            log_p.add(p.bitLength());
+            log_p.add(BigInteger.valueOf(p.bitLength()));
         }
 
-        return new Pair<>(new BigIntArray(fb), new IntArray[]{t_sqrt, log_p});
+        return new BigIntArray[]{new BigIntArray(fb), t_sqrt, log_p};
     }
 
     public abstract void initialize();
@@ -116,7 +116,7 @@ public abstract class QuadraticSieve {
         }
 
         while (soln >= 0) {
-            sieve_array[soln] = sieve_array[soln].add(BigInteger.valueOf(log_p.get(0)));
+            sieve_array[soln] = sieve_array[soln].add(log_p.get(0));
             soln -= 2;
         }
 
@@ -132,7 +132,7 @@ public abstract class QuadraticSieve {
 
             // Decrease down to soln1 + ip >= -M
             while (soln >= 0) {
-                sieve_array[soln] = sieve_array[soln].add(BigInteger.valueOf(log_p.get(p)));
+                sieve_array[soln] = sieve_array[soln].add(log_p.get(p));
                 soln -= prime;
             }
 
@@ -143,7 +143,7 @@ public abstract class QuadraticSieve {
             }
 
             while (soln >= 0) {
-                sieve_array[soln] = sieve_array[soln].add(BigInteger.valueOf(log_p.get(p)));
+                sieve_array[soln] = sieve_array[soln].add(log_p.get(p));
                 soln -= prime;
             }
         }

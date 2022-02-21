@@ -21,11 +21,11 @@ class QuadraticSieveTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
-            Pair<BigIntArray, IntArray[]> start = QuadraticSieve.startup(N, scanner);
+            BigIntArray[] start = QuadraticSieve.startup(N, scanner);
             long[] constants = MPQS.calculateConstants(N);
 
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, (int) constants[0], start.first(), start.second());
+            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
             System.out.println("N: " + N);
             System.out.println("Factor base: " + qs.factor_base);
 
@@ -157,11 +157,11 @@ class QuadraticSieveTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
-            Pair<BigIntArray, IntArray[]> start = QuadraticSieve.startup(N, scanner);
+            BigIntArray[] start = QuadraticSieve.startup(N, scanner);
             long[] constants = MPQS.calculateConstants(N);
 
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, (int) constants[0], start.first(), start.second());
+            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
 
             silvermanComputation();
         }

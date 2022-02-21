@@ -5,9 +5,7 @@ import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Self Initializing Quadratic Sieve
@@ -33,8 +31,8 @@ public class SIQS extends QuadraticSieve {
     private BigInteger a;
     private int n_a_factors;
 
-    public SIQS(BigInteger n, int m, BigIntArray fb, IntArray[] precomp) {
-        super(n, m, fb, precomp[0], precomp[1]);
+    public SIQS(BigInteger n, int m, BigIntArray fb, BigIntArray t_sq, BigIntArray log) {
+        super(n, m, fb, t_sq, log);
         B_ainv2 = null;
         B = null;
 
@@ -58,7 +56,7 @@ public class SIQS extends QuadraticSieve {
         else return 589824;
     }
 
-    public byte[] smoothA() {
+    public HashSet<Integer> smoothA() {
         int min = 0;
         // Get first prime in factor base >= 2000
         while (factor_base.get(min) < minFactor) {
@@ -92,61 +90,43 @@ public class SIQS extends QuadraticSieve {
         int F = FactorBase.size();
 
         // array representing if a given prime from the factor base is a factor of a
-        byte[] a_factors = null;
-        byte[] a_temp;
-        BigInteger A;
+        HashSet<Integer> a_factors = new HashSet<>();
+        HashSet<Integer> tmp_factors;
+        BigInteger A, tmp_diff;
 
-        BigDecimal ratio = null;
-        BigDecimal ratio_temp, diff;
+        BigInteger diff = null;
 
         // Approximately what a should be
         BigInteger target = Utils.BigSqrt(N.add(N)).divide(M);
 
-        MathContext precision = MathContext.DECIMAL128;
-        BigDecimal d_target = new BigDecimal(target);
-
-        System.err.println("target a = " + target + "; ndigits = " + Utils.nDigits(target));
-        System.err.println("target a = " + d_target + "; ndigits = " + Utils.nDigits(d_target));
-
-        int s;
+        // Credit to skollman - PyFactorise for this minimum a value, gets a's closer to actual target
+        BigInteger min_a = target.divide(Utils.BigSqrt(FactorBase.get(min).add(FactorBase.get(max).shiftRight(1))));
 
         for (int j = 0; j < trialsA; j++) {
 
-            s = 0;
             A = BigInteger.ONE;
 
-            a_temp = new byte[F];
-            Arrays.fill(a_temp, (byte) 0);
+            tmp_factors = new HashSet<>();
 
             // Randomly choose factors in the given range
-            for (int i = rand.nextInt(range) + min; A.compareTo(target) < 0; i = rand.nextInt(range) + min) {
-                if (a_temp[i] == 0) {
+            for (int i = rand.nextInt(range) + min; A.compareTo(min_a) < 0; i = rand.nextInt(range) + min) {
+                if (!tmp_factors.contains(i)) {
                     A = A.multiply(FactorBase.get(i));
-                    a_temp[i]++;
-                    s++;
+                    tmp_factors.add(i);
                 }
             }
 
-            diff = new BigDecimal(A.subtract(target).abs());
-            ratio_temp = diff.divide(d_target, BigDecimal.ROUND_HALF_UP);
+            tmp_diff = A.subtract(target).abs();
 
-            System.out.println("diff <=> d_target = " + diff.compareTo(d_target));
-
-            System.out.println("ndigits a = " + Utils.nDigits(A));
-            System.out.println("diff = " + diff + "; ratio = " + ratio_temp +
-                    "; ndigits diff = " + Utils.nDigits(diff.toBigInteger()));
-
-            if ((ratio == null) || (ratio_temp.compareTo(ratio) < 0)) {
+            if ((diff == null) || (tmp_diff.compareTo(diff) < 0)) {
                 a = A;
-                n_a_factors = s;
-                ratio = ratio_temp;
-                a_factors = a_temp;
+                diff = tmp_diff;
+                a_factors = tmp_factors;
             }
         }
 
-        System.err.println("chosen a = " + a);
-
-        System.exit(1);
+        BigDecimal d_diff = new BigDecimal(a).divide(new BigDecimal(target), MathContext.DECIMAL32);
+        System.out.println("chosen a = " + a + "; % difference = " + d_diff);
 
         return a_factors;
     }
@@ -154,32 +134,42 @@ public class SIQS extends QuadraticSieve {
     public void initialize() throws ArithmeticException {
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
+        HashSet<Integer> a_factors = smoothA();
+        n_a_factors = a_factors.size();
         B = new BigInteger[n_a_factors];
-        byte[] a_factors = smoothA();
+
         int b_index = 0;
         BigInteger a_l;     // a missing one of it's factors
         BigInteger gamma, q;
-        for (int p = 0; p < factor_base.size(); p++) {
+        for (int l : a_factors) {
+            // Get BigInteger prime
+            q = FactorBase.get(l);
 
-            // If this prime is in the factor base of a i.e. prime | a
-            if (a_factors[p] == 1) {
+            assert a.mod(q).equals(BigInteger.ZERO) : "q_l does not divide a";
 
-                // Get BigInteger prime
-                q = FactorBase.get(p);
-                a_l = a.divide(q);
+            a_l = a.divide(q);
 
-                // gamma = t_mem_p * (a_l^-1) mod q
-                gamma = BigInteger.valueOf(t_sqrt.get(p)).multiply(a_l.modInverse(q)).mod(q);
+            // gamma = t_mem_p * (a_l^-1) mod q
+            gamma = t_sqrt.get(l).multiply(a_l.modInverse(q)).mod(q);
 
-                // If gamma > q/2 but here comparing if 2*gamma > q so that if q is odd nothing is lost
-                if (gamma.shiftLeft(1).compareTo(q) > 0) {
-                    gamma = q.subtract(gamma);
-                }
-
-                // Add B_l to the products of b
-                B[b_index++] = a_l.multiply(gamma);
+            // If gamma > q/2 but here comparing if 2*gamma > q so that if q is odd nothing is lost
+            if (gamma.compareTo(q.shiftRight(1)) > 0) {
+                gamma = q.subtract(gamma);
             }
+
+            // Add B_l to the products of b
+            B[b_index++] = a_l.multiply(gamma);
         }
+
+        BigInteger b = BigInteger.ZERO;
+        for (BigInteger B_i : B) b = b.add(B_i);
+        b = b.mod(a);
+        if (b.add(b).compareTo(a) > 0) b = a.subtract(b);
+
+        assert b.compareTo(BigInteger.ZERO) > 0 : "b <= 0";
+        assert b.multiply(BigInteger.TWO).compareTo(a) <= 0 : "2*b > a";
+        assert b.multiply(b).subtract(N).mod(a).equals(BigInteger.ZERO) : "a does not divide b^2 - N";
+
 
         // B_ainv2 = new ArrayList<>(factor_base.size() - s);
         B_ainv2 = new IntArray[factor_base.size() - n_a_factors];
@@ -188,7 +178,10 @@ public class SIQS extends QuadraticSieve {
         BigInteger B_j, a_inv_p;
         IntArray B_ainv2_j;
         for (int p = 0; p < factor_base.size(); p++) {
-            if (a_factors[p] == 0) {
+            if (!a_factors.contains(p)) {
+
+                assert !a.mod(FactorBase.get(p)).equals(BigInteger.ZERO) : "p divides a";
+
                 B_ainv2_j = new IntArray(n_a_factors);
 
                 a_inv_p = a.modInverse(FactorBase.get(p));
@@ -202,15 +195,15 @@ public class SIQS extends QuadraticSieve {
             }
         }
 
-        BigInteger b = BigInteger.ZERO;
-        for (BigInteger B_i : B) b = b.add(B_i);
-
         // This iteration cannot be combined with loop above since b needs to be calculated before this
         BigInteger T;
         for (int p = 0; p < factor_base.size(); p++) {
-            if (a_factors[p] == 0) {
+            if (!a_factors.contains(p)) {
+
+                assert !a.mod(FactorBase.get(p)).equals(BigInteger.ZERO) : "p divides a";
+
                 a_inv_p = a.modInverse(FactorBase.get(p));
-                T = BigInteger.valueOf(t_sqrt.get(p));
+                T = t_sqrt.get(p);
 
                 // soln1 = ainv * (tmem_p - b) mod p
                 soln1[p] = Utils.intMod(a_inv_p.multiply(T.subtract(b)), FactorBase.get(p));
@@ -221,11 +214,6 @@ public class SIQS extends QuadraticSieve {
             }
         }
 
-        System.err.println("a = " + a + "\nb = " + b);
-        System.out.println("b^2 - N = " + b.pow(2).subtract(N));
-        BigInteger b2_N = b.pow(2).subtract(N).mod(a);
-        System.out.println("b^2 - N % a = " + b2_N);
-        assert b2_N.equals(BigInteger.ZERO) : "a does not divide b^2 - N";
         Q_x = new QSPoly(a, b, N);
 
     }
@@ -306,10 +294,10 @@ public class SIQS extends QuadraticSieve {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
-            Pair<BigIntArray, IntArray[]> start = QuadraticSieve.startup(N, scanner);
+            BigIntArray[] start = QuadraticSieve.startup(N, scanner);
 
             // Make new object which just creates arrays for process
-            SIQS qs = new SIQS(N, chooseSieveRange(Utils.nDigits(N)), start.first(), start.second());
+            SIQS qs = new SIQS(N, chooseSieveRange(Utils.nDigits(N)), start[0], start[1], start[2]);
             qs.initialize();
             int i = 1;
             BigInteger factor;
