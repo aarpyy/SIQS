@@ -23,6 +23,14 @@ public class BigIntArray extends AbstractList<BigInteger> implements List<BigInt
         }
     }
 
+    public IntArray toIntArray() {
+        int[] array = new int[size];
+        for (int i = 0; i < size; i++) {
+            array[i] = elementData[i].intValue();
+        }
+        return IntArray.fromArray(array);
+    }
+
     public static BigIntArray fromArray(BigInteger [] array) {
         return new BigIntArray(new LinkedList<>(Arrays.asList(array)));
     }

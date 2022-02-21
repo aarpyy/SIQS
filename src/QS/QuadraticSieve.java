@@ -1,6 +1,7 @@
 package QS;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Scanner;
 
@@ -28,14 +29,14 @@ public abstract class QuadraticSieve {
     protected final BigInteger M;
 
     protected QSPoly Q_x;
-    protected IntArray soln1, soln2;
-    protected BigIntArray sieve_array;
+    protected int[] soln1, soln2;
+    protected BigInteger[] sieve_array;
     protected IntMatrix smooth_matrix;
     protected BigIntArray polynomialInput;
 
-    public QuadraticSieve(BigInteger n, int m, IntArray factor_base, IntArray t_sqrt, IntArray log_p) {
-        this.factor_base = factor_base;
-        FactorBase = BigIntArray.fromIntArray(factor_base);
+    public QuadraticSieve(BigInteger n, int m, BigIntArray FactorBase, IntArray t_sqrt, IntArray log_p) {
+        this.FactorBase = FactorBase;
+        this.factor_base = FactorBase.toIntArray();
         this.t_sqrt = t_sqrt;
         this.log_p = log_p;
         N = n;
@@ -44,8 +45,8 @@ public abstract class QuadraticSieve {
 
         // These are all variables that will be set during initialization stage
         Q_x = null;
-        soln1 = new IntArray(factor_base.size());
-        soln2 = new IntArray(factor_base.size());
+        soln1 = new int[factor_base.size()];
+        soln2 = new int[factor_base.size()];
         sieve_array = null;
         smooth_matrix = null;
         polynomialInput = null;
@@ -60,21 +61,24 @@ public abstract class QuadraticSieve {
      * @param primesScanner {@code Scanner} opened on file containing primes
      * @return {@code IntArray[]} containing: {factor base, sqrt N mod p, log p}
      */
-    public static IntArray[] startup(BigInteger N, Scanner primesScanner) {
+    public static Pair<BigIntArray, IntArray[]> startup(BigInteger N, Scanner primesScanner) {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
-        int F = (int) (Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
+        BigInteger F = BigInteger.valueOf((long) Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
 
-        LinkedList<Integer> fb = new LinkedList<>();
+        System.out.println("F = " + F);
 
-        int prime;
+        LinkedList<BigInteger> fb = new LinkedList<>();
+
+        fb.add(new BigInteger(primesScanner.nextLine()));
+
+        BigInteger prime;
         // Read in all primes less than limit, adding those for which N is a quadratic residue
         while (primesScanner.hasNextLine()) {
-            if ((prime = Integer.parseInt(primesScanner.nextLine())) >= F) break;
+            if ((prime = new BigInteger(primesScanner.nextLine())).compareTo(F) >= 0) break;
 
                 // We can take N % p as int since p is int and N and N % p have the same residues mod p
-            else if (Utils.quadraticResidue(Utils.intMod(N, prime), prime)) fb.add(prime);
+            else if (Utils.quadraticResidue(N, prime)) fb.add(prime);
         }
-        primesScanner.close();
 
         // Array of square roots of N mod p
         IntArray t_sqrt = new IntArray(fb.size());
@@ -83,14 +87,14 @@ public abstract class QuadraticSieve {
         IntArray log_p = new IntArray(fb.size());
 
         // For each prime in factor base, add the modular square root and the log
-        for (int p : fb) {
-            t_sqrt.add(Utils.modSqrt(Utils.intMod(N, p), p));
+        for (BigInteger p : fb) {
+            t_sqrt.add(Utils.modSqrt(N, p).intValue());
 
             // Take log base 2 of prime p
-            log_p.add((int) Math.round(Math.log(p) / Utils.log2));
+            log_p.add(p.bitLength());
         }
 
-        return new IntArray[]{new IntArray(fb), t_sqrt, log_p};
+        return new Pair<>(new BigIntArray(fb), new IntArray[]{t_sqrt, log_p});
     }
 
     public abstract void initialize();
@@ -99,19 +103,20 @@ public abstract class QuadraticSieve {
      * Sieve along the range of (-M, M), filling {@code this.sieve_array} in the process.
      */
     public void sieve() {
-        sieve_array = BigIntArray.filledArray((2 * m) + 1, BigInteger.ZERO);
+        sieve_array = new BigInteger[(2 * m) + 1];
+        Arrays.fill(sieve_array, BigInteger.ZERO);
 
         int soln;
         int _2m = m + m;
 
         // For 2, just sieve with soln1 not soln2
-        soln = soln1.get(0) + _2m;
+        soln = soln1[0] + _2m;
         while (soln > _2m) {
             soln -= 2;
         }
 
         while (soln >= 0) {
-            sieve_array.increment(soln, log_p.get(0));
+            sieve_array[soln] = sieve_array[soln].add(BigInteger.valueOf(log_p.get(0)));
             soln -= 2;
         }
 
@@ -120,25 +125,25 @@ public abstract class QuadraticSieve {
             prime = factor_base.get(p);
 
             // Start soln at the top of soln1 + ip <= M
-            soln = soln1.get(p) + _2m;
+            soln = soln1[p] + _2m;
             while (soln > _2m) {
                 soln -= prime;
             }
 
             // Decrease down to soln1 + ip >= -M
             while (soln >= 0) {
-                sieve_array.increment(soln, log_p.get(p));
+                sieve_array[soln] = sieve_array[soln].add(BigInteger.valueOf(log_p.get(p)));
                 soln -= prime;
             }
 
             // Do the same for soln2 + ip
-            soln = soln2.get(p) + _2m;
+            soln = soln2[p] + _2m;
             while (soln > _2m) {
                 soln -= prime;
             }
 
             while (soln >= 0) {
-                sieve_array.increment(soln, log_p.get(p));
+                sieve_array[soln] = sieve_array[soln].add(BigInteger.valueOf(log_p.get(p)));
                 soln -= prime;
             }
         }
@@ -154,26 +159,34 @@ public abstract class QuadraticSieve {
      * @return {@code true} iff matrix has more rows than columns, otherwise {@code false}
      */
     public boolean trialDivision(int error) {
-        BigInteger min_val = BigInteger.valueOf((long) (Math.log(m * Utils.BigSqrt(N).longValue()) - error));
+        BigInteger min_val = BigInteger.valueOf((long) (Utils.BigLN(Utils.BigSqrt(N).multiply(M)) - error));
+
+        System.err.println("Minimum sieve value = " + min_val);
 
         LinkedList<IntArray> matrix = new LinkedList<>();
         LinkedList<BigInteger> input = new LinkedList<>();
-        BigInteger X;
-        for (int x = 0; x < sieve_array.size(); x++) {
-            if (sieve_array.get(x).compareTo(min_val) >= 0) {
+        IntArray t;
+        BigInteger X, r;
+        for (int x = 0; x < sieve_array.length; x++) {
+            if (sieve_array[x].compareTo(min_val) >= 0) {
                 try {
                     X = BigInteger.valueOf(x);
-                    matrix.add(Utils.trialDivide(Q_x.apply(X), FactorBase));
+                    r = Q_x.apply(X);
+                    t = Utils.trialDivide(r, FactorBase);
+                    System.err.println("Q_x(" + x + ") = " + r + " is smooth");
+                    matrix.add(t);
                     input.add(X);
                 } catch (ArithmeticException ignored) { }
             }
         }
 
         if (matrix.size() > FactorBase.size()) {
+            System.err.println("Trial division succeeded");
             smooth_matrix = new IntMatrix(matrix);
             polynomialInput = new BigIntArray(input);
             return true;
         } else {
+            System.err.println("Trial division failed");
             return false;
         }
     }

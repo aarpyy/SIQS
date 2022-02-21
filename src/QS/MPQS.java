@@ -9,8 +9,8 @@ import java.util.Scanner;
 // Multiple Polynomial Quadratic Sieve
 public class MPQS extends QuadraticSieve {
 
-    public MPQS(BigInteger n, int m, IntArray factor_base, IntArray t_sqrt, IntArray log_p) {
-        super(n, m, factor_base, t_sqrt, log_p);
+    public MPQS(BigInteger n, int m, BigIntArray fb, IntArray[] precomp) {
+        super(n, m, fb, precomp[0], precomp[1]);
     }
 
     public static long[] calculateConstants(BigInteger N) {
@@ -79,10 +79,10 @@ public class MPQS extends QuadraticSieve {
             b_mod_p = int_b % p;
 
             // soln1 = a^-1 * (tmem_p - b ) mod p
-            soln1.add(Math.floorMod(a_inv * (t - b_mod_p), p));
+            soln1[i] = Math.floorMod(a_inv * (t - b_mod_p), p);
 
             // soln2 = a^-1 * (-tmem_p - b ) mod p
-            soln2.add(Math.floorMod(a_inv * (-t - b_mod_p), p));
+            soln2[i] = Math.floorMod(a_inv * (-t - b_mod_p), p);
         }
     }
 
@@ -142,11 +142,11 @@ public class MPQS extends QuadraticSieve {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
-            IntArray[] start = QuadraticSieve.startup(N, scanner);
+            Pair<BigIntArray, IntArray[]> start = QuadraticSieve.startup(N, scanner);
             long[] constants = MPQS.calculateConstants(N);
 
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
+            MPQS qs = new MPQS(N, (int) constants[0], start.first(), start.second());
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

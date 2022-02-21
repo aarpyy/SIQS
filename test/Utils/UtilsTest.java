@@ -1,16 +1,12 @@
 package Utils;
 
-import QS.IntArray;
-import QS.MPQS;
-import QS.QuadraticSieve;
-import QS.Utils;
+import QS.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -30,11 +26,11 @@ class UtilsTest {
             File primesFile = new File(".\\primes.txt");
             Scanner scanner = new Scanner(primesFile);
 
-            IntArray[] start = QuadraticSieve.startup(N, scanner);
+            Pair<BigIntArray, IntArray[]> start = QuadraticSieve.startup(N, scanner);
             long[] constants = MPQS.calculateConstants(N);
 
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
+            MPQS qs = new MPQS(N, (int) constants[0], start.first(), start.second());
 
             IntArray powers = Utils.trialDivide(N, qs.FactorBase);
 
@@ -61,7 +57,22 @@ class UtilsTest {
     }
 
     @Test
+    void powerMod() {
+        int a = 3;
+        int p = 17;
+        System.out.println("pow(a, (p - 1) // 2, p) = " + Utils.powerMod(a, (p - 1) / 2, p));
+        System.out.println(Utils.powerMod(3, 8, 17));
+        System.out.println("quadraticNonResidue(" + a + ", " + p + ") = " + Utils.quadraticNonResidue(a, p));
+    }
+
+    @Test
     void fastPower() {
+        int i = 0;
+        int[] array = new int[10];
+        Arrays.fill(array, 0);
+        array[i++] = 1;
+        System.out.println(Arrays.toString(array));
+        System.out.println(i);
     }
 
     @Test
@@ -108,30 +119,10 @@ class UtilsTest {
 
     @Test
     void modSqrt() {
-        int modulus = 17;
+        BigInteger a = BigInteger.valueOf(179);
+        BigInteger p = BigInteger.valueOf(46633);
 
-        BigInteger p = BigInteger.valueOf(modulus);
-        BigInteger a;
-
-        LinkedList<BigInteger> squares = new LinkedList<>();
-        for (int i = 1; i < modulus; i++) {
-            a = BigInteger.valueOf(i);
-            squares.add(a.modPow(BigInteger.TWO, p));
-        }
-
-        BigInteger sq;
-        for (BigInteger n : squares) {
-            try {
-                sq = Utils.modSqrt(n, p);
-                assertEquals(sq.modPow(BigInteger.TWO, p), n);
-
-                if (print) {
-                    System.out.println("N: " + n + "; √n: " + sq + " ^2: " + sq.modPow(BigInteger.TWO, p));
-                }
-            } catch (ArithmeticException e) {
-                System.out.println(n + " does not have a square root mod " + p);
-            }
-        }
+        System.out.println(Utils.modSqrt(a, p));
     }
 
     @Test

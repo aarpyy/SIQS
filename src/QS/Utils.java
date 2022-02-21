@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -131,19 +130,16 @@ public final class Utils {
     public static int powerMod(int a, int p, int m) {
         if (p < 0) throw new ArithmeticException("Exponent " + p + " must be positive");
 
-        // Make sure that a is positive
-        a = Math.floorMod(a, m);
-
         int res = 1;
         while (p != 0) {
-            if ((p & 1) != 0) {
+            if ((p & 1) == 1) {
                 p--;
                 res = (res * a) % m;
             }
-            p <<= 1;
+            p >>= 1;
             a = (a * a) % m;
         }
-        return res;
+        return Math.floorMod(res, m);
     }
 
     /**
@@ -298,61 +294,69 @@ public final class Utils {
      * @throws ArithmeticException if {@code a^((p-1)/2) != 1} i.e. a is not a quadratic residue mod p
      */
     public static BigInteger modSqrt(BigInteger a, BigInteger p) throws ArithmeticException {
-        if (!quadraticResidue(a, p)) {
+        if (a.equals(BigInteger.ZERO)) {
+            return a;
+        } else if (!quadraticResidue(a, p)) {
             throw new ArithmeticException(a + " does not have a quadratic residue mod " + p);
-        } else if (p.and(THREE).equals(THREE)) {
-            return a.modPow(p.add(BigInteger.ONE).shiftRight(2), p);
-        } else if (p.and(BigInteger.valueOf(7)).equals(BigInteger.valueOf(5))) {
-            BigInteger v = a.multiply(BigInteger.TWO).modPow(p.subtract(BigInteger.valueOf(5).shiftRight(3)), p);
-            BigInteger i = a.multiply(BigInteger.TWO).multiply(v.pow(2)).mod(p);
-            return a.multiply(v).multiply(i.subtract(BigInteger.ONE)).mod(p);
         } else {
-            BigInteger Q = p.subtract(BigInteger.ONE);
-            int S = 0;
-            while (!Q.testBit(0)) {
-                Q = Q.shiftRight(1);
-                S++;
-            }
+            switch (p.mod(BigInteger.valueOf(8)).intValue()) {
+                case 1 -> {
+                    BigInteger Q = p.subtract(BigInteger.ONE);
+                    int S = 0;
+                    while (!Q.testBit(0)) {
+                        Q = Q.shiftRight(1);
+                        S++;
+                    }
 
-            Random rand = new Random();
-            BigInteger z = randRange(BigInteger.TWO, p, rand);
-            while (!quadraticNonResidue(z, p)) {
-                z = randRange(BigInteger.TWO, p, rand);
-            }
+                    Random rand = new Random();
+                    BigInteger z = randRange(BigInteger.TWO, p, rand);
+                    while (!quadraticNonResidue(z, p)) {
+                        z = randRange(BigInteger.TWO, p, rand);
+                    }
 
-            BigInteger c = z.modPow(Q, p);
-            BigInteger t = a.modPow(Q, p);
-            BigInteger r = a.modPow(Q.add(BigInteger.ONE).shiftRight(1), p);
-            BigInteger b;
+                    BigInteger c = z.modPow(Q, p);
+                    BigInteger t = a.modPow(Q, p);
+                    BigInteger r = a.modPow(Q.add(BigInteger.ONE).shiftRight(1), p);
+                    BigInteger b;
 
-            int i;
-            BigInteger x;
-            while (true) {
-                if (t.equals(BigInteger.ZERO)) {
-                    return BigInteger.ZERO;
-                } else if (t.equals(BigInteger.ONE)) {
-                    return r;
-                }
+                    int i;
+                    BigInteger x;
+                    while (true) {
+                        if (t.equals(BigInteger.ZERO)) {
+                            return BigInteger.ZERO;
+                        } else if (t.equals(BigInteger.ONE)) {
+                            return r;
+                        }
 
-                i = 0;
-                x = t;
+                        i = 0;
+                        x = t;
 
-                while (!x.equals(BigInteger.ONE)) {
-                    x = x.multiply(x).mod(p);
-                    i++;
+                        while (!x.equals(BigInteger.ONE)) {
+                            x = x.multiply(x).mod(p);
+                            i++;
 
-                    if (i == S) {
-                        throw new ArithmeticException("Finding square root of " + a + " mod " + p + " failed " +
-                                "despite " + a + " being a quadratic residue mod " + p);
+                            if (i == S) {
+                                throw new ArithmeticException("Finding square root of " + a + " mod " + p + " failed " +
+                                        "despite " + a + " being a quadratic residue mod " + p);
+                            }
+                        }
+
+                        b = c.modPow(BigInteger.TWO.pow(S - i - 1), p);
+                        c = b.modPow(BigInteger.TWO, p);
+                        S = i;
+
+                        t = t.multiply(c).mod(p);
+                        r = r.multiply(b).mod(p);
                     }
                 }
-
-                b = c.modPow(BigInteger.TWO.pow(S - i - 1), p);
-                c = b.modPow(BigInteger.TWO, p);
-                S = i;
-
-                t = t.multiply(c).mod(p);
-                r = r.multiply(b).mod(p);
+                case 5 -> {
+                    BigInteger v = a.multiply(BigInteger.TWO).modPow(p.subtract(BigInteger.valueOf(5).shiftRight(3)), p);
+                    BigInteger i = a.multiply(BigInteger.TWO).multiply(v.pow(2)).mod(p);
+                    return a.multiply(v).multiply(i.subtract(BigInteger.ONE)).mod(p);
+                }
+                default -> {
+                    return a.modPow(p.add(BigInteger.ONE).shiftRight(2), p);
+                }
             }
         }
     }
@@ -366,61 +370,69 @@ public final class Utils {
      * @throws ArithmeticException if a^((p-1)/2) != 1 i.e. a is not a quadratic residue mod p
      */
     public static int modSqrt(int a, int p) throws ArithmeticException {
-        if (!quadraticResidue(a, p)) {
+        if (a == 0) {
+            return a;
+        } else if (!quadraticResidue(a, p)) {
             throw new ArithmeticException(a + " does not have a quadratic residue mod " + p);
-        } else if ((p & 3) == 3) {
-            return powerMod(a, (p + 1) >> 2, p);
-        } else if ((p & 7) == 5) {
-            int v = powerMod(2 * a, (p - 5) >> 3, p);
-            int i = (2 * a * v * v) % p;
-            return (a * v * (i - 1)) % p;
         } else {
-            int Q = p - 1;
-            int S = 0;
-            while ((Q & 1) == 0) {
-                Q >>= 1;
-                S++;
-            }
+            switch (p % 8) {
+                case 1 -> {
+                    int Q = p - 1;
+                    int S = 0;
+                    while ((Q & 1) == 0) {
+                        Q >>= 1;
+                        S++;
+                    }
 
-            Random rand = new Random();
-            int range = p - 2;
-            int z = rand.nextInt(range) + 2;
-            while (!quadraticNonResidue(z, p)) {
-                z = rand.nextInt(range) + 2;
-            }
+                    Random rand = new Random();
+                    int range = p - 2;
+                    int z = rand.nextInt(range) + 2;
+                    while (!quadraticNonResidue(z, p)) {
+                        z = rand.nextInt(range) + 2;
+                    }
 
-            int c = powerMod(z, Q, p);
-            int t = powerMod(a, Q, p);
-            int r = powerMod(a, (Q + 1) >> 1, p);
+                    int c = powerMod(z, Q, p);
+                    int t = powerMod(a, Q, p);
+                    int r = powerMod(a, (Q + 1) >> 1, p);
 
-            int b, i, x;
+                    int i, b, x;
+                    while (true) {
+                        if (t == 0) {
+                            return 0;
+                        } else if (t == 1) {
+                            return r;
+                        }
 
-            while (true) {
-                if (t == 0) {
-                    return 0;
-                } else if (t == 1) {
-                    return r;
-                }
+                        i = 0;
+                        x = t;
 
-                i = 0;
-                x = t;
+                        while (x != 1) {
+                            x = (x * x) % p;
+                            i++;
 
-                while (x != 1) {
-                    x = (x * x) % p;
-                    i++;
+                            if (i == S) {
+                                throw new ArithmeticException("Finding square root of " + a + " mod " + p + " failed " +
+                                        "despite " + a + " being a quadratic residue mod " + p);
+                            }
+                        }
 
-                    if (i == S) {
-                        throw new ArithmeticException("Finding square root of " + a + " mod " + p + " failed " +
-                                "despite " + a + " being a quadratic residue mod " + p);
+                        b = powerMod(c, 1 << (S - i - 1), p);
+                        c = powerMod(b, 2, p);
+                        S = i;
+
+                        t = (t * c) % p;
+                        r = (r * b) % p;
                     }
                 }
-
-                b = powerMod(c, (int) Math.pow(2, S - i - 1), p);
-                c = powerMod(b, 2, p);
-                S = i;
-
-                t = (t * c) % p;
-                r = (r * b) % p;
+                case 5 -> {
+                    int a2 = a + a;
+                    int v = powerMod(a2, (p - 5) >> 3, p);
+                    int i = (a2 * v * v) % p;
+                    return (a * v * (i - 1)) % p;
+                }
+                default -> {
+                    return powerMod(a, (p + 1) >> 2, p);
+                }
             }
         }
     }
@@ -474,6 +486,10 @@ public final class Utils {
         // Returns a ^ ((p - 1) / 2) == 1, which tells us if there exists an integer c s.sqrtFB.
         // c^2 = a mod p
         return a.modPow(p.subtract(BigInteger.ONE).shiftRight(1), p).equals(BigInteger.ONE);
+    }
+
+    public static boolean quadraticResidue(BigInteger a, int p) {
+        return quadraticResidue(a, BigInteger.valueOf(p));
     }
 
     /**
