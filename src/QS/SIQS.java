@@ -25,6 +25,7 @@ public class SIQS extends QuadraticSieve {
 
     private IntArray[] B_ainv2;
     private BigInteger[] B;
+    private BigInteger a;
     private int s;
 
     public SIQS(BigInteger n, int m, BigIntArray fb, IntArray[] precomp) {
@@ -34,6 +35,7 @@ public class SIQS extends QuadraticSieve {
 
         // Number of primes in that a factors into -- each are power of 1
         s = 0;
+        a = BigInteger.ONE;
     }
 
     /**
@@ -51,8 +53,7 @@ public class SIQS extends QuadraticSieve {
         else return 589824;
     }
 
-    public void initialize() throws ArithmeticException {
-
+    public byte[] smoothA() {
         int min = 0;
         // Get first prime in factor base >= 2000
         while (factor_base.get(min) < minFactor) {
@@ -82,17 +83,15 @@ public class SIQS extends QuadraticSieve {
         if (range < minNFactors) {
             throw new ArithmeticException("Less than " + minNFactors + " in range of factor base");
         }
-
         // array representing if a given prime from the factor base is a factor of a
         byte[] a_factors = new byte[FactorBase.size()];
         Arrays.fill(a_factors, (byte) 0);
 
         // Approximately what a should be
-        BigInteger a_approx = Utils.BigSqrt(N.add(N)).divide(M);
-        BigInteger a = BigInteger.ONE;
+        BigInteger target = Utils.BigSqrt(N.add(N)).divide(M);
 
         // Randomly choose factors in the given range
-        for (int i = rand.nextInt(range) + min; a.compareTo(a_approx) < 0; i = rand.nextInt(range) + min) {
+        for (int i = rand.nextInt(range) + min; a.compareTo(target) < 0; i = rand.nextInt(range) + min) {
             if (a_factors[i] == 0) {
                 a = a.multiply(FactorBase.get(i));
                 a_factors[i]++;
@@ -100,17 +99,17 @@ public class SIQS extends QuadraticSieve {
             }
         }
 
-        BigInteger diff1 = a.subtract(a_approx).abs();
+        BigInteger diff1 = a.subtract(target).abs();
         BigInteger diff2;
         int r = -1;
 
         /*
         Iterate through all factors used to make a. Find which one, when removed, gets a closest
-        to a_approx. If removing none gets a closest, don't remove, otherwise remove optimal.
+        to target. If removing none gets a closest, don't remove, otherwise remove optimal.
          */
         for (int j = 0; j < a_factors.length; j++) {
             if (a_factors[j] == 1) {
-                diff2 = a.divide(FactorBase.get(j)).subtract(a_approx).abs();
+                diff2 = a.divide(FactorBase.get(j)).subtract(target).abs();
                 if (diff2.compareTo(diff1) < 0) r = j;
             }
         }
@@ -120,7 +119,10 @@ public class SIQS extends QuadraticSieve {
             s--;
         }
 
-        System.out.println("index removed: " + r);
+        return a_factors;
+    }
+
+    public void initialize() throws ArithmeticException {
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
         B = new BigInteger[s];
@@ -191,8 +193,9 @@ public class SIQS extends QuadraticSieve {
 
         System.err.println("a = " + a + "\nb = " + b);
         System.out.println("b^2 - N = " + b.pow(2).subtract(N));
-        System.out.println("b^2 - N % a = " + b.pow(2).subtract(N).mod(a));
-        assert b.pow(2).subtract(N).mod(a).equals(BigInteger.ZERO) : "a does not divide b^2 - N";
+        BigInteger b2_N = b.pow(2).subtract(N).mod(a);
+        System.out.println("b^2 - N % a = " + b2_N);
+        assert b2_N.equals(BigInteger.ZERO) : "a does not divide b^2 - N";
         Q_x = new QSPoly(a, b, N);
 
     }
