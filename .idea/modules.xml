@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/MPQS.iml" filepath="$PROJECT_DIR$/MPQS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SIQS.iml" filepath="$PROJECT_DIR$/SIQS.iml" />
     </modules>
   </component>
 </project>
