@@ -72,17 +72,17 @@ public final class Utils {
      * Attempts to completely factor n using the given factor base, returning the powers of the factors
      * if number was completely factored, throwing ArithmeticException if not.
      * @param n BigInteger to be factored
-     * @param primes BigIntArray of factor base
+     * @param fb BigIntArray of factor base
      * @return IntArray of the powers of each of the factors in the factor base if {@code n} was completely factored
-     * @throws ArithmeticException if {@code n} is not a product of just the factors in {@code primes}
+     * @throws ArithmeticException if {@code n} is not a product of just the factors in {@code fb}
      */
-    public static IntArray trialDivide(BigInteger n, BigIntArray primes) throws ArithmeticException {
-        int[] factors = new int[primes.size()];
+    public static IntArray trialDivide(BigInteger n, BigIntArray fb) throws ArithmeticException {
+        int[] factors = new int[fb.size()];
         BigInteger[] div;
         BigInteger prime;
-        for (int i = 0; i < primes.size(); i++) {
+        for (int i = 0; i < fb.size(); i++) {
             factors[i] = 0;
-            prime = primes.get(i);
+            prime = fb.get(i);
             while ((div = n.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
                 n = div[0];
                 factors[i]++;

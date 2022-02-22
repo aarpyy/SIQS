@@ -165,7 +165,7 @@ public abstract class QuadraticSieve {
      * @return {@code true} iff matrix has more rows than columns, otherwise {@code false}
      */
     public boolean trialDivision(int error) {
-        BigInteger min_val = BigInteger.valueOf((long) (Utils.BigLN(Utils.BigSqrt(N).multiply(M)) - error));
+        BigInteger min_val = BigInteger.valueOf(Utils.BigSqrt(N).multiply(M).bitLength() - error);
 
         System.err.println("Minimum sieve value = " + min_val);
 
@@ -173,11 +173,15 @@ public abstract class QuadraticSieve {
         LinkedList<BigInteger> input = new LinkedList<>();
         IntArray t;
         BigInteger X, r;
+        int divided = 0;
+        System.out.println("Trial dividing sieve array of length " + sieve_array.length);
         for (int x = 0; x < sieve_array.length; x++) {
             if (sieve_array[x].compareTo(min_val) >= 0) {
                 try {
+                    divided++;
                     X = BigInteger.valueOf(x);
                     r = Q_x.apply(X);
+                    assert r.compareTo(BigInteger.ZERO) >= 0 : "result is negative";
                     t = Utils.trialDivide(r, FactorBase);
                     System.err.println("Q_x(" + x + ") = " + r + " is smooth");
                     matrix.add(t);
@@ -185,6 +189,7 @@ public abstract class QuadraticSieve {
                 } catch (ArithmeticException ignored) { }
             }
         }
+        System.out.println("\nTrial division complete. " + divided + " divisions performed");
 
         if (matrix.size() > FactorBase.size()) {
             System.err.println("Trial division succeeded");

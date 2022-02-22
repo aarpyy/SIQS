@@ -26,6 +26,8 @@ public class SIQS extends QuadraticSieve {
     // Number of trials to randomly choose polynomial coefficient 'a'
     private static final int trialsA = 10;
 
+    private static final int trialDivError = 25;
+
     private IntArray[] B_ainv2;
     private BigInteger[] B;
     private BigInteger a;
@@ -104,7 +106,7 @@ public class SIQS extends QuadraticSieve {
         BigDecimal best_ratio = null;
         BigDecimal ratio, A;
 
-        int comp1, comp2, comp3;
+        int comp;
 
         for (int j = 0; j < trialsA; j++) {
 
@@ -132,10 +134,9 @@ public class SIQS extends QuadraticSieve {
                 OR current A has bigger ratio than best_ratio and best_ratio is smaller than opt_ratio
                 set current data to chosen
                  */
-                comp1 = ratio.compareTo(best_ratio);
-                comp2 = ratio.compareTo(opt_ratio);
-                comp3 = best_ratio.compareTo(opt_ratio);
-                if (((comp1 < 0) && (comp2 >= 0)) || ((comp3 < 0) && (comp1 > 0))) {
+                comp = ratio.compareTo(best_ratio);
+                if (((comp < 0) && (ratio.compareTo(opt_ratio) >= 0))
+                        || ((best_ratio.compareTo(opt_ratio) < 0) && (comp > 0))) {
 
                     // toBigIntegerExact() ensures that A is an integer, raising an error if not
                     a = A.toBigIntegerExact();
@@ -324,7 +325,7 @@ public class SIQS extends QuadraticSieve {
             while (true) {
                 qs.sieve();
                 System.out.println("Performed " + i + " round of sieving");
-                if (!qs.trialDivision(50)) {
+                if (!qs.trialDivision(trialDivError)) {
                     qs.nextPoly(i);
                 } else if ((factor = qs.solve()) != null) {
                     System.out.println("Factor: " + factor);

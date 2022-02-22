@@ -25,7 +25,7 @@ public class QSPoly implements Function<BigInteger, BigInteger> {
     
     @Override
     public BigInteger apply(BigInteger x) {
-        return A.multiply(x).add(B).pow(2).subtract(N);
+        return A.multiply(x).add(B).pow(2).subtract(N).mod(N);
     }
 
     public BigInteger apply(int x) {
