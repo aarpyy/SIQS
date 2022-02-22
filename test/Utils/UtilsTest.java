@@ -221,6 +221,16 @@ class UtilsTest {
 
     @Test
     void quadraticNonResidue() {
+        BigInteger a = BigInteger.valueOf(28);
+        BigInteger p = BigInteger.valueOf(29);
+        BigInteger sq;
+        int s;
+
+        System.out.println((sq = Utils.modSqrt(a, p)));
+        System.out.println(sq.modPow(BigInteger.TWO, p));
+
+        System.out.println((s = Utils.modSqrt(a.intValue(), p.intValue())));
+        System.out.println(Utils.powerMod(s, 2, p.intValue()));
     }
 
     @Test

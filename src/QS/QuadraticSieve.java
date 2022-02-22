@@ -86,9 +86,15 @@ public abstract class QuadraticSieve {
         // Array of log base e of p (rounded)
         BigIntArray log_p = new BigIntArray(fb.size());
 
+        BigInteger sq;
         // For each prime in factor base, add the modular square root and the log
         for (BigInteger p : fb) {
-            t_sqrt.add(Utils.modSqrt(N, p));
+            sq = Utils.modSqrt(N, p);
+
+            assert sq.modPow(BigInteger.TWO, p).equals(N.mod(p)) :
+                    "Square root failed: " + sq + "^2 == " + sq.pow(2).mod(p) + " != N mod " + p + " (" + N.mod(p) + ")";
+
+            t_sqrt.add(sq);
 
             // Take log base 2 of prime p
             log_p.add(BigInteger.valueOf(p.bitLength()));

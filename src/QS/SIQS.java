@@ -87,45 +87,65 @@ public class SIQS extends QuadraticSieve {
             throw new ArithmeticException("Less than " + minNFactors + " in range of factor base");
         }
 
-        int F = FactorBase.size();
-
         // array representing if a given prime from the factor base is a factor of a
         HashSet<Integer> a_factors = new HashSet<>();
         HashSet<Integer> tmp_factors;
-        BigInteger A, tmp_diff;
-
-        BigInteger diff = null;
 
         // Approximately what a should be
-        BigInteger target = Utils.BigSqrt(N.add(N)).divide(M);
+        // BigInteger target = Utils.BigSqrt(N.add(N)).divide(M);
+        MathContext ctx = MathContext.DECIMAL128;
+        BigDecimal target = new BigDecimal(N.add(N)).sqrt(ctx).divide(new BigDecimal(M), ctx);
 
         // Credit to skollman - PyFactorise for this minimum a value, gets a's closer to actual target
-        BigInteger min_a = target.divide(Utils.BigSqrt(FactorBase.get(min).add(FactorBase.get(max).shiftRight(1))));
+        BigDecimal fbRange = new BigDecimal(FactorBase.get(min).add(FactorBase.get(max).shiftRight(1)));
+        BigDecimal min_a = target.divide(fbRange, ctx);
+
+        BigDecimal opt_ratio = BigDecimal.valueOf(0.9);
+        BigDecimal best_ratio = null;
+        BigDecimal ratio, A;
+
+        int comp1, comp2, comp3;
 
         for (int j = 0; j < trialsA; j++) {
 
-            A = BigInteger.ONE;
+            A = BigDecimal.ONE;
 
             tmp_factors = new HashSet<>();
 
             // Randomly choose factors in the given range
             for (int i = rand.nextInt(range) + min; A.compareTo(min_a) < 0; i = rand.nextInt(range) + min) {
                 if (!tmp_factors.contains(i)) {
-                    A = A.multiply(FactorBase.get(i));
+                    A = A.multiply(new BigDecimal(FactorBase.get(i)));
                     tmp_factors.add(i);
                 }
             }
 
-            tmp_diff = A.subtract(target).abs();
+            ratio = A.divide(target, ctx);
 
-            if ((diff == null) || (tmp_diff.compareTo(diff) < 0)) {
-                a = A;
-                diff = tmp_diff;
+            if (best_ratio == null) {
+                a = A.toBigIntegerExact();
+                best_ratio = ratio;
                 a_factors = tmp_factors;
+            } else {
+                /*
+                If current A has ratio smaller than best_ratio and it's bigger than the opt_ratio
+                OR current A has bigger ratio than best_ratio and best_ratio is smaller than opt_ratio
+                set current data to chosen
+                 */
+                comp1 = ratio.compareTo(best_ratio);
+                comp2 = ratio.compareTo(opt_ratio);
+                comp3 = best_ratio.compareTo(opt_ratio);
+                if (((comp1 < 0) && (comp2 >= 0)) || ((comp3 < 0) && (comp1 > 0))) {
+
+                    // toBigIntegerExact() ensures that A is an integer, raising an error if not
+                    a = A.toBigIntegerExact();
+                    best_ratio = ratio;
+                    a_factors = tmp_factors;
+                }
             }
         }
 
-        BigDecimal d_diff = new BigDecimal(a).divide(new BigDecimal(target), MathContext.DECIMAL32);
+        BigDecimal d_diff = new BigDecimal(a).divide(target, MathContext.DECIMAL32);
         System.out.println("chosen a = " + a + "; % difference = " + d_diff);
 
         return a_factors;
@@ -153,7 +173,7 @@ public class SIQS extends QuadraticSieve {
             gamma = t_sqrt.get(l).multiply(a_l.modInverse(q)).mod(q);
 
             // If gamma > q/2 but here comparing if 2*gamma > q so that if q is odd nothing is lost
-            if (gamma.compareTo(q.shiftRight(1)) > 0) {
+            if (gamma.shiftLeft(1).compareTo(q) > 0) {
                 gamma = q.subtract(gamma);
             }
 

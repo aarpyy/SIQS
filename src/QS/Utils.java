@@ -291,7 +291,7 @@ public final class Utils {
      * sqrt = {@code av(i - 1) mod p} where {@code v = (2a)^((p-5)/8) mod p} and
      * {@code i = {@code 2av^2 mod p}}. Otherwise, {@code p % 4 == 1} and we can use the
      * Tonelli-Shanks algorithm.
-     * <p>Source for algorithm: https://en.wikipedia.org/wiki/Tonelli%E2%80%93Shanks_algorithm</p>
+     * <p>Source for algorithm: https://www.rieselprime.de/ziki/Modular_square_root</p>
      * @param a number to take square root of
      * @param p modulus
      * @return BigInteger x s.t. x^2 = a mod p
@@ -305,57 +305,54 @@ public final class Utils {
         } else {
             switch (p.mod(BigInteger.valueOf(8)).intValue()) {
                 case 1 -> {
-                    BigInteger Q = p.subtract(BigInteger.ONE);
-                    int S = 0;
-                    while (!Q.testBit(0)) {
-                        Q = Q.shiftRight(1);
-                        S++;
+                    BigInteger q, y, z, c, t, r, b;
+                    int i, s, m;
+
+                    q = p.subtract(BigInteger.ONE);
+                    s = 0;
+                    while (!q.testBit(0)) {
+                        q = q.shiftRight(1);
+                        s++;
                     }
 
                     Random rand = new Random();
-                    BigInteger z = randRange(BigInteger.TWO, p, rand);
+                    z = randRange(BigInteger.TWO, p, rand);
                     while (!quadraticNonResidue(z, p)) {
                         z = randRange(BigInteger.TWO, p, rand);
                     }
 
-                    BigInteger c = z.modPow(Q, p);
-                    BigInteger t = a.modPow(Q, p);
-                    BigInteger r = a.modPow(Q.add(BigInteger.ONE).shiftRight(1), p);
-                    BigInteger b;
+                    c = z.modPow(q, p);
+                    t = a.modPow(q, p);
+                    r = a.modPow(q.add(BigInteger.ONE).shiftRight(1), p);
 
-                    int i;
-                    BigInteger x;
+                    // Switching s to m does nothing code-wise, but is name-consistent with source algorithm
+                    m = s;
+
                     while (true) {
-                        if (t.equals(BigInteger.ZERO)) {
-                            return BigInteger.ZERO;
-                        } else if (t.equals(BigInteger.ONE)) {
+                        if (t.equals(BigInteger.ONE)) {
                             return r;
-                        }
-
-                        i = 0;
-                        x = t;
-
-                        while (!x.equals(BigInteger.ONE)) {
-                            x = x.multiply(x).mod(p);
-                            i++;
-
-                            if (i == S) {
-                                throw new ArithmeticException("Finding square root of " + a + " mod " + p + " failed " +
-                                        "despite " + a + " being a quadratic residue mod " + p);
+                        } else {
+                            i = 0;
+                            y = t;
+                            while (!y.equals(BigInteger.ONE)) {
+                                y = y.multiply(y).mod(p);
+                                i++;
                             }
+
+                            b = c.modPow(BigInteger.TWO.pow(m - i - 1), p);
+                            c = b.multiply(b).mod(p);
+                            r = r.multiply(b).mod(p);
+                            t = t.multiply(c).mod(p);
+
+                            m = i;
+
                         }
-
-                        b = c.modPow(BigInteger.TWO.pow(S - i - 1), p);
-                        c = b.modPow(BigInteger.TWO, p);
-                        S = i;
-
-                        t = t.multiply(c).mod(p);
-                        r = r.multiply(b).mod(p);
                     }
                 }
                 case 5 -> {
-                    BigInteger v = a.multiply(BigInteger.TWO).modPow(p.subtract(BigInteger.valueOf(5).shiftRight(3)), p);
-                    BigInteger i = a.multiply(BigInteger.TWO).multiply(v.pow(2)).mod(p);
+                    BigInteger a2 = a.add(a);
+                    BigInteger v = a2.modPow(p.subtract(BigInteger.valueOf(5)).shiftRight(3), p);
+                    BigInteger i = a2.multiply(v.multiply(v)).mod(p);
                     return a.multiply(v).multiply(i.subtract(BigInteger.ONE)).mod(p);
                 }
                 default -> {
