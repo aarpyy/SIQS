@@ -1,14 +1,11 @@
-package Utils;
+package QS;
 
-import QS.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,31 +17,22 @@ class UtilsTest {
 
     @Test
     void smoothFactor() {
-        try {
-            BigInteger N = new BigInteger("3703");
-
-            File primesFile = new File(".\\primes.txt");
-            Scanner scanner = new Scanner(primesFile);
-
-            BigIntArray[] start = QuadraticSieve.startup(N, scanner);
-
-            // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, start[0], start[1], start[2], start[3]);
-
-            IntArray powers = qs.trialDivide(N);
-
-            // Confirm that these are the powers
-            int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};
-            for (int i = 0; i < knownPowers.length; i++) {
-                assertEquals(knownPowers[i], powers.get(i));
+        BigInteger a = new BigInteger("3019406709819244469219098647" +
+                "429015240407452240932129599881656");
+        BigIntArray primesLTF = BigIntArray.fromArray(Utils.firstN(6000, new File(".\\primes.txt")));
+        int[] factors = new int[primesLTF.size()];
+        BigInteger[] div;
+        BigInteger prime;
+        for (int i = 0; i < primesLTF.size(); i++) {
+            factors[i] = 0;
+            prime = primesLTF.get(i);
+            while ((div = a.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
+                a = div[0];
+                factors[i]++;
             }
+        }
 
-            // Confirm that when you take product of each of powers you get original number
-            assertEquals(Utils.evalPower(qs.FactorBase, powers), N);
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        System.out.println("A = " + a);
     }
 
     @Test

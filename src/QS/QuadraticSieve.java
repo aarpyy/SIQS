@@ -22,19 +22,19 @@ public abstract class QuadraticSieve {
     // Both integer and BigInteger versions of factor base are public as well as N
     public final BigInteger N;
 
-    public final IntArray factor_base;
+    public final int[] factor_base;
     // Same array as factor_base but BigInteger's for separate uses
-    public final BigIntArray FactorBase;
+    public final BigInteger[] FactorBase;
 
-    public final BigIntArray primesLTF;
+    public final BigInteger[] primesLTF;
 
     public final int requiredRelations;
 
     // Everything else is protected so that both MPQS and SIQS can have access, but they are not needed outside
 
     // Solutions to modSqrt(N, p) for each p (N/p) in factor base
-    protected final BigIntArray t_sqrt;
-    protected final BigIntArray log_p;
+    protected final BigInteger[] t_sqrt;
+    protected final BigInteger[] log_p;
 
     protected final int m;
     protected final BigInteger M;
@@ -46,27 +46,31 @@ public abstract class QuadraticSieve {
     protected ArrayList<IntArray> smooth_relations_u;
     protected ArrayList<BigInteger> smooth_relations_t;
 
-    public QuadraticSieve(BigInteger n, BigIntArray primesLTF, BigIntArray FactorBase, BigIntArray t_sqrt, BigIntArray log_p) {
-        this.FactorBase = FactorBase;
-        this.factor_base = FactorBase.toIntArray();
-        this.primesLTF = primesLTF;
+    public QuadraticSieve(BigInteger n, BigInteger[] pr, BigInteger[] fb, BigInteger[] t_sq, BigInteger[] lp) {
+        int s = fb.length;
 
-        assert factor_base.get(0) == 2 : "First prime in factor base is not 2";
+        FactorBase = fb;
+        factor_base = new int[s];
+        for (int i = 0; i < s; i++) {
+            factor_base[i] = fb[i].intValue();
+        }
+        primesLTF = pr;
 
-        this.t_sqrt = t_sqrt;
-        this.log_p = log_p;
+        assert factor_base[0] == 2 : "First prime in factor base is not 2";
+
+        t_sqrt = t_sq;
+        log_p = lp;
         N = n;
         int digits = Utils.nDigits(N);
-        this.m = chooseSieveRange(digits);
+        m = chooseSieveRange(digits);
         M = BigInteger.valueOf(m);
 
         System.out.println("M = " + M);
 
-        System.out.println("Size of factor base = " + factor_base.size());
-        System.out.println("Primes < F = " + primesLTF.size());
+        System.out.println("Size of factor base = " + factor_base.length);
+        System.out.println("Primes < F = " + pr.length);
 
         // These are all variables that will be set during initialization stage
-        int s = factor_base.size();
         soln1 = new int[s];
         soln2 = new int[s];
         requiredRelations = (int) Math.round(s * smoothRelationRatio);
@@ -86,12 +90,9 @@ public abstract class QuadraticSieve {
      * @param primesScanner {@code Scanner} opened on file containing primes
      * @return {@code IntArray[]} containing: {primes < F, factor base, sqrt N mod p, log p}
      */
-    public static BigIntArray[] startup(BigInteger N, Scanner primesScanner) {
+    public static BigInteger[][] startup(BigInteger N, Scanner primesScanner) {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
-//        BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
-//
-//        F = BigInteger.valueOf(6000);
-        int F = 6000;
+        BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
 
         System.out.println("F = " + F);
 
@@ -104,33 +105,48 @@ public abstract class QuadraticSieve {
         // Read in all primes less than limit, adding those for which N is a quadratic residue
         while (primesScanner.hasNextLine()) {
             primes.add(prime = new BigInteger(primesScanner.nextLine()));
-            if (fb.size() >= F) break;
-
-                // We can take N % p as int since p is int and N and N % p have the same residues mod p
+            if (prime.compareTo(F) >= 0) {
+                primes.removeLast();
+                break;
+            }
+            // We can take N % p as int since p is int and N and N % p have the same residues mod p
             else if (Utils.quadraticResidue(N, prime)) fb.add(prime);
         }
 
         // Array of square roots of N mod p
-        BigIntArray t_sqrt = new BigIntArray(fb.size());
+        BigInteger[] t_sqrt = new BigInteger[fb.size()];
 
         // Array of log base e of p (rounded)
-        BigIntArray log_p = new BigIntArray(fb.size());
+        BigInteger[] log_p = new BigInteger[fb.size()];
+
+        BigInteger[] factor_base = new BigInteger[fb.size()];
 
         BigInteger sq;
         // For each prime in factor base, add the modular square root and the log
+        int i = 0;
         for (BigInteger p : fb) {
+            factor_base[i] = p;
+
             sq = Utils.modSqrt(N, p);
 
             assert sq.modPow(BigInteger.TWO, p).equals(N.mod(p)) :
                     "Square root failed: " + sq + "^2 == " + sq.pow(2).mod(p) + " != N mod " + p + " (" + N.mod(p) + ")";
 
-            t_sqrt.add(sq);
+            t_sqrt[i] = sq;
 
             // Take log base 2 of prime p
-            log_p.add(BigInteger.valueOf(Math.round(Math.log(p.intValue()) / Utils.log2)));
+            log_p[i] = BigInteger.valueOf(Math.round(Math.log(p.intValue()) / Utils.log2));
+            i++;
         }
 
-        return new BigIntArray[]{new BigIntArray(primes), new BigIntArray(fb), t_sqrt, log_p};
+        BigInteger[] primesLTF = new BigInteger[primes.size()];
+        i = 0;
+        for (BigInteger p : primes) {
+            primesLTF[i] = p;
+            i++;
+        }
+
+        return new BigInteger[][]{primesLTF, factor_base, t_sqrt, log_p};
     }
 
     /**
@@ -173,17 +189,17 @@ public abstract class QuadraticSieve {
         }
 
         int prime;
-        for (int p = 1; p < factor_base.size(); p++) {
-            prime = factor_base.get(p);
+        for (int p = 1; p < factor_base.length; p++) {
+            prime = factor_base[p];
 
             i_min = -((m + soln1[p]) / prime);
             for (int j = (soln1[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
-                sieve_array[j] = sieve_array[j].add(log_p.get(p));
+                sieve_array[j] = sieve_array[j].add(log_p[p]);
             }
 
             i_min = -((m + soln2[p]) / prime);
             for (int j = (soln2[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
-                sieve_array[j] = sieve_array[j].add(log_p.get(p));
+                sieve_array[j] = sieve_array[j].add(log_p[p]);
             }
         }
 
@@ -197,12 +213,12 @@ public abstract class QuadraticSieve {
      * @throws ArithmeticException if {@code n} is not a product of just the factors in {@code fb}
      */
     public IntArray trialDivide(BigInteger a) throws ArithmeticException {
-        int[] factors = new int[primesLTF.size()];
+        int[] factors = new int[primesLTF.length];
         BigInteger[] div;
         BigInteger prime;
-        for (int i = 0; i < primesLTF.size(); i++) {
+        for (int i = 0; i < primesLTF.length; i++) {
             factors[i] = 0;
-            prime = primesLTF.get(i);
+            prime = primesLTF[i];
             while ((div = a.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
                 a = div[0];
                 factors[i]++;
@@ -227,8 +243,6 @@ public abstract class QuadraticSieve {
      * via {@code this.smooth_matrix} and return {@code true} otherwise return {@code false}.
      *
      * @param g polynomial to use to get smooth output
-     * @param error margin of error for minimum value of input for {@code Q_x}
-     * @return {@code true} iff matrix has more rows than columns, otherwise {@code false}
      */
     public void trialDivision(QSPoly g, BigInteger min_val) {
         IntArray array;

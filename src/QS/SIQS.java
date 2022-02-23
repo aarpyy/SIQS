@@ -29,14 +29,14 @@ public class SIQS extends QuadraticSieve {
     // Number of trials to randomly choose polynomial coefficient 'a'
     private static final int trialsA = 30;
 
-    private static final int trialDivError = 25;
+    private static final int trialDivError = 45;
 
     private int[][] B_ainv2;
     private BigInteger[] B;
     private BigInteger a, b;
     private HashSet<Integer> a_factors;
 
-    public SIQS(BigInteger n, BigIntArray pr, BigIntArray fb, BigIntArray t_sq, BigIntArray log) {
+    public SIQS(BigInteger n, BigInteger[] pr, BigInteger[] fb, BigInteger[] t_sq, BigInteger[] log) {
         super(n, pr, fb, t_sq, log);
         B_ainv2 = null;
         B = null;
@@ -53,21 +53,21 @@ public class SIQS extends QuadraticSieve {
     public void smoothA() {
         int min = 0;
         // Get first prime in factor base >= 2000
-        while (factor_base.get(min) < minFactor) {
+        while (factor_base[min] < minFactor) {
             min++;
 
             // If there aren't enough primes to reach 2000, just start from beginning
-            if (min >= factor_base.size()) {
+            if (min >= factor_base.length) {
                 min = 0;
                 break;
             }
         }
         int max = min;
-        while(factor_base.get(max) < maxFactor) {
+        while(factor_base[max] < maxFactor) {
             max++;
 
-            if (max >= factor_base.size()) {
-                max = factor_base.size();
+            if (max >= factor_base.length) {
+                max = factor_base.length;
                 break;
             }
         }
@@ -83,7 +83,7 @@ public class SIQS extends QuadraticSieve {
         BigDecimal target = new BigDecimal(N.add(N)).sqrt(ctx).divide(new BigDecimal(M), ctx);
 
         // Credit to skollman - PyFactorise for this minimum a value, gets a's closer to actual target
-        BigDecimal fbRange = BigDecimal.valueOf(Math.sqrt((factor_base.get(min) + factor_base.get(max)) / 2.0));
+        BigDecimal fbRange = BigDecimal.valueOf(Math.sqrt((factor_base[min] + factor_base[max]) / 2.0));
         BigInteger min_a = target.divide(fbRange, 0, RoundingMode.HALF_UP).toBigIntegerExact();
 
         BigDecimal opt_ratio = BigDecimal.valueOf(0.9);
@@ -102,7 +102,7 @@ public class SIQS extends QuadraticSieve {
             // Randomly choose factors in the given range
             for (int i = rand.nextInt(range) + min; A.compareTo(min_a) < 0; i = rand.nextInt(range) + min) {
                 if (!tmp_factors.contains(i)) {
-                    A = A.multiply(FactorBase.get(i));
+                    A = A.multiply(FactorBase[i]);
                     tmp_factors.add(i);
                 }
             }
@@ -146,14 +146,14 @@ public class SIQS extends QuadraticSieve {
         BigInteger gamma, q;
         for (int l : a_factors) {
             // Get BigInteger prime
-            q = FactorBase.get(l);
+            q = FactorBase[l];
 
             assert a.mod(q).equals(BigInteger.ZERO) : "q_l does not divide a";
 
             a_l = a.divide(q);
 
             // gamma = t_mem_p * (a_l^-1) mod q
-            gamma = t_sqrt.get(l).multiply(a_l.modInverse(q)).mod(q);
+            gamma = t_sqrt[l].multiply(a_l.modInverse(q)).mod(q);
 
             // If gamma > q/2 but here comparing if 2*gamma > q so that if q is odd nothing is lost
             if (gamma.shiftLeft(1).compareTo(q) > 0) {
@@ -175,33 +175,33 @@ public class SIQS extends QuadraticSieve {
 
 
         // B_ainv2 = new ArrayList<>(factor_base.size() - s);
-        B_ainv2 = new int[a_factors.size()][factor_base.size()];
+        B_ainv2 = new int[a_factors.size()][factor_base.length];
         BigInteger a_inv_p;
-        for (int p = 0; p < factor_base.size(); p++) {
+        for (int p = 0; p < factor_base.length; p++) {
             if (!a_factors.contains(p)) {
 
-                assert !a.mod(FactorBase.get(p)).equals(BigInteger.ZERO) : "p divides a";
+                assert !a.mod(FactorBase[p]).equals(BigInteger.ZERO) : "p divides a";
 
-                a_inv_p = a.modInverse(FactorBase.get(p));
+                a_inv_p = a.modInverse(FactorBase[p]);
                 for (int j = 0; j < a_factors.size(); j++) {
 
                     // Add 2*B_j*a^-1 mod p
-                    B_ainv2[j][p] = Utils.intMod(B[j].add(B[j]).multiply(a_inv_p), FactorBase.get(p));
+                    B_ainv2[j][p] = Utils.intMod(B[j].add(B[j]).multiply(a_inv_p), FactorBase[p]);
                 }
             }
         }
 
         // This iteration cannot be combined with loop above since b needs to be calculated before this
         BigInteger T, prime;
-        for (int p = 0; p < factor_base.size(); p++) {
+        for (int p = 0; p < factor_base.length; p++) {
             if (!a_factors.contains(p)) {
 
-                prime = FactorBase.get(p);
+                prime = FactorBase[p];
 
                 assert !a.mod(prime).equals(BigInteger.ZERO) : "p divides a";
 
                 a_inv_p = a.modInverse(prime);
-                T = t_sqrt.get(p);
+                T = t_sqrt[p];
 
                 // soln1 = ainv * (tmem_p - b) mod p
                 soln1[p] = Utils.intMod(a_inv_p.multiply(T.subtract(b)), prime);
@@ -230,16 +230,16 @@ public class SIQS extends QuadraticSieve {
                 v++;
             }
 
-            byte sign = (byte) (((j & 1) == 1) ? -1 : 1);
+            int sign = (Math.ceil(Math.pow(2, v) % 2) == 1) ? -1 : 1;
 
             b = b.add(BigInteger.valueOf(sign).multiply(BigInteger.TWO).multiply(B[v]));
             QSPoly Q_x = new QSPoly(a, b);
 
-            for (int p = 0; p < factor_base.size(); p++) {
+            for (int p = 0; p < factor_base.length; p++) {
                 if (!a_factors.contains(p)) {
                     // solnj[p] = solnj[p] + (-1 ^ (i / 2^v)) * B_ainv2[v][p] mod p
-                    soln1[p] = (soln1[p] + sign * B_ainv2[v][p]) % factor_base.get(p);
-                    soln2[p] = (soln2[p] + sign * B_ainv2[v][p]) % factor_base.get(p);
+                    soln1[p] = (soln1[p] + sign * B_ainv2[v][p]) % factor_base[p];
+                    soln2[p] = (soln2[p] + sign * B_ainv2[v][p]) % factor_base[p];
                 }
             }
 
@@ -254,10 +254,13 @@ public class SIQS extends QuadraticSieve {
 
         BinaryMatrix matrixMod2 = BinaryMatrix.fromIntMatrix(smooth_matrix);
         BinaryMatrix kernel = matrixMod2.kernel();
-        IntArray powers;
+        int[] powers;
         BigInteger g_x, a, gcd;
         for (BinaryArray array : kernel) {
-            powers = array.matmul(smooth_matrix).divide(2);
+            powers = array.matmul(smooth_matrix);
+            for (int i = 0; i < powers.length; i++) {
+                powers[i] >>= 1;
+            }
             g_x = Utils.evalPower(FactorBase, powers);
             a = array.dotProduct(polynomialInput);
 
@@ -297,7 +300,7 @@ public class SIQS extends QuadraticSieve {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
-            BigIntArray[] start = QuadraticSieve.startup(N, scanner);
+            BigInteger[][] start = QuadraticSieve.startup(N, scanner);
 
             // Make new object which just creates arrays for process
             SIQS qs = new SIQS(N, start[0], start[1], start[2], start[3]);
@@ -313,7 +316,7 @@ public class SIQS extends QuadraticSieve {
             for (int i = 1; !qs.enoughRelations(); i++) {
                 qs.sieve();
                 qs.trialDivision(g, minTrial);
-                qs.nextPoly(i);
+                g = qs.nextPoly(i);
                 i++;
 
                 if (i > nPolynomials) {

@@ -128,13 +128,14 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
         }
     }
 
-    public IntArray matmul(IntMatrix other) throws IllegalArgumentException {
+    public int[] matmul(IntMatrix other) throws IllegalArgumentException {
         if (size != other.size()) {
             throw new IllegalArgumentException("Array lengths differ: " + size + ", " + other.size());
         } else {
-            IntArray array = new IntArray(size);
+            int[] array = new int[size];
+            int i = 0;
             for (IntArray row : other.T) {
-                array.add(this.dotProduct(row));
+                array[i] = this.dotProduct(row);
             }
             return array;
         }

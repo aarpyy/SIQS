@@ -8,7 +8,7 @@ import java.util.Scanner;
 // Multiple Polynomial Quadratic Sieve
 public class MPQS extends QuadraticSieve {
 
-    public MPQS(BigInteger n, BigIntArray pr, BigIntArray fb, BigIntArray t_sq, BigIntArray log) {
+    public MPQS(BigInteger n, BigInteger[] pr, BigInteger[] fb, BigInteger[] t_sq, BigInteger[] log) {
         super(n, pr, fb, t_sq, log);
     }
 
@@ -57,9 +57,9 @@ public class MPQS extends QuadraticSieve {
         int int_b = b.intValue();
 
         int p, t, a_inv, b_mod_p;
-        for (int i = 0; i < factor_base.size(); i++) {
-            p = factor_base.get(i);
-            t = t_sqrt.get(i).intValue();
+        for (int i = 0; i < factor_base.length; i++) {
+            p = factor_base[i];
+            t = t_sqrt[i].intValue();
 
             a_inv = Utils.modularInverse(int_a, p);
             b_mod_p = int_b % p;
@@ -128,7 +128,7 @@ public class MPQS extends QuadraticSieve {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
-            BigIntArray[] start = QuadraticSieve.startup(N, scanner);
+            BigInteger[][] start = QuadraticSieve.startup(N, scanner);
 
             // Make new object which just creates arrays for process
             MPQS qs = new MPQS(N, start[0], start[1], start[2], start[3]);

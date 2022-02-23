@@ -27,7 +27,7 @@ class SIQSTest {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
-            BigIntArray[] start = QuadraticSieve.startup(N, scanner);
+            BigInteger[][] start = QuadraticSieve.startup(N, scanner);
 
             // Make new object which just creates arrays for process
             SIQS qs = new SIQS(N, start[0], start[1], start[2], start[3]);

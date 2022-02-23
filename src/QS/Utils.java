@@ -79,16 +79,16 @@ public final class Utils {
      *
      * @throws ArithmeticException if the lengths of the two arrays differ
      */
-    public static BigInteger evalPower(BigIntArray primes, IntArray powers) {
-        if (primes.size() != powers.size()) {
-            throw new ArithmeticException("Array lengths differ: " + primes.size() + ", " + powers.size());
+    public static BigInteger evalPower(BigInteger[] primes, int[] powers) {
+        if (primes.length != powers.length) {
+            throw new ArithmeticException("Array lengths differ: " + primes.length + ", " + powers.length);
         } else {
 
             BigInteger acc = BigInteger.ONE;
             // Otherwise, they are same size so evaluate powers
-            for (int i = 0; i < primes.size(); i++) {
+            for (int i = 0; i < primes.length; i++) {
                 // Take product of BigInteger power value
-                acc = acc.multiply(primes.get(i).pow(powers.get(i)));
+                acc = acc.multiply(primes[i].pow(powers[i]));
             }
             return acc;
         }
