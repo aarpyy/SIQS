@@ -134,7 +134,6 @@ public class SIQS extends QuadraticSieve {
         BigDecimal d_diff = new BigDecimal(a).divide(target, MathContext.DECIMAL32);
         System.out.println("chosen a = " + a + "; % difference = " + d_diff);
     }
-
     public QSPoly firstPolynomial() throws ArithmeticException {
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
@@ -215,6 +214,7 @@ public class SIQS extends QuadraticSieve {
         return new QSPoly(a, b);
 
     }
+
 
     public QSPoly nextPoly(int i) {
         if (B_ainv2 != null) {

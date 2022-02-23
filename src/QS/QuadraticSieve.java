@@ -76,9 +76,11 @@ public abstract class QuadraticSieve {
         requiredRelations = (int) Math.round(s * smoothRelationRatio);
         smooth_relations_u = new ArrayList<>(requiredRelations);
         smooth_relations_t = new ArrayList<>(requiredRelations);
-        sieve_array = null;
         smooth_matrix = null;
         polynomialInput = null;
+
+        sieve_array = new BigInteger[m + m + 1];
+        Arrays.fill(sieve_array, BigInteger.ZERO);
     }
 
     /**
@@ -177,8 +179,6 @@ public abstract class QuadraticSieve {
      */
     public void sieve() {
         int m2_1 = m + m + 1;
-        sieve_array = new BigInteger[m2_1];
-        Arrays.fill(sieve_array, BigInteger.ZERO);
 
         // For 2, just sieve with soln1, not soln2
         int i_min = -((m + soln1[0]) / 2);
