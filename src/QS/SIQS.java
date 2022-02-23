@@ -230,9 +230,10 @@ public class SIQS extends QuadraticSieve {
                 v++;
             }
 
-            int sign = (Math.ceil(Math.pow(2, v) % 2) == 1) ? -1 : 1;
+            int sign = ((j >> 1) == 1) ? -1 : 1;
 
-            b = b.add(BigInteger.valueOf(sign).multiply(BigInteger.TWO).multiply(B[v]));
+            b = b.add(BigInteger.valueOf(2 * sign).multiply(B[v])).mod(a);
+            if (b.add(b).compareTo(a) > 0) b = a.subtract(b);
             QSPoly Q_x = new QSPoly(a, b);
 
             for (int p = 0; p < factor_base.length; p++) {
