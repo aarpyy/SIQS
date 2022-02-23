@@ -41,6 +41,7 @@ class UtilsTest {
             while ((div = a.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
                 a = div[0];
             }
+            if (a.abs().equals(BigInteger.ONE)) return true;
         }
 
         System.err.println("a remaining = " + a);
@@ -74,7 +75,7 @@ class UtilsTest {
         // t = ax + b
         BigInteger t = h.apply(x);
 
-        BigInteger u = g.apply(x);
+        BigInteger u = g.apply(x).divide(a);
 
         BigInteger[] primesLTF = Utils.firstN(6000, new File("./primes.txt"));
         assert primesLTF.length == 6000 : "failed to get primes";

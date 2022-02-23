@@ -205,26 +205,33 @@ public abstract class QuadraticSieve {
      *
      * @param g polynomial to use to get smooth output
      */
-    public void trialDivision(QSPoly g, int min_val) {
+    public void trialDivision(QSPoly g, QSPoly h, int min_val) {
         IntArray array;
         BigInteger X, t, u;
+        int larger = 0;
+
+        System.err.println("Performing trial division with g(x) = (" + a + "x + " + b + ")^2 - " + N);
 
         for (int x = 0; x < sieve_array.length; x++) {
             if (sieve_array[x] >= min_val) {
+                larger++;
                 try {
                     X = BigInteger.valueOf(x - m);
-                    t = g.apply(X);
+                    u = g.apply(X);
 
-                    u = t.multiply(t).subtract(N);
+                    assert u.mod(a).equals(BigInteger.ZERO) : "a does not divide g(x)";
+
+                    // u = u.divide(a);
 
                     array = trialDivide(u);
-                    System.err.println("Q_x(" + x + ") = " + t + " is smooth");
+                    t = h.apply(X);
+                    System.err.println("Q_x(" + x + ") = " + u + " is smooth");
                     smooth_relations_u.add(array);
                     smooth_relations_t.add(t);
                 } catch (ArithmeticException ignored) { }
             }
         }
-        // System.out.printf("Trial division complete. %d/%d results were negative\n", negative, divided);
+        System.out.printf("Trial division complete. %d indices were larger than limit\n", larger);
     }
 
     public void constructMatrix() {
