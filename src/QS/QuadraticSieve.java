@@ -221,8 +221,6 @@ public abstract class QuadraticSieve {
 
                     assert u.mod(a).equals(BigInteger.ZERO) : "a does not divide g(x)";
 
-                    // u = u.divide(a);
-
                     array = trialDivide(u);
                     t = h.apply(X);
                     System.err.println("Q_x(" + x + ") = " + u + " is smooth");
