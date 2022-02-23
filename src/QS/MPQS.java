@@ -1,15 +1,12 @@
 package QS;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.math.BigInteger;
-import java.util.Scanner;
 
 // Multiple Polynomial Quadratic Sieve
 public class MPQS extends QuadraticSieve {
 
-    public MPQS(BigInteger n, BigInteger[] pr, BigInteger[] fb, BigInteger[] t_sq, BigInteger[] log) {
-        super(n, pr, fb, t_sq, log);
+    public MPQS(BigInteger n, BigInteger[] pr) {
+        super(n, pr);
     }
 
     /*
@@ -42,7 +39,7 @@ public class MPQS extends QuadraticSieve {
 
         // Use c s.sqrtFB. b^2 - n = a*c
         BigInteger c = b.pow(2).subtract(N).divide(a);
-        return new QSPoly(a, b);
+        return new QSPoly(new BigInteger[]{a, b});
     }
 
     public void initialize() {
@@ -100,44 +97,39 @@ public class MPQS extends QuadraticSieve {
 
         // N = (B^2 - kN) / 4A in the paper but here it is just divided by A
         BigInteger C = B.pow(2).subtract(kN).divide(A);
-        return new QSPoly(A, B);
+        return new QSPoly(new BigInteger[]{A, B});
     }
 
-    public BigInteger solve() {
-        return null;
-    }
+    @Override
+    public void sieve() {
+        int m2_1 = m + m + 1;
 
-    public static void main(String[] args) throws IllegalArgumentException {
+        // For 2, just sieve with soln1, not soln2
+        int i_min = -((m + soln1[0]) / 2);
+        for (int j = (soln1[0] + (i_min * 2)) + m; j < m2_1; j += 2) {
 
-        BigInteger N;
-        String fName;
+            // log2(2) = 1 so just add 1
+            sieve_array[j]++;
+        }
 
-        if (args.length == 0) {
-            throw new IllegalArgumentException("Must provide composite integer to be factored");
-        } else {
-            N = new BigInteger(args[0]);
-            if (args.length > 1) {
-                fName = args[1];
-            } else {
-                fName = ".\\primes.txt";
+        int prime;
+        for (int p = 1; p < factor_base.length; p++) {
+            prime = factor_base[p];
+
+            i_min = -((m + soln1[p]) / prime);
+            for (int j = (soln1[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
+                sieve_array[j] += log_p[p];
+            }
+
+            i_min = -((m + soln2[p]) / prime);
+            for (int j = (soln2[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
+                sieve_array[j] += log_p[p];
             }
         }
+    }
 
-        try {
-            // Open file for primes
-            File primesFile = new File(fName);
-            Scanner scanner = new Scanner(primesFile);
-
-            BigInteger[][] start = QuadraticSieve.startup(N, scanner);
-
-            // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, start[0], start[1], start[2], start[3]);
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch (ArithmeticException e) {
-            System.out.println(e + "\nTry using a bigger prime base!");
-        }
+    @Override
+    public BigInteger solve() {
+        return null;
     }
 }

@@ -458,7 +458,7 @@ public final class Utils {
     public static boolean quadraticResidue(BigInteger a, BigInteger p) {
         // Returns a ^ ((p - 1) / 2) == 1, which tells us if there exists an integer c s.sqrtFB.
         // c^2 = a mod p
-        return a.modPow(p.subtract(BigInteger.ONE).shiftRight(1), p).equals(BigInteger.ONE);
+        return a.modPow(p.subtract(BigInteger.ONE).divide(BigInteger.TWO), p).equals(BigInteger.ONE);
     }
 
     public static boolean quadraticResidue(BigInteger a, int p) {

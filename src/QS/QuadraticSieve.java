@@ -2,10 +2,7 @@ package QS;
 
 import java.math.BigInteger;
 import java.math.MathContext;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * This class is base class for both {@code SIQS} and {@code MPQS} as both share the same computation
@@ -34,121 +31,111 @@ public abstract class QuadraticSieve {
 
     // Solutions to modSqrt(N, p) for each p (N/p) in factor base
     protected final BigInteger[] t_sqrt;
-    protected final BigInteger[] log_p;
+    protected final int[] log_p;
 
     protected final int m;
     protected final BigInteger M;
 
+    protected BigInteger a, b;
+
     protected int[] soln1, soln2;
-    protected BigInteger[] sieve_array;
+    protected long[] sieve_array;
     protected IntMatrix smooth_matrix;
     protected BigIntArray polynomialInput;
     protected ArrayList<IntArray> smooth_relations_u;
     protected ArrayList<BigInteger> smooth_relations_t;
 
-    public QuadraticSieve(BigInteger n, BigInteger[] pr, BigInteger[] fb, BigInteger[] t_sq, BigInteger[] lp) {
-        int s = fb.length;
+    public QuadraticSieve(BigInteger n, BigInteger[] primes) {
+        N = n;
+        primesLTF = primes;
 
-        FactorBase = fb;
-        factor_base = new int[s];
-        for (int i = 0; i < s; i++) {
-            factor_base[i] = fb[i].intValue();
+        LinkedList<BigInteger> fb = new LinkedList<>();
+        for (BigInteger p : primes) {
+            if (Utils.quadraticResidue(N, p)) fb.add(p);
         }
-        primesLTF = pr;
+
+        int fbSize = fb.size();
+
+        FactorBase = new BigInteger[fbSize];
+        factor_base = new int[fbSize];
+        int i = 0;
+        for (BigInteger p : fb) {
+            FactorBase[i] = p;
+            factor_base[i] = p.intValue();
+            i++;
+        }
+
+        // Array of square roots of N mod p
+        t_sqrt = new BigInteger[fbSize];
+
+        // Array of log base e of p (rounded)
+        log_p = new int[fbSize];
+
+        BigInteger t, p;
+        for (i = 0; i < fbSize; i++) {
+            p = FactorBase[i];
+            t = Utils.modSqrt(N, p);
+
+            assert t.modPow(BigInteger.TWO, p).equals(N.mod(p)) :
+                    "Square root failed: " + t + "^2 == " + t.pow(2).mod(p) + " != N mod " + p + " (" + N.mod(p) + ")";
+
+            t_sqrt[i] = t;
+
+            // Take log base 2 of prime p
+            log_p[i] = (int) Math.round(Math.log(p.intValue()) / Utils.log2);
+        }
+
 
         assert factor_base[0] == 2 : "First prime in factor base is not 2";
-
-        t_sqrt = t_sq;
-        log_p = lp;
-        N = n;
         int digits = Utils.nDigits(N);
         m = chooseSieveRange(digits);
         M = BigInteger.valueOf(m);
 
         System.out.println("M = " + M);
 
-        System.out.println("Size of factor base = " + factor_base.length);
-        System.out.println("Primes < F = " + pr.length);
+        System.out.println("Size of factor base = " + fbSize);
+        System.out.println("Primes < F = " + primesLTF.length);
 
         // These are all variables that will be set during initialization stage
-        soln1 = new int[s];
-        soln2 = new int[s];
-        requiredRelations = (int) Math.round(s * smoothRelationRatio);
+        soln1 = new int[fbSize];
+        soln2 = new int[fbSize];
+        requiredRelations = (int) Math.round(fbSize * smoothRelationRatio);
         smooth_relations_u = new ArrayList<>(requiredRelations);
         smooth_relations_t = new ArrayList<>(requiredRelations);
         smooth_matrix = null;
         polynomialInput = null;
 
-        sieve_array = new BigInteger[m + m + 1];
-        Arrays.fill(sieve_array, BigInteger.ZERO);
+        sieve_array = new long[m + m + 1];
+        Arrays.fill(sieve_array, 0);
     }
 
     /**
-     * Computes startup data for quadratic sieve, returning as an array: factor base,
-     * solutions to modular square root of n mod p for each prime p in factor base, and
-     * integer value of log p for each prime p in factor base. This should be called once
-     * and used multiple times to create multiple instances of {@code SIQS} or {@code MPQS}.
+     * Computes startup data for quadratic sieve, returning as an array the factor base.
      * @param N number to be factored using quadratic sieve
      * @param primesScanner {@code Scanner} opened on file containing primes
-     * @return {@code IntArray[]} containing: {primes < F, factor base, sqrt N mod p, log p}
+     * @return {@code BigInteger[]} containing primes < F
      */
-    public static BigInteger[][] startup(BigInteger N, Scanner primesScanner) {
+    public static BigInteger[] startup(BigInteger N, Scanner primesScanner) {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
         BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
 
         System.out.println("F = " + F);
 
-        LinkedList<BigInteger> fb = new LinkedList<>();
         LinkedList<BigInteger> primes = new LinkedList<>();
-
-        fb.add(new BigInteger(primesScanner.nextLine()));
 
         BigInteger prime;
         // Read in all primes less than limit, adding those for which N is a quadratic residue
         while (primesScanner.hasNextLine()) {
-            primes.add(prime = new BigInteger(primesScanner.nextLine()));
+            prime = new BigInteger(primesScanner.nextLine());
             if (prime.compareTo(F) >= 0) {
-                primes.removeLast();
                 break;
+            } else {
+                primes.add(prime);
             }
-            // We can take N % p as int since p is int and N and N % p have the same residues mod p
-            else if (Utils.quadraticResidue(N, prime)) fb.add(prime);
-        }
-
-        // Array of square roots of N mod p
-        BigInteger[] t_sqrt = new BigInteger[fb.size()];
-
-        // Array of log base e of p (rounded)
-        BigInteger[] log_p = new BigInteger[fb.size()];
-
-        BigInteger[] factor_base = new BigInteger[fb.size()];
-
-        BigInteger sq;
-        // For each prime in factor base, add the modular square root and the log
-        int i = 0;
-        for (BigInteger p : fb) {
-            factor_base[i] = p;
-
-            sq = Utils.modSqrt(N, p);
-
-            assert sq.modPow(BigInteger.TWO, p).equals(N.mod(p)) :
-                    "Square root failed: " + sq + "^2 == " + sq.pow(2).mod(p) + " != N mod " + p + " (" + N.mod(p) + ")";
-
-            t_sqrt[i] = sq;
-
-            // Take log base 2 of prime p
-            log_p[i] = BigInteger.valueOf(Math.round(Math.log(p.intValue()) / Utils.log2));
-            i++;
         }
 
         BigInteger[] primesLTF = new BigInteger[primes.size()];
-        i = 0;
-        for (BigInteger p : primes) {
-            primesLTF[i] = p;
-            i++;
-        }
-
-        return new BigInteger[][]{primesLTF, factor_base, t_sqrt, log_p};
+        return primes.toArray(primesLTF);
     }
 
     /**
@@ -177,33 +164,7 @@ public abstract class QuadraticSieve {
     /**
      * Sieve along the range of (-M, M), filling {@code this.sieve_array} in the process.
      */
-    public void sieve() {
-        int m2_1 = m + m + 1;
-
-        // For 2, just sieve with soln1, not soln2
-        int i_min = -((m + soln1[0]) / 2);
-        for (int j = (soln1[0] + (i_min * 2)) + m; j < m2_1; j += 2) {
-
-            // log2(2) = 1 so just add 1
-            sieve_array[j] = sieve_array[j].add(BigInteger.ONE);
-        }
-
-        int prime;
-        for (int p = 1; p < factor_base.length; p++) {
-            prime = factor_base[p];
-
-            i_min = -((m + soln1[p]) / prime);
-            for (int j = (soln1[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
-                sieve_array[j] = sieve_array[j].add(log_p[p]);
-            }
-
-            i_min = -((m + soln2[p]) / prime);
-            for (int j = (soln2[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
-                sieve_array[j] = sieve_array[j].add(log_p[p]);
-            }
-        }
-
-    }
+    public abstract void sieve();
 
     /**
      * Attempts to completely factor n using the given factor base, returning the powers of the factors
@@ -244,24 +205,17 @@ public abstract class QuadraticSieve {
      *
      * @param g polynomial to use to get smooth output
      */
-    public void trialDivision(QSPoly g, BigInteger min_val) {
+    public void trialDivision(QSPoly g, int min_val) {
         IntArray array;
         BigInteger X, t, u;
 
-        // For testing
-        int divided, negative;
-        divided = negative = 0;
-
         for (int x = 0; x < sieve_array.length; x++) {
-            if (sieve_array[x].compareTo(min_val) >= 0) {
+            if (sieve_array[x] >= min_val) {
                 try {
-                    divided++;
                     X = BigInteger.valueOf(x - m);
                     t = g.apply(X);
 
                     u = t.pow(2).subtract(N);
-
-                    if (u.signum() == -1) negative++;
 
                     array = trialDivide(u);
                     System.err.println("Q_x(" + x + ") = " + t + " is smooth");

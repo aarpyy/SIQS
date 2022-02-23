@@ -11,19 +11,19 @@ import java.util.function.Function;
  */
 public class QSPoly implements Function<BigInteger, BigInteger> {
 
-    public final BigInteger A, B;
+    public final BigInteger[] coeffs;
 
-    public QSPoly(BigInteger a, BigInteger b) {
-        A = a;
-        B = b;
-    }
-
-    public String toString() {
-        return "" + A + "x + " + B + "";
+    public QSPoly(BigInteger[] coeffs) {
+        this.coeffs = coeffs;
     }
     
     @Override
     public BigInteger apply(BigInteger x) {
-        return A.multiply(x).add(B);
+        BigInteger result = BigInteger.ZERO;
+        for (BigInteger a : coeffs) {
+            result = result.multiply(x);
+            result = result.add(a);
+        }
+        return result;
     }
 }

@@ -33,11 +33,10 @@ public class SIQS extends QuadraticSieve {
 
     private int[][] B_ainv2;
     private BigInteger[] B;
-    private BigInteger a, b;
     private HashSet<Integer> a_factors;
 
-    public SIQS(BigInteger n, BigInteger[] pr, BigInteger[] fb, BigInteger[] t_sq, BigInteger[] log) {
-        super(n, pr, fb, t_sq, log);
+    public SIQS(BigInteger n, BigInteger[] pr) {
+        super(n, pr);
         B_ainv2 = null;
         B = null;
         a = b = null;
@@ -134,6 +133,7 @@ public class SIQS extends QuadraticSieve {
         BigDecimal d_diff = new BigDecimal(a).divide(target, MathContext.DECIMAL32);
         System.out.println("chosen a = " + a + "; % difference = " + d_diff);
     }
+
     public QSPoly firstPolynomial() throws ArithmeticException {
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
@@ -211,10 +211,9 @@ public class SIQS extends QuadraticSieve {
             }
         }
 
-        return new QSPoly(a, b);
+        return new QSPoly(new BigInteger[]{a, b});
 
     }
-
 
     public QSPoly nextPoly(int i) {
         if (B_ainv2 != null) {
@@ -234,7 +233,7 @@ public class SIQS extends QuadraticSieve {
 
             b = b.add(BigInteger.valueOf(2 * sign).multiply(B[v])).mod(a);
             if (b.add(b).compareTo(a) > 0) b = a.subtract(b);
-            QSPoly Q_x = new QSPoly(a, b);
+            QSPoly Q_x = new QSPoly(new BigInteger[]{a, b});
 
             for (int p = 0; p < factor_base.length; p++) {
                 if (!a_factors.contains(p)) {
@@ -250,6 +249,26 @@ public class SIQS extends QuadraticSieve {
         }
     }
 
+    @Override
+    public void sieve() {
+        int m2_1 = m + m + 1;
+        int prime, i_min;
+        for (int p : a_factors) {
+            prime = factor_base[p];
+
+            i_min = -((m + soln1[p]) / prime);
+            for (int j = (soln1[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
+                sieve_array[j] += log_p[p];
+            }
+
+            i_min = -((m + soln2[p]) / prime);
+            for (int j = (soln2[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
+                sieve_array[j] += log_p[p];
+            }
+        }
+    }
+
+    @Override
     public BigInteger solve() {
         assert (smooth_matrix != null) : "Trial division must be performed before solving!";
 
@@ -301,16 +320,16 @@ public class SIQS extends QuadraticSieve {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
-            BigInteger[][] start = QuadraticSieve.startup(N, scanner);
+            BigInteger[] primes = QuadraticSieve.startup(N, scanner);
 
             // Make new object which just creates arrays for process
-            SIQS qs = new SIQS(N, start[0], start[1], start[2], start[3]);
+            SIQS qs = new SIQS(N, primes);
 
             // Initialize a and get first polynomial
             QSPoly g = qs.firstPolynomial();
             int nPolynomials = 1 << (qs.nFactorsA() - 1);
             boolean attemptSolve = true;
-            BigInteger minTrial = BigInteger.valueOf(Utils.BigSqrt(qs.N).multiply(qs.M).bitLength() - trialDivError);
+            int minTrial = Utils.BigSqrt(qs.N).multiply(qs.M).bitLength() - trialDivError;
 
             System.err.println("Minimum sieve value = " + minTrial);
 

@@ -35,8 +35,54 @@ class UtilsTest {
         System.out.println("A = " + a);
     }
 
+    public boolean smoothQ(BigInteger a, BigInteger[] fb) throws ArithmeticException {
+        BigInteger[] div;
+        for (BigInteger prime : fb) {
+            while ((div = a.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
+                a = div[0];
+            }
+        }
+
+        System.err.println("a remaining = " + a);
+        return a.abs().equals(BigInteger.ONE);
+    }
+
     @Test
     void smoothQ() {
+
+        BigInteger a = new BigInteger("43587013253626868526148511");
+        BigInteger b = new BigInteger("32509926565408793599779197");
+        BigInteger n = new BigInteger("38960345140440235673039093629415692237700636392206014039414593");
+
+        // g(x) = (43587013253626868526148511x + 32509926565408793599779197)^2 -
+        // 38960345140440235673039093629415692237700636392206014039414593
+
+        // g(190049) = 29658876963701267291872210914657645530209474084129016789249496 is smooth
+        // g(157667) = 8267437258112573728992510063083647711328343152600789041437576 is smooth
+        // g(-144059) = 466729559795233670416450245757971075782866784232584831987016 is smooth
+        // g(-144081) = 478770344493738998034713580955577586448722997937926925631936 is smooth
+
+        QSPoly g = new QSPoly(new BigInteger[]{
+                a.multiply(a),
+                a.multiply(b).multiply(BigInteger.TWO),
+                b.multiply(b).subtract(n)});
+        QSPoly h = new QSPoly(new BigInteger[]{a, b});
+        BigInteger x = new BigInteger("190049");
+
+        System.out.println("t^2 = " + a.multiply(x).add(b).pow(2).subtract(n));
+
+        // t = ax + b
+        BigInteger t = h.apply(x);
+
+        BigInteger u = g.apply(x);
+
+        BigInteger[] primesLTF = Utils.firstN(6000, new File(".\\primes.txt"));
+        assert primesLTF.length == 6000 : "failed to get primes";
+
+        System.out.println("u = " + u + "; u is smooth: " + smoothQ(u, primesLTF));
+
+
+
     }
 
     @Test
