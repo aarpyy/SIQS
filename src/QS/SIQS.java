@@ -29,7 +29,7 @@ public class SIQS extends QuadraticSieve {
     // Number of trials to randomly choose polynomial coefficient 'a'
     private static final int trialsA = 30;
 
-    private static final int trialDivError = 45;
+    private static final int trialDivError = 25;
 
     private int[][] B_ainv2;
     private BigInteger[] B;
@@ -337,12 +337,13 @@ public class SIQS extends QuadraticSieve {
                 qs.sieve();
                 qs.trialDivision(g, minTrial);
                 g = qs.nextPoly(i);
-                i++;
+                
+                if (i % 20 == 0) System.out.printf("20/%d polynomials used\n", nPolynomials);
 
                 if (i > nPolynomials) {
-                    System.err.printf("Sieved %d/%d possible polynomials\n", nPolynomials, nPolynomials);
-                    attemptSolve = false;
-                    break;
+                    System.err.printf("Sieved %d/%d possible polynomials\nRecycling...", nPolynomials, nPolynomials);
+                    g = qs.firstPolynomial();
+                    i = 0;
                 }
             }
 

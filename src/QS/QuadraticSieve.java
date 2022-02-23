@@ -215,7 +215,7 @@ public abstract class QuadraticSieve {
                     X = BigInteger.valueOf(x - m);
                     t = g.apply(X);
 
-                    u = t.pow(2).subtract(N);
+                    u = t.multiply(t).subtract(N);
 
                     array = trialDivide(u);
                     System.err.println("Q_x(" + x + ") = " + t + " is smooth");

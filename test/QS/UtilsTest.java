@@ -50,8 +50,8 @@ class UtilsTest {
     @Test
     void smoothQ() {
 
-        BigInteger a = new BigInteger("43587013253626868526148511");
-        BigInteger b = new BigInteger("32509926565408793599779197");
+        BigInteger a = new BigInteger("62544596343631375258275701");
+        BigInteger b = new BigInteger("2044341417134775465505134");
         BigInteger n = new BigInteger("38960345140440235673039093629415692237700636392206014039414593");
 
         // g(x) = (43587013253626868526148511x + 32509926565408793599779197)^2 -
@@ -67,7 +67,7 @@ class UtilsTest {
                 a.multiply(b).multiply(BigInteger.TWO),
                 b.multiply(b).subtract(n)});
         QSPoly h = new QSPoly(new BigInteger[]{a, b});
-        BigInteger x = new BigInteger("190049");
+        BigInteger x = new BigInteger("140501");
 
         System.out.println("t^2 = " + a.multiply(x).add(b).pow(2).subtract(n));
 
@@ -76,7 +76,7 @@ class UtilsTest {
 
         BigInteger u = g.apply(x);
 
-        BigInteger[] primesLTF = Utils.firstN(6000, new File(".\\primes.txt"));
+        BigInteger[] primesLTF = Utils.firstN(6000, new File("./primes.txt"));
         assert primesLTF.length == 6000 : "failed to get primes";
 
         System.out.println("u = " + u + "; u is smooth: " + smoothQ(u, primesLTF));
