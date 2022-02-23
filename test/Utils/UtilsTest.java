@@ -27,12 +27,11 @@ class UtilsTest {
             Scanner scanner = new Scanner(primesFile);
 
             BigIntArray[] start = QuadraticSieve.startup(N, scanner);
-            long[] constants = MPQS.calculateConstants(N);
 
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
+            MPQS qs = new MPQS(N, start[0], start[1], start[2], start[3]);
 
-            IntArray powers = Utils.trialDivide(N, qs.FactorBase);
+            IntArray powers = qs.trialDivide(N);
 
             // Confirm that these are the powers
             int [] knownPowers = {0, 0, 0, 1, 0, 0, 0, 0, 2, 0};

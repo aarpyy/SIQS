@@ -22,15 +22,14 @@ class QuadraticSieveTest {
             Scanner scanner = new Scanner(primesFile);
 
             BigIntArray[] start = QuadraticSieve.startup(N, scanner);
-            long[] constants = MPQS.calculateConstants(N);
 
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
+            MPQS qs = new MPQS(N, start[0], start[1], start[2], start[3]);
             System.out.println("N: " + N);
             System.out.println("Factor base: " + qs.factor_base);
 
 
-            QSPoly Q_x = new QSPoly(BigInteger.ONE, BigInteger.ZERO, N.negate());
+            QSPoly Q_x = new QSPoly(BigInteger.ONE, N.negate());
             System.out.println("Polynomial: " + Q_x);
 
         }
@@ -158,10 +157,9 @@ class QuadraticSieveTest {
             Scanner scanner = new Scanner(primesFile);
 
             BigIntArray[] start = QuadraticSieve.startup(N, scanner);
-            long[] constants = MPQS.calculateConstants(N);
 
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
+            MPQS qs = new MPQS(N, start[0], start[1], start[2], start[3]);
 
             silvermanComputation();
         }

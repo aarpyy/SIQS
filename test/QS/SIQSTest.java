@@ -30,11 +30,10 @@ class SIQSTest {
             BigIntArray[] start = QuadraticSieve.startup(N, scanner);
 
             // Make new object which just creates arrays for process
-            SIQS qs = new SIQS(N, SIQS.chooseSieveRange(Utils.nDigits(N)), start[0], start[1], start[2]);
+            SIQS qs = new SIQS(N, start[0], start[1], start[2], start[3]);
 
             for (int i = 0; i < 30; i++) {
-                qs.initialize();
-                System.out.println((i + 1) + " round(s) of a's chosen");
+                qs.firstPolynomial();
             }
 
         } catch (FileNotFoundException e) {

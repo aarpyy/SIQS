@@ -11,24 +11,19 @@ import java.util.function.Function;
  */
 public class QSPoly implements Function<BigInteger, BigInteger> {
 
-    public final BigInteger A, B, N;
+    public final BigInteger A, B;
 
-    public QSPoly(BigInteger a, BigInteger b, BigInteger n) {
+    public QSPoly(BigInteger a, BigInteger b) {
         A = a;
         B = b;
-        N = n;
     }
 
     public String toString() {
-        return "(" + A + "x + " + B + ")^2 - " + N;
+        return "" + A + "x + " + B + "";
     }
     
     @Override
     public BigInteger apply(BigInteger x) {
-        return A.multiply(x).add(B).pow(2).subtract(N).mod(N);
-    }
-
-    public BigInteger apply(int x) {
-        return apply(BigInteger.valueOf(x));
+        return A.multiply(x).add(B);
     }
 }

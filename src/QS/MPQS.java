@@ -2,27 +2,14 @@ package QS;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Scanner;
 
 // Multiple Polynomial Quadratic Sieve
 public class MPQS extends QuadraticSieve {
 
-    public MPQS(BigInteger n, int m, BigIntArray fb, BigIntArray t_sq, BigIntArray log) {
-        super(n, m, fb, t_sq, log);
-    }
-
-    public static long[] calculateConstants(BigInteger N) {
-        double digits = Utils.BigLog(N, 10);
-
-        // M = 386 * digits^2 - (23209.3 * digits) + 352768
-        long m = BigDecimal.valueOf(386 * Math.pow(digits, 2)).subtract(
-                BigDecimal.valueOf(23209.3).multiply(BigDecimal.valueOf(digits).add(
-                        BigDecimal.valueOf(352768)))).toBigInteger().longValue();
-        long f = (long) (2.92659 * Math.pow(digits, 2) - 164.385 * digits + 2455.36);
-
-        return new long[]{m, f};
+    public MPQS(BigInteger n, BigIntArray pr, BigIntArray fb, BigIntArray t_sq, BigIntArray log) {
+        super(n, pr, fb, t_sq, log);
     }
 
     /*
@@ -55,7 +42,7 @@ public class MPQS extends QuadraticSieve {
 
         // Use c s.sqrtFB. b^2 - n = a*c
         BigInteger c = b.pow(2).subtract(N).divide(a);
-        return new QSPoly(a, b, c);
+        return new QSPoly(a, b);
     }
 
     public void initialize() {
@@ -65,7 +52,6 @@ public class MPQS extends QuadraticSieve {
 
         BigInteger a = q.pow(2);
         BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
-        Q_x = new QSPoly(a, b, N);
 
         int int_a = a.intValue();
         int int_b = b.intValue();
@@ -114,7 +100,7 @@ public class MPQS extends QuadraticSieve {
 
         // N = (B^2 - kN) / 4A in the paper but here it is just divided by A
         BigInteger C = B.pow(2).subtract(kN).divide(A);
-        return new QSPoly(A, B, C);
+        return new QSPoly(A, B);
     }
 
     public BigInteger solve() {
@@ -143,10 +129,9 @@ public class MPQS extends QuadraticSieve {
             Scanner scanner = new Scanner(primesFile);
 
             BigIntArray[] start = QuadraticSieve.startup(N, scanner);
-            long[] constants = MPQS.calculateConstants(N);
 
             // Make new object which just creates arrays for process
-            MPQS qs = new MPQS(N, (int) constants[0], start[0], start[1], start[2]);
+            MPQS qs = new MPQS(N, start[0], start[1], start[2], start[3]);
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();

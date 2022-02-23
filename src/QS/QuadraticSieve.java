@@ -1,6 +1,8 @@
 package QS;
 
 import java.math.BigInteger;
+import java.math.MathContext;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Scanner;
@@ -12,12 +14,21 @@ import java.util.Scanner;
  */
 public abstract class QuadraticSieve {
 
+    // Math context for any BigDecimal divisions/square roots
+    protected static final MathContext ctx = MathContext.DECIMAL128;
+
+    private static final double smoothRelationRatio = 1.05;
+
     // Both integer and BigInteger versions of factor base are public as well as N
     public final BigInteger N;
 
     public final IntArray factor_base;
     // Same array as factor_base but BigInteger's for separate uses
     public final BigIntArray FactorBase;
+
+    public final BigIntArray primesLTF;
+
+    public final int requiredRelations;
 
     // Everything else is protected so that both MPQS and SIQS can have access, but they are not needed outside
 
@@ -28,25 +39,39 @@ public abstract class QuadraticSieve {
     protected final int m;
     protected final BigInteger M;
 
-    protected QSPoly Q_x;
     protected int[] soln1, soln2;
     protected BigInteger[] sieve_array;
     protected IntMatrix smooth_matrix;
     protected BigIntArray polynomialInput;
+    protected ArrayList<IntArray> smooth_relations_u;
+    protected ArrayList<BigInteger> smooth_relations_t;
 
-    public QuadraticSieve(BigInteger n, int m, BigIntArray FactorBase, BigIntArray t_sqrt, BigIntArray log_p) {
+    public QuadraticSieve(BigInteger n, BigIntArray primesLTF, BigIntArray FactorBase, BigIntArray t_sqrt, BigIntArray log_p) {
         this.FactorBase = FactorBase;
         this.factor_base = FactorBase.toIntArray();
+        this.primesLTF = primesLTF;
+
+        assert factor_base.get(0) == 2 : "First prime in factor base is not 2";
+
         this.t_sqrt = t_sqrt;
         this.log_p = log_p;
         N = n;
-        this.m = m;
+        int digits = Utils.nDigits(N);
+        this.m = chooseSieveRange(digits);
         M = BigInteger.valueOf(m);
 
+        System.out.println("M = " + M);
+
+        System.out.println("Size of factor base = " + factor_base.size());
+        System.out.println("Primes < F = " + primesLTF.size());
+
         // These are all variables that will be set during initialization stage
-        Q_x = null;
-        soln1 = new int[factor_base.size()];
-        soln2 = new int[factor_base.size()];
+        int s = factor_base.size();
+        soln1 = new int[s];
+        soln2 = new int[s];
+        requiredRelations = (int) Math.round(s * smoothRelationRatio);
+        smooth_relations_u = new ArrayList<>(requiredRelations);
+        smooth_relations_t = new ArrayList<>(requiredRelations);
         sieve_array = null;
         smooth_matrix = null;
         polynomialInput = null;
@@ -59,22 +84,27 @@ public abstract class QuadraticSieve {
      * and used multiple times to create multiple instances of {@code SIQS} or {@code MPQS}.
      * @param N number to be factored using quadratic sieve
      * @param primesScanner {@code Scanner} opened on file containing primes
-     * @return {@code IntArray[]} containing: {factor base, sqrt N mod p, log p}
+     * @return {@code IntArray[]} containing: {primes < F, factor base, sqrt N mod p, log p}
      */
     public static BigIntArray[] startup(BigInteger N, Scanner primesScanner) {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
-        BigInteger F = BigInteger.valueOf((long) Math.exp(Math.sqrt(Utils.BigLN(N) * Math.log(Utils.BigLN(N))) / 2));
+//        BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
+//
+//        F = BigInteger.valueOf(6000);
+        int F = 6000;
 
         System.out.println("F = " + F);
 
         LinkedList<BigInteger> fb = new LinkedList<>();
+        LinkedList<BigInteger> primes = new LinkedList<>();
 
         fb.add(new BigInteger(primesScanner.nextLine()));
 
         BigInteger prime;
         // Read in all primes less than limit, adding those for which N is a quadratic residue
         while (primesScanner.hasNextLine()) {
-            if ((prime = new BigInteger(primesScanner.nextLine())).compareTo(F) >= 0) break;
+            primes.add(prime = new BigInteger(primesScanner.nextLine()));
+            if (fb.size() >= F) break;
 
                 // We can take N % p as int since p is int and N and N % p have the same residues mod p
             else if (Utils.quadraticResidue(N, prime)) fb.add(prime);
@@ -97,63 +127,97 @@ public abstract class QuadraticSieve {
             t_sqrt.add(sq);
 
             // Take log base 2 of prime p
-            log_p.add(BigInteger.valueOf(p.bitLength()));
+            log_p.add(BigInteger.valueOf(Math.round(Math.log(p.intValue()) / Utils.log2)));
         }
 
-        return new BigIntArray[]{new BigIntArray(fb), t_sqrt, log_p};
+        return new BigIntArray[]{new BigIntArray(primes), new BigIntArray(fb), t_sqrt, log_p};
     }
 
-    public abstract void initialize();
+    /**
+     * Function to choose sieve range M. <p>Credit to
+     * https://github.com/skollmann/PyFactorise/blob/master/factorise.py for
+     * the selection, which itself is based off msieve-1.52.</p>
+     * @param digits number of digits in base-10 representation of N
+     * @return sieve range
+     */
+    public static int chooseSieveRange(int digits) {
+        if (digits < 52) return 65536;
+        else if (digits < 88) return 196608;
+        else return 589824;
+    }
+
+    public static int chooseF(int digits) {
+        if (digits < 70) return 60000;
+        else if (digits < 80) return 350000;
+        else return 900000;
+    }
+
+    public boolean enoughRelations() {
+        return (smooth_relations_u.size() >= requiredRelations);
+    }
 
     /**
      * Sieve along the range of (-M, M), filling {@code this.sieve_array} in the process.
      */
     public void sieve() {
-        sieve_array = new BigInteger[(2 * m) + 1];
+        int m2_1 = m + m + 1;
+        sieve_array = new BigInteger[m2_1];
         Arrays.fill(sieve_array, BigInteger.ZERO);
 
-        int soln;
-        int _2m = m + m;
+        // For 2, just sieve with soln1, not soln2
+        int i_min = -((m + soln1[0]) / 2);
+        for (int j = (soln1[0] + (i_min * 2)) + m; j < m2_1; j += 2) {
 
-        // For 2, just sieve with soln1 not soln2
-        soln = soln1[0] + _2m;
-        while (soln > _2m) {
-            soln -= 2;
-        }
-
-        while (soln >= 0) {
-            sieve_array[soln] = sieve_array[soln].add(log_p.get(0));
-            soln -= 2;
+            // log2(2) = 1 so just add 1
+            sieve_array[j] = sieve_array[j].add(BigInteger.ONE);
         }
 
         int prime;
         for (int p = 1; p < factor_base.size(); p++) {
             prime = factor_base.get(p);
 
-            // Start soln at the top of soln1 + ip <= M
-            soln = soln1[p] + _2m;
-            while (soln > _2m) {
-                soln -= prime;
+            i_min = -((m + soln1[p]) / prime);
+            for (int j = (soln1[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
+                sieve_array[j] = sieve_array[j].add(log_p.get(p));
             }
 
-            // Decrease down to soln1 + ip >= -M
-            while (soln >= 0) {
-                sieve_array[soln] = sieve_array[soln].add(log_p.get(p));
-                soln -= prime;
-            }
-
-            // Do the same for soln2 + ip
-            soln = soln2[p] + _2m;
-            while (soln > _2m) {
-                soln -= prime;
-            }
-
-            while (soln >= 0) {
-                sieve_array[soln] = sieve_array[soln].add(log_p.get(p));
-                soln -= prime;
+            i_min = -((m + soln2[p]) / prime);
+            for (int j = (soln2[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
+                sieve_array[j] = sieve_array[j].add(log_p.get(p));
             }
         }
 
+    }
+
+    /**
+     * Attempts to completely factor n using the given factor base, returning the powers of the factors
+     * if number was completely factored, throwing ArithmeticException if not.
+     * @param a BigInteger to be factored
+     * @return IntArray of the powers of each of the factors in the factor base if {@code n} was completely factored
+     * @throws ArithmeticException if {@code n} is not a product of just the factors in {@code fb}
+     */
+    public IntArray trialDivide(BigInteger a) throws ArithmeticException {
+        int[] factors = new int[primesLTF.size()];
+        BigInteger[] div;
+        BigInteger prime;
+        for (int i = 0; i < primesLTF.size(); i++) {
+            factors[i] = 0;
+            prime = primesLTF.get(i);
+            while ((div = a.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
+                a = div[0];
+                factors[i]++;
+            }
+        }
+
+        if (a.abs().equals(BigInteger.ONE)) {
+            System.out.println("Success!");
+            return IntArray.fromArray(factors);
+        } else {
+            if (a.abs().compareTo(BigInteger.TEN) <= 0) {
+                System.err.println("remainder after division = " + a);
+            }
+            throw new ArithmeticException(a + " unable to be factored completely");
+        }
     }
 
     /**
@@ -161,45 +225,43 @@ public abstract class QuadraticSieve {
      * it to the matrix if successful. If more trial divisions were successful than the number
      * of factors in the factor base, save the {@code LinkedList<IntArray>} as an {@code IntMatrix}
      * via {@code this.smooth_matrix} and return {@code true} otherwise return {@code false}.
+     *
+     * @param g polynomial to use to get smooth output
      * @param error margin of error for minimum value of input for {@code Q_x}
      * @return {@code true} iff matrix has more rows than columns, otherwise {@code false}
      */
-    public boolean trialDivision(int error) {
-        BigInteger min_val = BigInteger.valueOf(Utils.BigSqrt(N).multiply(M).bitLength() - error);
+    public void trialDivision(QSPoly g, BigInteger min_val) {
+        IntArray array;
+        BigInteger X, t, u;
 
-        System.err.println("Minimum sieve value = " + min_val);
+        // For testing
+        int divided, negative;
+        divided = negative = 0;
 
-        LinkedList<IntArray> matrix = new LinkedList<>();
-        LinkedList<BigInteger> input = new LinkedList<>();
-        IntArray t;
-        BigInteger X, r;
-        int divided = 0;
-        System.out.println("Trial dividing sieve array of length " + sieve_array.length);
         for (int x = 0; x < sieve_array.length; x++) {
             if (sieve_array[x].compareTo(min_val) >= 0) {
                 try {
                     divided++;
-                    X = BigInteger.valueOf(x);
-                    r = Q_x.apply(X);
-                    assert r.compareTo(BigInteger.ZERO) >= 0 : "result is negative";
-                    t = Utils.trialDivide(r, FactorBase);
-                    System.err.println("Q_x(" + x + ") = " + r + " is smooth");
-                    matrix.add(t);
-                    input.add(X);
+                    X = BigInteger.valueOf(x - m);
+                    t = g.apply(X);
+
+                    u = t.pow(2).subtract(N);
+
+                    if (u.signum() == -1) negative++;
+
+                    array = trialDivide(u);
+                    System.err.println("Q_x(" + x + ") = " + t + " is smooth");
+                    smooth_relations_u.add(array);
+                    smooth_relations_t.add(t);
                 } catch (ArithmeticException ignored) { }
             }
         }
-        System.out.println("\nTrial division complete. " + divided + " divisions performed");
+        // System.out.printf("Trial division complete. %d/%d results were negative\n", negative, divided);
+    }
 
-        if (matrix.size() > FactorBase.size()) {
-            System.err.println("Trial division succeeded");
-            smooth_matrix = new IntMatrix(matrix);
-            polynomialInput = new BigIntArray(input);
-            return true;
-        } else {
-            System.err.println("Trial division failed");
-            return false;
-        }
+    public void constructMatrix() {
+        smooth_matrix = new IntMatrix(smooth_relations_u);
+        polynomialInput = new BigIntArray(smooth_relations_t);
     }
 
     public abstract BigInteger solve();
