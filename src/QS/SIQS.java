@@ -174,11 +174,13 @@ public class SIQS extends QuadraticSieve {
         b = BigInteger.ZERO;
         for (BigInteger B_i : B) b = b.add(B_i);
         b = b.mod(a);
-        if (b.add(b).compareTo(a) > 0) b = a.subtract(b);
 
-        assert b.compareTo(BigInteger.ZERO) > 0 : "b <= 0";
-        assert b.multiply(BigInteger.TWO).compareTo(a) <= 0 : "2*b > a";
-        assert b.multiply(b).subtract(N).mod(a).equals(BigInteger.ZERO) : "a does not divide b^2 - N";
+        BigInteger _b = b;
+        if (b.add(b).compareTo(a) > 0) _b = a.subtract(b);
+
+        assert _b.compareTo(BigInteger.ZERO) > 0 : "b <= 0";
+        assert _b.multiply(BigInteger.TWO).compareTo(a) <= 0 : "2*b > a";
+        assert _b.multiply(_b).subtract(N).mod(a).equals(BigInteger.ZERO) : "a does not divide b^2 - N";
 
 
         // B_ainv2 = new ArrayList<>(factor_base.size() - s);
@@ -207,8 +209,8 @@ public class SIQS extends QuadraticSieve {
         }
 
         QSPoly g = new QSPoly(new BigInteger[]{a.multiply(a),
-                a.multiply(b).multiply(BigInteger.TWO), b.multiply(b).subtract(N)});
-        QSPoly h = new QSPoly(new BigInteger[]{a, b});
+                a.multiply(_b).multiply(BigInteger.TWO), _b.multiply(_b).subtract(N)});
+        QSPoly h = new QSPoly(new BigInteger[]{a, _b});
 
         return new QSPoly[]{g, h};
 
@@ -242,14 +244,15 @@ public class SIQS extends QuadraticSieve {
 
             // assert z == sign : "signs error";
 
-            b = b.add(BigInteger.valueOf(2 * sign).multiply(B[v - 1]));
-            if (b.add(b).compareTo(a) > 0) b = a.subtract(b);
+            b = b.add(BigInteger.valueOf(2 * sign).multiply(B[v - 1])).mod(a);
+            BigInteger _b = b;
+            if (b.add(b).compareTo(a) > 0) _b = a.subtract(b);
 
-            assert b.multiply(b).subtract(N).mod(a).equals(BigInteger.ZERO) : "(" + i + ") a does not divide b^2 - N";
+            assert _b.multiply(_b).subtract(N).mod(a).equals(BigInteger.ZERO) : "(" + i + ") a does not divide b^2 - N";
 
             QSPoly g = new QSPoly(new BigInteger[]{a.multiply(a),
-                    a.multiply(b).multiply(BigInteger.TWO), b.multiply(b).subtract(N)});
-            QSPoly h = new QSPoly(new BigInteger[]{a, b});
+                    a.multiply(_b).multiply(BigInteger.TWO), _b.multiply(_b).subtract(N)});
+            QSPoly h = new QSPoly(new BigInteger[]{a, _b});
 
             for (int p = 0; p < factor_base.length; p++) {
                 if (!a_factors.contains(p)) {

@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,41 +50,54 @@ class UtilsTest {
         return a.abs().equals(BigInteger.ONE);
     }
 
+    // g(x) = (43587013253626868526148511x + 32509926565408793599779197)^2 -
+    // 38960345140440235673039093629415692237700636392206014039414593
+
+    // g(190049) = 29658876963701267291872210914657645530209474084129016789249496 is smooth
+    // g(157667) = 8267437258112573728992510063083647711328343152600789041437576 is smooth
+    // g(-144059) = 466729559795233670416450245757971075782866784232584831987016 is smooth
+    // g(-144081) = 478770344493738998034713580955577586448722997937926925631936 is smooth
+
     @Test
     void smoothQ() {
 
-        BigInteger a = new BigInteger("62544596343631375258275701");
-        BigInteger b = new BigInteger("2044341417134775465505134");
+        BigInteger a = new BigInteger("54779672493371855249250161");
+        BigInteger b = new BigInteger("53185392252687434372091752");
         BigInteger n = new BigInteger("38960345140440235673039093629415692237700636392206014039414593");
 
-        // g(x) = (43587013253626868526148511x + 32509926565408793599779197)^2 -
-        // 38960345140440235673039093629415692237700636392206014039414593
+        BigInteger[] primesLTF = Utils.firstN(6000, new File("./primes.txt"));
+        assert primesLTF.length == 6000 : "failed to get primes";
+        LinkedList<BigInteger> fb = new LinkedList<>();
+        for (BigInteger p : primesLTF) {
+            if (Utils.quadraticResidue(n, p)) {
+                fb.add(p);
+            }
+        }
+        BigInteger[] factor_base = new BigInteger[fb.size()];
+        fb.toArray(factor_base);
 
-        // g(190049) = 29658876963701267291872210914657645530209474084129016789249496 is smooth
-        // g(157667) = 8267437258112573728992510063083647711328343152600789041437576 is smooth
-        // g(-144059) = 466729559795233670416450245757971075782866784232584831987016 is smooth
-        // g(-144081) = 478770344493738998034713580955577586448722997937926925631936 is smooth
+        assert smoothQ(a, factor_base) : "a not smooth";
+
+        HashSet<Integer> a_factors = new HashSet<>();
+        HashSet<Integer> a_non_factors = new HashSet<>();
+
+        for (int p = 0; p < factor_base.length; p++) {
+            if (a.mod(factor_base[p]).equals(BigInteger.ZERO)) a_factors.add(p);
+            else a_non_factors.add(p);
+        }
+
+        for (int p : a_factors) assert !a_non_factors.contains(p);
 
         QSPoly g = new QSPoly(new BigInteger[]{
                 a.multiply(a),
                 a.multiply(b).multiply(BigInteger.TWO),
                 b.multiply(b).subtract(n)});
         QSPoly h = new QSPoly(new BigInteger[]{a, b});
-        BigInteger x = new BigInteger("140501");
+        BigInteger x = new BigInteger("159833");
 
-        System.out.println("t^2 = " + a.multiply(x).add(b).pow(2).subtract(n));
+        BigInteger u = new BigInteger("37700203519108897185590977712347655894920706509975548221061891");
 
-        // t = ax + b
-        BigInteger t = h.apply(x);
-
-        BigInteger u = g.apply(x).divide(a);
-
-        BigInteger[] primesLTF = Utils.firstN(6000, new File("./primes.txt"));
-        assert primesLTF.length == 6000 : "failed to get primes";
-
-        System.out.println("u = " + u + "; u is smooth: " + smoothQ(u, primesLTF));
-
-
+        assert g.apply(x).equals(u) : "poly failed: " + g.apply(x);
 
     }
 

@@ -210,7 +210,7 @@ public abstract class QuadraticSieve {
         BigInteger X, t, u;
         int larger = 0;
 
-        System.err.println("Performing trial division with g(x) = (" + a + "x + " + b + ")^2 - " + N);
+        // System.err.println("Performing trial division with g(x) = (" + a + "x + " + b + ")^2 - " + N);
 
         for (int x = 0; x < sieve_array.length; x++) {
             if (sieve_array[x] >= min_val) {
@@ -229,7 +229,7 @@ public abstract class QuadraticSieve {
                 } catch (ArithmeticException ignored) { }
             }
         }
-        System.out.printf("Trial division complete. %d indices were larger than limit\n", larger);
+        // System.out.printf("Trial division complete. %d indices were larger than limit\n", larger);
     }
 
     public void constructMatrix() {
