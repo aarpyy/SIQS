@@ -20,4 +20,18 @@ public record QSPoly(BigInteger[] coeffs) implements Function<BigInteger, BigInt
         }
         return result;
     }
+
+    public String toString() {
+        int degree = coeffs.length - 1;
+        if (degree == 0) return "";
+        else if (degree == 1) return coeffs[0].toString();
+
+        StringBuilder str = new StringBuilder();
+        str.append(coeffs[0]).append("x^").append(degree);
+        for (int i = 1; i < coeffs.length; i++) {
+            degree--;
+            str.append(" + ").append(coeffs[i]).append("x^").append(degree);
+        }
+        return str.toString();
+    }
 }

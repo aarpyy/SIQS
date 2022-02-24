@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Scanner;
@@ -176,14 +177,14 @@ public class SIQS extends QuadraticSieve {
         b = b.mod(a);
 
         BigInteger _b = b;
-        if (b.add(b).compareTo(a) > 0) _b = a.subtract(b);
+        if (_b.add(_b).compareTo(a) > 0) _b = a.subtract(_b);
+
+        BigInteger b2_n = _b.multiply(_b).subtract(N);
 
         assert _b.compareTo(BigInteger.ZERO) > 0 : "b <= 0";
         assert _b.multiply(BigInteger.TWO).compareTo(a) <= 0 : "2*b > a";
-        assert _b.multiply(_b).subtract(N).mod(a).equals(BigInteger.ZERO) : "a does not divide b^2 - N";
+        assert b2_n.mod(a).equals(BigInteger.ZERO) : "a does not divide b^2 - N";
 
-
-        // B_ainv2 = new ArrayList<>(factor_base.size() - s);
         B_ainv2 = new int[a_factors.size()][factor_base.length];
         BigInteger a_inv, prime, t;
         for (int p : a_non_factors) {
@@ -208,8 +209,7 @@ public class SIQS extends QuadraticSieve {
             soln2[p] = Utils.intMod(a_inv.multiply(t.negate().subtract(b)), prime);
         }
 
-        QSPoly g = new QSPoly(new BigInteger[]{a.multiply(a),
-                a.multiply(_b).multiply(BigInteger.TWO), _b.multiply(_b).subtract(N)});
+        QSPoly g = new QSPoly(new BigInteger[]{a.multiply(a), a.multiply(_b).multiply(BigInteger.TWO), b2_n});
         QSPoly h = new QSPoly(new BigInteger[]{a, _b});
 
         return new QSPoly[]{g, h};
@@ -217,74 +217,44 @@ public class SIQS extends QuadraticSieve {
     }
 
     public QSPoly[] nextPoly(int i) {
-        if (B_ainv2 != null) {
 
+        assert (1 <= i) && (i <= ((2 << a_factors.size()) - 1)) : "Invalid polynomial index of " + i;
 
-            assert (1 <= i) && (i <= ((2 << a_factors.size()) - 1)) : "Invalid polynomial index of " + i;
-
-            // v is the highest power of 2 that divides 2*i
-            int v = 0;
-            int j = i + i;
-            while ((j & 1) == 0) {
-                j >>= 1;
-                v++;
-            }
-
-            int _v = 1;
-            int i2 = 2 * i;
-            while (i2 % Math.pow(2, _v) == 0) {
-                _v++;
-            }
-            _v--;
-
-            assert v == _v : "v calc error: _v = " + _v + "; v = " + v + "; i = " + i;
-
-            int sign = ((((int) Math.ceil(i / Math.pow(2, v))) & 1) == 1) ? -1 : 1;
-            // int sign = ((((int) Math.ceil(j / 2.0)) & 1) == 1) ? -1 : 1;
-
-            // assert z == sign : "signs error";
-
-            b = b.add(BigInteger.valueOf(2 * sign).multiply(B[v - 1])).mod(a);
-            BigInteger _b = b;
-            if (b.add(b).compareTo(a) > 0) _b = a.subtract(b);
-
-            assert _b.multiply(_b).subtract(N).mod(a).equals(BigInteger.ZERO) : "(" + i + ") a does not divide b^2 - N";
-
-            QSPoly g = new QSPoly(new BigInteger[]{a.multiply(a),
-                    a.multiply(_b).multiply(BigInteger.TWO), _b.multiply(_b).subtract(N)});
-            QSPoly h = new QSPoly(new BigInteger[]{a, _b});
-
-            for (int p = 0; p < factor_base.length; p++) {
-                if (!a_factors.contains(p)) {
-                    // solnj[p] = solnj[p] + (-1 ^ (i / 2^v)) * B_ainv2[v][p] mod p
-                    soln1[p] = (soln1[p] + sign * B_ainv2[v - 1][p]) % factor_base[p];
-                    soln2[p] = (soln2[p] + sign * B_ainv2[v - 1][p]) % factor_base[p];
-                }
-            }
-
-            return new QSPoly[]{g, h};
-        } else {
-            return null;
+        // v is the highest power of 2 that divides 2*i
+        int v = 0;
+        int j = i + i;
+        while ((j & 1) == 0) {
+            j >>= 1;
+            v++;
         }
+
+        int sign = ((((int) Math.ceil(i / Math.pow(2, v))) & 1) == 1) ? -1 : 1;
+
+        // b = (b + 2 * sign * B_v) % a
+        b = b.add(BigInteger.valueOf(2 * sign).multiply(B[v - 1])).mod(a);
+        BigInteger _b = b;
+        if (_b.add(_b).compareTo(a) > 0) _b = a.subtract(_b);
+
+        BigInteger b2_n = _b.multiply(_b).subtract(N);
+
+        assert b2_n.mod(a).equals(BigInteger.ZERO) : "(" + i + ") a does not divide b^2 - N";
+
+        QSPoly g = new QSPoly(new BigInteger[]{a.multiply(a), a.multiply(_b).multiply(BigInteger.TWO), b2_n});
+        QSPoly h = new QSPoly(new BigInteger[]{a, _b});
+
+        for (int p : a_non_factors) {
+            // solnj[p] = solnj[p] + (-1 ^ (i / 2^v)) * B_ainv2[v][p] mod p
+            soln1[p] = (soln1[p] + sign * B_ainv2[v - 1][p]) % factor_base[p];
+            soln2[p] = (soln2[p] + sign * B_ainv2[v - 1][p]) % factor_base[p];
+        }
+
+        return new QSPoly[]{g, h};
     }
 
     @Override
     public void sieve() {
-        int m2_1 = m + m + 1;
-        int prime, i_min;
-        for (int p : a_factors) {
-            prime = factor_base[p];
-
-            i_min = -((m + soln1[p]) / prime);
-            for (int j = (soln1[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
-                sieve_array[j] += log_p[p];
-            }
-
-            i_min = -((m + soln2[p]) / prime);
-            for (int j = (soln2[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
-                sieve_array[j] += log_p[p];
-            }
-        }
+        Arrays.fill(sieve_array, 0);
+        for (int p : a_non_factors) sieveIndex(p);
     }
 
     @Override

@@ -105,8 +105,8 @@ public abstract class QuadraticSieve {
         smooth_matrix = null;
         polynomialInput = null;
 
+        // Initialize sieve array here, gets filled with 0's each time sieve is called
         sieve_array = new long[m + m + 1];
-        Arrays.fill(sieve_array, 0);
     }
 
     /**
@@ -166,6 +166,20 @@ public abstract class QuadraticSieve {
      */
     public abstract void sieve();
 
+    public void sieveIndex(int i) {
+        int prime = factor_base[i];
+
+        int i_min = -((m + soln1[i]) / prime);
+        for (int j = (soln1[i] + (i_min * prime)) + m; j < (m + m + 1); j += prime) {
+            sieve_array[j] += log_p[i];
+        }
+
+        i_min = -((m + soln2[i]) / prime);
+        for (int j = (soln2[i] + (i_min * prime)) + m; j < (m + m + 1); j += prime) {
+            sieve_array[j] += log_p[i];
+        }
+    }
+
     /**
      * Attempts to completely factor n using the given factor base, returning the powers of the factors
      * if number was completely factored, throwing ArithmeticException if not.
@@ -208,13 +222,11 @@ public abstract class QuadraticSieve {
     public void trialDivision(QSPoly g, QSPoly h, int min_val) {
         IntArray array;
         BigInteger X, t, u;
-        int larger = 0;
-
-        // System.err.println("Performing trial division with g(x) = (" + a + "x + " + b + ")^2 - " + N);
+        HashSet<Integer> sieved = new HashSet<>();
 
         for (int x = 0; x < sieve_array.length; x++) {
             if (sieve_array[x] >= min_val) {
-                larger++;
+                sieved.add(x);
                 try {
                     X = BigInteger.valueOf(x - m);
                     u = g.apply(X);
@@ -229,7 +241,12 @@ public abstract class QuadraticSieve {
                 } catch (ArithmeticException ignored) { }
             }
         }
-        // System.out.printf("Trial division complete. %d indices were larger than limit\n", larger);
+        if (sieved.size() > 3) {
+            System.err.println("Performing trial division with a = " + a + "; b = " + b);
+            System.out.printf("Trial division complete. %d indices were larger than limit\n", sieved.size());
+            System.out.println("Sieved indices: " + sieved);
+            System.exit(0);
+        }
     }
 
     public void constructMatrix() {

@@ -1,6 +1,7 @@
 package QS;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 // Multiple Polynomial Quadratic Sieve
 public class MPQS extends QuadraticSieve {
@@ -103,6 +104,7 @@ public class MPQS extends QuadraticSieve {
     @Override
     public void sieve() {
         int m2_1 = m + m + 1;
+        Arrays.fill(sieve_array, 0);
 
         // For 2, just sieve with soln1, not soln2
         int i_min = -((m + soln1[0]) / 2);
@@ -112,19 +114,8 @@ public class MPQS extends QuadraticSieve {
             sieve_array[j]++;
         }
 
-        int prime;
         for (int p = 1; p < factor_base.length; p++) {
-            prime = factor_base[p];
-
-            i_min = -((m + soln1[p]) / prime);
-            for (int j = (soln1[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
-                sieve_array[j] += log_p[p];
-            }
-
-            i_min = -((m + soln2[p]) / prime);
-            for (int j = (soln2[p] + (i_min * prime)) + m; j < m2_1; j += prime) {
-                sieve_array[j] += log_p[p];
-            }
+            sieveIndex(p);
         }
     }
 
