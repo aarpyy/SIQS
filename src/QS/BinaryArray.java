@@ -135,7 +135,7 @@ public class BinaryArray extends AbstractList<Byte> implements List<Byte> {
             int[] array = new int[size];
             int i = 0;
             for (IntArray row : other.T) {
-                array[i] = this.dotProduct(row);
+                array[i++] = this.dotProduct(row);
             }
             return array;
         }

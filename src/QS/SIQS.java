@@ -2,6 +2,7 @@ package QS;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -296,22 +297,42 @@ public class SIQS extends QuadraticSieve {
     public BigInteger solve() {
         assert (smooth_matrix != null) : "Trial division must be performed before solving!";
 
-        BinaryMatrix matrixMod2 = BinaryMatrix.fromIntMatrix(smooth_matrix);
-        BinaryMatrix kernel = matrixMod2.kernel();
-        int[] powers;
-        BigInteger g_x, a, gcd;
-        for (BinaryArray array : kernel) {
-            powers = array.matmul(smooth_matrix);
-            for (int i = 0; i < powers.length; i++) {
-                powers[i] >>= 1;
+//        System.err.printf("Dimensions of smooth matrix: (%d, %d)\n", smooth_matrix.length, smooth_matrix[0].length);
+//        System.err.printf("Length of polynomial input: %d\n", polynomialInput.length);
+
+        int[][] transposed = new int[smooth_matrix[0].length][smooth_matrix.length];
+        for (int i = 0; i < smooth_matrix[0].length; i++) {
+            for (int j = 0; j < smooth_matrix.length; j++) {
+                transposed[i][j] = Math.floorMod(smooth_matrix[j][i], 2);
             }
-            g_x = Utils.evalPower(FactorBase, powers);
-            a = array.dotProduct(polynomialInput);
+        }
 
-            gcd = a.subtract(g_x).abs().gcd(N);
+        int[][] kernel = Utils.binaryKernel(transposed);
+        // System.err.printf("Dimensions of kernel: (%d, %d)\n", kernel.length, kernel[0].length);
 
-            if ((gcd.compareTo(N) < 0) && (gcd.compareTo(BigInteger.ONE) > 0)) {
-                return gcd;
+        int[] powers;
+        BigInteger g_x, a, p, q, g_sq;
+        for (int[] array : kernel) {
+            powers = Utils.matMul(array, smooth_matrix);
+            g_sq = Utils.evalPower(primesLTF, powers);
+            for (int i = 0; i < powers.length; i++) {
+                assert powers[i] >= 0 && powers[i] % 2 == 0 : "power is not even";
+                powers[i] /= 2;
+            }
+            g_x = Utils.evalPower(primesLTF, powers);
+
+            assert g_x.pow(2).equals(g_sq) : "sqrt(x)^2 != x";
+
+            a = Utils.dot(array, polynomialInput);
+
+
+            p = a.subtract(g_x).abs().gcd(N);
+            q = a.add(g_x).abs().gcd(N);
+
+            if ((p.compareTo(N) < 0) && (p.compareTo(BigInteger.ONE) > 0)) {
+                return p;
+            } else if ((q.compareTo(N) < 0) && (q.compareTo(BigInteger.ONE) > 0)) {
+                return q;
             }
         }
         return null;
@@ -361,43 +382,51 @@ public class SIQS extends QuadraticSieve {
             int relations = qs.getRelationsFound();
             int required = qs.getRequiredRelations();
 
-            for (int i = 1; !qs.enoughRelations(); i++) {
-                qs.sieve();
-                qs.trialDivision(g, h, minTrial);
-                Q_x = qs.nextPoly(i);
-                g = Q_x[0];
-                h = Q_x[1];
-
-                // if (i % (nPolynomials / 4) == 0) System.out.printf("%d/%d polynomials used\n", i, nPolynomials);
-
-                if (i >= nPolynomials) {
-                    // System.err.printf("Sieved %d/%d possible polynomials\nRecycling...\n", nPolynomials, nPolynomials);
-                    Q_x = qs.firstPolynomial();
-                    nPolynomials = 1 << (qs.nFactorsA() - 1);
+            for (int j = 0; j < 5; j++) {
+                for (int i = 1; !qs.enoughRelations(); i++) {
+                    qs.sieve();
+                    qs.trialDivision(g, h, minTrial);
+                    Q_x = qs.nextPoly(i);
                     g = Q_x[0];
                     h = Q_x[1];
-                    i = 0;
 
-                    if (relations != qs.getRelationsFound()) {
-                        relations = qs.getRelationsFound();
-                        System.out.printf("%d/%d\n", relations, required);
+                    // if (i % (nPolynomials / 4) == 0) System.out.printf("%d/%d polynomials used\n", i, nPolynomials);
+
+                    if (i >= nPolynomials) {
+                        // System.err.printf("Sieved %d/%d possible polynomials\nRecycling...\n", nPolynomials, nPolynomials);
+                        Q_x = qs.firstPolynomial();
+                        nPolynomials = 1 << (qs.nFactorsA() - 1);
+                        g = Q_x[0];
+                        h = Q_x[1];
+                        i = 0;
+
+                        if (relations != qs.getRelationsFound()) {
+                            relations = qs.getRelationsFound();
+                            // System.out.printf("%d/%d\n", relations, required);
+                        }
                     }
                 }
-            }
 
-            qs.constructMatrix();
-            BigInteger factor = qs.solve();
+                qs.constructMatrix();
 
-            if (factor == null) {
-                System.err.println("Unable to find non-trivial factor of n");
-            } else {
-                System.out.println("Factor of n: " + factor + "\nn / factor = " + N.divide(factor));
+                // FileWriter matrixFile = new FileWriter("./matrix.txt");
+                // qs.writeMatrix(matrixFile);
+
+                BigInteger factor = qs.solve();
+
+                if (factor == null) {
+                    System.err.println("Unable to find non-trivial factor of n");
+                } else {
+                    System.out.println("Factor of n: " + factor + "\nn / factor = " + N.divide(factor));
+                }
             }
 
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
             System.err.println("File not found");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

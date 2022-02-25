@@ -1,5 +1,7 @@
 package QS;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.*;
@@ -41,9 +43,9 @@ public abstract class QuadraticSieve {
 
     protected int[] soln1, soln2;
     protected long[] sieve_array;
-    protected IntMatrix smooth_matrix;
-    protected BigIntArray polynomialInput;
-    protected ArrayList<IntArray> smooth_relations_u;
+    protected int[][] smooth_matrix;
+    protected BigInteger[] polynomialInput;
+    protected ArrayList<int[]> smooth_relations_u;
     protected ArrayList<BigInteger> smooth_relations_t;
 
     public QuadraticSieve(BigInteger n, BigInteger[] primes) {
@@ -119,7 +121,7 @@ public abstract class QuadraticSieve {
      */
     public static BigInteger[] startup(BigInteger N, Scanner primesScanner) {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
-        BigInteger F = BigInteger.valueOf(chooseF(N));
+        BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
 
         System.out.println("F = " + F);
 
@@ -148,18 +150,24 @@ public abstract class QuadraticSieve {
      * @return sieve range
      */
     public static int chooseSieveRange(int digits) {
-//        if (digits < 52) return 65536;
-//        else if (digits < 88) return 196608;
-//        else return 589824;
-        return 100000;
+        if (digits < 45) return 40000;
+        else if (digits < 52) return 65536;
+        else if (digits < 88) return 196608;
+        else return 589824;
     }
 
-    public static int chooseF(BigInteger n) {
-        return 100000;
-//        int digits = Utils.nDigits(n);
-//        if (digits < 70) return 60000;
-//        else if (digits < 80) return 350000;
-//        else return 900000;
+    public static int chooseF(int digits) {
+        if (digits < 38) return 4200;
+        else if (digits < 40) return 5600;
+        else if (digits < 42) return 7000;
+        else if (digits < 44) return 8400;
+        else if (digits < 48) return 13000;
+        else if (digits < 52) return 16000;
+        else if (digits < 56) return 29000;
+        else if (digits < 60) return 60000;
+        else if (digits < 70) return 100000;
+        else if (digits < 80) return 350000;
+        else return 900000;
     }
 
     public boolean enoughRelations() {
@@ -198,9 +206,9 @@ public abstract class QuadraticSieve {
      * if number was completely factored, throwing ArithmeticException if not.
      * @param a BigInteger to be factored
      * @return IntArray of the powers of each of the factors in the factor base if {@code n} was completely factored
-     * @throws ArithmeticException if {@code n} is not a product of just the factors in {@code fb}
+     * or null if not
      */
-    public IntArray trialDivide(BigInteger a) throws ArithmeticException {
+    public int[] trialDivide(BigInteger a) throws ArithmeticException {
         int[] factors = new int[primesLTF.length];
         BigInteger[] div;
         BigInteger prime;
@@ -215,9 +223,9 @@ public abstract class QuadraticSieve {
 
         if (a.abs().equals(BigInteger.ONE)) {
             relationsFound++;
-            return IntArray.fromArray(factors);
+            return factors;
         } else {
-            throw new ArithmeticException(a + " unable to be factored completely");
+            return null;
         }
     }
 
@@ -230,30 +238,49 @@ public abstract class QuadraticSieve {
      * @param g polynomial to use to get smooth output
      */
     public void trialDivision(QSPoly g, QSPoly h, int min_val) {
-        IntArray array;
+        int[] array;
         BigInteger X, t, u;
 
         for (int x = 0; x < sieve_array.length; x++) {
             if (sieve_array[x] >= min_val) {
-                try {
-                    X = BigInteger.valueOf(x - m);
-                    u = g.apply(X);
-
-                    assert u.mod(a).equals(BigInteger.ZERO) : "a does not divide g(x)";
-
-                    array = trialDivide(u);
+                X = BigInteger.valueOf(x - m);
+                u = g.apply(X);
+                if ((array = trialDivide(u)) != null) {
                     t = h.apply(X);
-                    // System.err.println("Q_x(" + x + ") = " + u + " is smooth");
+
+                    assert t.modPow(BigInteger.TWO, N).equals(u.mod(N)) : "t^2 != u mod n";
+                    assert t.pow(2).subtract(N).equals(u) : "t^2 - n != u";
+
                     smooth_relations_u.add(array);
                     smooth_relations_t.add(t);
-                } catch (ArithmeticException ignored) { }
+                }
             }
         }
     }
 
     public void constructMatrix() {
-        smooth_matrix = new IntMatrix(smooth_relations_u);
-        polynomialInput = new BigIntArray(smooth_relations_t);
+        smooth_matrix = new int[smooth_relations_u.size()][primesLTF.length];
+        polynomialInput = new BigInteger[smooth_relations_t.size()];
+        assert smooth_matrix.length == polynomialInput.length;
+        for (int i = 0; i < smooth_matrix.length; i++) {
+            smooth_matrix[i] = smooth_relations_u.get(i);
+            polynomialInput[i] = smooth_relations_t.get(i);
+
+            assert polynomialInput[i].pow(2).subtract(N).abs().equals(Utils.evalPower(primesLTF, smooth_matrix[i])) : "this2";
+            // assert polynomialInput[i].modPow(BigInteger.TWO, N).equals(
+                //    Utils.evalPower(primesLTF, smooth_matrix[i]).mod(N)) : "power fail";
+        }
+    }
+
+    public void writeMatrix(FileWriter fileWriter) throws IOException {
+        fileWriter.write("Smooth matrix\n");
+        for (int[] a : smooth_matrix) {
+            fileWriter.write(Arrays.toString(a) + "\n");
+        }
+        fileWriter.write("\nPolynomial input\n");
+        for (BigInteger i : polynomialInput) {
+            fileWriter.write(i + "\n");
+        }
     }
 
     public abstract BigInteger solve();

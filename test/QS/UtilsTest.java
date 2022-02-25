@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -102,7 +99,21 @@ class UtilsTest {
     }
 
     @Test
-    void evalPower() {
+    void kernel() {
+        int[][] matrix = new int[][]{
+                new int[]{1, 0, 1, 0, 0, 0},
+                new int[]{0, 1, 1, 0, 1, 0},
+                new int[]{0, 0, 0, 1, 1, 1},
+                new int[] {0, 0, 0, 0, 0, 0}
+        };
+
+        int[][] kernel = Utils.binaryKernel(matrix);
+        for (int[] row : kernel) {
+            System.out.println(Arrays.toString(row));
+            for (int[] r : matrix) {
+                assert Utils.dot(row, r) % 2 == 0 : "Kernel produced non-zero result";
+            }
+        }
     }
 
     @Test

@@ -5,8 +5,7 @@ import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public final class Utils {
 
@@ -66,6 +65,123 @@ public final class Utils {
             transposed[i] = column;
         }
         return transposed;
+    }
+
+    /**
+     * Computes the kernel of a GF(2) matrix, returning the basis vectors of the kernel
+     * as an array of {@code int[]}
+     * @param matrix 2-dimensional int array over GF(2)
+     * @return basis vectors of kernel
+     */
+    public static int[][] binaryKernel(int[][] matrix) {
+        int w = matrix[0].length;
+        int h = matrix.length;
+
+        int[][] tmpMatrix = new int[h + w][];
+
+        int n = 0;
+        for (int[] a : matrix) {
+            tmpMatrix[n++] = a;
+        }
+
+        int[] row;
+        for (int i = 0; i < w; i++) {
+            row = new int[w];
+            Arrays.fill(row, 0);
+            row[i] = 1;
+            tmpMatrix[n++] = row;
+        }
+
+        int[][] T = transpose(tmpMatrix);
+        int[] temp;
+        int pivotRow = 0;
+        for (int j = 0; j < h; j++) {
+            for (int i = pivotRow; i < w; i++) {
+                if (T[i][j] == 1) {
+
+                    if (i > pivotRow) {
+                        // Swap pivot row and row i
+                        temp = T[i];
+                        T[i] = T[pivotRow];
+                        T[pivotRow] = temp;
+                    }
+
+                    for (int k = 0; k < w; k++) {
+                        if ((k != pivotRow) && (T[k][j] == 1)) {
+                            for (int m = 0; m < h + w; m++) {
+                                T[k][m] = Math.floorMod(T[k][m] - T[pivotRow][m], 2);
+                            }
+                        }
+                    }
+                    pivotRow++;
+                    break;
+                }
+            }
+        }
+        int[][] right = new int[w][w];
+        int[][] left = new int[w][h];
+        for (int i = 0; i < w; i++) {
+            System.arraycopy(T[i], 0, left[i], 0, h);
+            System.arraycopy(T[i], h, right[i], 0, w);
+        }
+
+        int[][] kernel;
+        boolean isZero;
+        int i;
+        for (i = 0; i < w; i++) {
+            isZero = true;
+            for (int k = 0; k < h; k++) {
+                if (left[i][k] != 0) {
+                    isZero = false;
+                    break;
+                }
+            }
+            if (isZero) break;
+        }
+        kernel = new int[w - i][w];
+        // Add rest of them, since matrix in RREF all rows below will also be zero
+        int k = 0;
+        for (; i < w; i++) {
+            kernel[k++] = right[i];
+        }
+        return kernel;
+    }
+
+    public static int[] matMul(int[] vector, int[][] matrix) {
+        if (vector.length != matrix.length) {
+            throw new IllegalArgumentException("Array lengths differ: " + vector.length + ", " + matrix.length);
+        } else {
+            int[] array = new int[matrix[0].length];
+            int i = 0;
+            for (int[] row : transpose(matrix)) {
+                array[i++] = dot(vector, row);
+            }
+            return array;
+        }
+    }
+
+    public static int dot(int[] a, int[] b) {
+        if (a.length == b.length) {
+            int res = 0;
+            for (int i = 0; i < a.length; i++) {
+                res += a[i] * b[i];
+            }
+            return res;
+        } else {
+            throw new ArrayIndexOutOfBoundsException("Lengths " + a.length + " and " + b.length + " differ");
+        }
+    }
+
+    public static BigInteger dot(int[] a, BigInteger[] b) {
+        if (a.length == b.length) {
+            BigInteger res = BigInteger.ZERO;
+            for (int i = 0; i < a.length; i++) {
+                res = res.add(BigInteger.valueOf(a[i]).multiply(b[i]));
+            }
+            return res;
+        } else {
+            throw new ArrayIndexOutOfBoundsException("Lengths" + a.length + " and " + b.length + " differ");
+        }
     }
 
     /**

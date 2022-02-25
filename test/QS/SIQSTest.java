@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 class SIQSTest {
@@ -60,9 +62,52 @@ class SIQSTest {
     }
 
     @Test
-    void main() {
+    void matrix() throws FileNotFoundException {
+        File matrixFile = new File("./matrix.txt");
+        Scanner scanner = new Scanner(matrixFile);
+        scanner.nextLine();
+
+        int height = 316;
+        int width = 300;
+        int[][] matrix = new int[height][];
+        String line;
+        String[] array;
+        for (int i = 0; i < height; i++) {
+            line = scanner.nextLine();
+            line = line.substring(1, line.length() - 1);
+            array = line.split(", ");
+
+            matrix[i] = new int[array.length];
+            for (int j = 0; j < array.length; j++) {
+                matrix[i][j] = Integer.parseInt(array[j]);
+            }
+            System.out.println(Arrays.toString(matrix[i]));
+            System.exit(0);
+        }
+    }
+
+    @Test
+    void main_62() {
         BigInteger a = new BigInteger("4461769171101033943441783314719");
         BigInteger b = new BigInteger("8732039611727821335286278841247");
+        String[] args = new String[]{a.multiply(b).toString()};
+
+        SIQS.main(args);
+    }
+
+    @Test
+    void main_42() {
+        BigInteger a = new BigInteger("785419973550680254573");
+        BigInteger b = new BigInteger("744673529241354861493");
+        String[] args = new String[]{a.multiply(b).toString()};
+
+        SIQS.main(args);
+    }
+
+    @Test
+    void main_37() {
+        BigInteger a = new BigInteger("2204477496956597");
+        BigInteger b = new BigInteger("744673529241354861493");
         String[] args = new String[]{a.multiply(b).toString()};
 
         SIQS.main(args);

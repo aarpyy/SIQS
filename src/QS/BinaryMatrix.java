@@ -112,16 +112,25 @@ public class BinaryMatrix extends AbstractList<BinaryArray> implements List<Bina
             temp.add(row);
         }
 
+        // System.out.println("temp\n"  + temp);
+
+        int tmp_w = temp.get(0).size();
+        int tmp_h = temp.size();
+
         BinaryMatrix T = new BinaryMatrix(temp).transpose();
+
+        assert T.w == tmp_h && T.h == tmp_w : "Transpose failed";
+
+        // System.out.println("T\n"  + T);
 
         int pivotRow = 0;
         for (int j = 0; j < h; j++) {
             for (int i = pivotRow; i < T.h; i++) {
-                if (T.get(i).get(j) != 0) {
+                if (T.get(i).get(j) == 1) {
 
                     if (i > pivotRow) {
                         // Swap pivot row and row i
-                        swap(i, pivotRow);
+                        T.swap(i, pivotRow);
                     }
 
                     T.rowReduce(pivotRow);
