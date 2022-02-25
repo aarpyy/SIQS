@@ -300,6 +300,12 @@ public class SIQS extends QuadraticSieve {
 //        System.err.printf("Dimensions of smooth matrix: (%d, %d)\n", smooth_matrix.length, smooth_matrix[0].length);
 //        System.err.printf("Length of polynomial input: %d\n", polynomialInput.length);
 
+        System.out.println("first 5 t^2 = u mod n (after)");
+        for (int i = 0; i < 5; i++) {
+            System.out.printf("t: %s; u: %s\n", polynomialInput[i],
+                    Arrays.toString(trialDivide(polynomialInput[i].pow(2).subtract(N))));
+        }
+
         int[][] transposed = new int[smooth_matrix[0].length][smooth_matrix.length];
         for (int i = 0; i < smooth_matrix[0].length; i++) {
             for (int j = 0; j < smooth_matrix.length; j++) {

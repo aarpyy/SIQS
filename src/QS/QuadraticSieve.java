@@ -253,6 +253,14 @@ public abstract class QuadraticSieve {
 
                     smooth_relations_u.add(array);
                     smooth_relations_t.add(t);
+
+                    if (smooth_relations_u.size() == 5) {
+                        System.out.println("first 5 t^2 = u mod n");
+                        for (int i = 0; i < 5; i++) {
+                            System.out.printf("t: %s; u: %s\n", smooth_relations_t.get(i),
+                                    Arrays.toString(smooth_relations_u.get(i)));
+                        }
+                    }
                 }
             }
         }
