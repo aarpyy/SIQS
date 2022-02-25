@@ -310,10 +310,23 @@ public class SIQS extends QuadraticSieve {
         int[][] kernel = Utils.binaryKernel(transposed);
         // System.err.printf("Dimensions of kernel: (%d, %d)\n", kernel.length, kernel[0].length);
 
-        int[] powers;
-        BigInteger g_x, a, p, q, g_sq;
+        int[] powers, tmp_powers;
+        BigInteger g_x, a, p, q, r, g_sq;
         for (int[] array : kernel) {
+            for (int x : Utils.matMul(array, Utils.transpose(transposed))) {
+                assert x % 2 == 0 : "kernel failed mod2";
+            }
+
             powers = Utils.matMul(array, smooth_matrix);
+            a = Utils.dot(array, polynomialInput);
+            tmp_powers = trialDivide(a.pow(2).subtract(N));
+
+            if (!Arrays.equals(powers, tmp_powers)) {
+                System.err.printf("powers: %s\n", Arrays.toString(powers));
+                System.err.printf("tmp_powers: %s\n", Arrays.toString(tmp_powers));
+                System.exit(0);
+            }
+
             g_sq = Utils.evalPower(primesLTF, powers);
             for (int i = 0; i < powers.length; i++) {
                 assert powers[i] >= 0 && powers[i] % 2 == 0 : "power is not even";
@@ -323,11 +336,14 @@ public class SIQS extends QuadraticSieve {
 
             assert g_x.pow(2).equals(g_sq) : "sqrt(x)^2 != x";
 
-            a = Utils.dot(array, polynomialInput);
+            if (!a.modPow(BigInteger.TWO, N).equals(g_sq.mod(N))) {
+                System.err.printf("poly^2: %s; eval^2: %s\n", a.modPow(BigInteger.TWO, N), g_sq.mod(N));
+                System.err.printf("poly: %s; eval: %s\n", a.mod(N), g_x.mod(N));
+            }
 
 
-            p = a.subtract(g_x).abs().gcd(N);
-            q = a.add(g_x).abs().gcd(N);
+            p = a.subtract(g_x).gcd(N);
+            q = a.add(g_x).gcd(N);
 
             if ((p.compareTo(N) < 0) && (p.compareTo(BigInteger.ONE) > 0)) {
                 return p;
@@ -382,7 +398,7 @@ public class SIQS extends QuadraticSieve {
             int relations = qs.getRelationsFound();
             int required = qs.getRequiredRelations();
 
-            for (int j = 0; j < 5; j++) {
+            for (int j = 0; j < 1; j++) {
                 for (int i = 1; !qs.enoughRelations(); i++) {
                     qs.sieve();
                     qs.trialDivision(g, h, minTrial);
