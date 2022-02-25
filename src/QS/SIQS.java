@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -30,7 +29,7 @@ public class SIQS extends QuadraticSieve {
     // Number of trials to randomly choose polynomial coefficient 'a'
     private static final int trialsA = 30;
 
-    private static final int trialDivError = 25;
+    public static final int trialDivError = 25;
 
     private int[][] B_ainv2;
     private BigInteger[] B;
@@ -50,6 +49,18 @@ public class SIQS extends QuadraticSieve {
 
     public int nFactorsA() {
         return a_factors.size();
+    }
+
+    public void printInfoA() {
+        System.err.println("Indices: " + a_factors);
+
+        int[] primes = new int[a_factors.size()];
+        int i = 0;
+        for (int j : a_factors) {
+            primes[i++] = factor_base[j];
+        }
+
+        System.err.println("Prime factors: " + Arrays.toString(primes));
     }
 
     public void smoothA() {
@@ -139,20 +150,29 @@ public class SIQS extends QuadraticSieve {
             if (!a_factors.contains(p)) a_non_factors.add(p);
         }
 
-        BigDecimal d_diff = new BigDecimal(a).divide(target, MathContext.DECIMAL32);
-        System.out.println("chosen a = " + a + "; % difference = " + d_diff);
+//        BigDecimal d_diff = new BigDecimal(a).divide(target, MathContext.DECIMAL32);
+//        System.err.println("a_java = " + a + "  # (" + d_diff + "%)");
     }
 
     public QSPoly[] firstPolynomial() throws ArithmeticException {
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
         smoothA();
+
         B = new BigInteger[a_factors.size()];
 
         int b_index = 0;
         BigInteger a_l;     // a missing one of it's factors
         BigInteger gamma, q;
+
+        int[] factors_q = new int[a_factors.size()];
+        int j = 0;
         for (int l : a_factors) {
+            factors_q[j++] = l;
+        }
+        Arrays.sort(factors_q);
+
+        for (int l : factors_q) {
             // Get BigInteger prime
             q = FactorBase[l];
 
@@ -172,12 +192,18 @@ public class SIQS extends QuadraticSieve {
             B[b_index++] = a_l.multiply(gamma);
         }
 
+        // System.err.println("B_java = " + Arrays.toString(B));
+
         b = BigInteger.ZERO;
         for (BigInteger B_i : B) b = b.add(B_i);
         b = b.mod(a);
 
+        // System.err.println("b_java = " + b);
+
         BigInteger _b = b;
         if (_b.add(_b).compareTo(a) > 0) _b = a.subtract(_b);
+
+        // System.err.println("b = " + _b);
 
         BigInteger b2_n = _b.multiply(_b).subtract(N);
 
@@ -193,7 +219,7 @@ public class SIQS extends QuadraticSieve {
             assert !a.mod(prime).equals(BigInteger.ZERO) : "p divides a";
 
             a_inv = a.modInverse(prime);
-            for (int j = 0; j < a_factors.size(); j++) {
+            for (j = 0; j < a_factors.size(); j++) {
 
                 // Add 2*B_j*a^-1 mod p
                 B_ainv2[j][p] = Utils.intMod(B[j].add(B[j]).multiply(a_inv), prime);
@@ -218,7 +244,7 @@ public class SIQS extends QuadraticSieve {
 
     public QSPoly[] nextPoly(int i) {
 
-        assert (1 <= i) && (i <= ((2 << a_factors.size()) - 1)) : "Invalid polynomial index of " + i;
+        assert (1 <= i) && (i <= ((2 << (a_factors.size() - 1)) - 1)) : "Invalid polynomial index of " + i;
 
         // v is the highest power of 2 that divides 2*i
         int v = 0;
@@ -230,10 +256,19 @@ public class SIQS extends QuadraticSieve {
 
         int sign = ((((int) Math.ceil(i / Math.pow(2, v))) & 1) == 1) ? -1 : 1;
 
+//        System.err.printf("sign_%d = %d\n", i, sign);
+//        System.err.printf("v_%d = %d\n", i, v);
+        // System.err.println("B_v = " + B[v - 1]);
+
         // b = (b + 2 * sign * B_v) % a
         b = b.add(BigInteger.valueOf(2 * sign).multiply(B[v - 1])).mod(a);
+
+        // System.err.printf("b_%d_java = %s\n", i + 1, b);
+
         BigInteger _b = b;
         if (_b.add(_b).compareTo(a) > 0) _b = a.subtract(_b);
+
+        // System.err.printf("b(%d) = %s\n", i, _b);
 
         BigInteger b2_n = _b.multiply(_b).subtract(N);
 
@@ -244,8 +279,8 @@ public class SIQS extends QuadraticSieve {
 
         for (int p : a_non_factors) {
             // solnj[p] = solnj[p] + (-1 ^ (i / 2^v)) * B_ainv2[v][p] mod p
-            soln1[p] = (soln1[p] + sign * B_ainv2[v - 1][p]) % factor_base[p];
-            soln2[p] = (soln2[p] + sign * B_ainv2[v - 1][p]) % factor_base[p];
+            soln1[p] = Math.floorMod((soln1[p] + sign * B_ainv2[v - 1][p]), factor_base[p]);
+            soln2[p] = Math.floorMod((soln2[p] + sign * B_ainv2[v - 1][p]), factor_base[p]);
         }
 
         return new QSPoly[]{g, h};
@@ -319,10 +354,12 @@ public class SIQS extends QuadraticSieve {
             QSPoly g = Q_x[0];
             QSPoly h = Q_x[1];
             int nPolynomials = 1 << (qs.nFactorsA() - 1);
-            boolean attemptSolve = true;
             int minTrial = Utils.BigSqrt(qs.N).multiply(qs.M).bitLength() - trialDivError;
 
             System.err.println("Minimum sieve value = " + minTrial);
+
+            int relations = qs.getRelationsFound();
+            int required = qs.getRequiredRelations();
 
             for (int i = 1; !qs.enoughRelations(); i++) {
                 qs.sieve();
@@ -331,26 +368,30 @@ public class SIQS extends QuadraticSieve {
                 g = Q_x[0];
                 h = Q_x[1];
 
-                if (i % (nPolynomials / 4) == 0) System.out.printf("%d/%d polynomials used\n", i, nPolynomials);
+                // if (i % (nPolynomials / 4) == 0) System.out.printf("%d/%d polynomials used\n", i, nPolynomials);
 
-                if (i > nPolynomials) {
-                    System.err.printf("Sieved %d/%d possible polynomials\nRecycling...", nPolynomials, nPolynomials);
+                if (i >= nPolynomials) {
+                    // System.err.printf("Sieved %d/%d possible polynomials\nRecycling...\n", nPolynomials, nPolynomials);
                     Q_x = qs.firstPolynomial();
+                    nPolynomials = 1 << (qs.nFactorsA() - 1);
                     g = Q_x[0];
                     h = Q_x[1];
                     i = 0;
+
+                    if (relations != qs.getRelationsFound()) {
+                        relations = qs.getRelationsFound();
+                        System.out.printf("%d/%d\n", relations, required);
+                    }
                 }
             }
 
-            if (attemptSolve) {
-                qs.constructMatrix();
-                BigInteger factor = qs.solve();
+            qs.constructMatrix();
+            BigInteger factor = qs.solve();
 
-                if (factor == null) {
-                    System.err.println("Unable to find non-trivial factor of n");
-                } else {
-                    System.out.println("Factor of n: " + factor + "\nn / factor = " + N.divide(factor));
-                }
+            if (factor == null) {
+                System.err.println("Unable to find non-trivial factor of n");
+            } else {
+                System.out.println("Factor of n: " + factor + "\nn / factor = " + N.divide(factor));
             }
 
         }

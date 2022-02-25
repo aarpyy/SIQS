@@ -25,7 +25,8 @@ public abstract class QuadraticSieve {
 
     public final BigInteger[] primesLTF;
 
-    public final int requiredRelations;
+    protected final int requiredRelations;
+    protected int relationsFound;
 
     // Everything else is protected so that both MPQS and SIQS can have access, but they are not needed outside
 
@@ -104,6 +105,7 @@ public abstract class QuadraticSieve {
         smooth_relations_t = new ArrayList<>(requiredRelations);
         smooth_matrix = null;
         polynomialInput = null;
+        relationsFound = 0;
 
         // Initialize sieve array here, gets filled with 0's each time sieve is called
         sieve_array = new long[m + m + 1];
@@ -117,7 +119,7 @@ public abstract class QuadraticSieve {
      */
     public static BigInteger[] startup(BigInteger N, Scanner primesScanner) {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
-        BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
+        BigInteger F = BigInteger.valueOf(chooseF(N));
 
         System.out.println("F = " + F);
 
@@ -146,19 +148,30 @@ public abstract class QuadraticSieve {
      * @return sieve range
      */
     public static int chooseSieveRange(int digits) {
-        if (digits < 52) return 65536;
-        else if (digits < 88) return 196608;
-        else return 589824;
+//        if (digits < 52) return 65536;
+//        else if (digits < 88) return 196608;
+//        else return 589824;
+        return 100000;
     }
 
-    public static int chooseF(int digits) {
-        if (digits < 70) return 60000;
-        else if (digits < 80) return 350000;
-        else return 900000;
+    public static int chooseF(BigInteger n) {
+        return 100000;
+//        int digits = Utils.nDigits(n);
+//        if (digits < 70) return 60000;
+//        else if (digits < 80) return 350000;
+//        else return 900000;
     }
 
     public boolean enoughRelations() {
-        return (smooth_relations_u.size() >= requiredRelations);
+        return (relationsFound >= requiredRelations);
+    }
+
+    public int getRequiredRelations() {
+        return requiredRelations;
+    }
+
+    public int getRelationsFound() {
+        return relationsFound;
     }
 
     /**
@@ -201,12 +214,9 @@ public abstract class QuadraticSieve {
         }
 
         if (a.abs().equals(BigInteger.ONE)) {
-            System.out.println("Success!");
+            relationsFound++;
             return IntArray.fromArray(factors);
         } else {
-            if (a.abs().compareTo(BigInteger.TEN) <= 0) {
-                System.err.println("remainder after division = " + a);
-            }
             throw new ArithmeticException(a + " unable to be factored completely");
         }
     }
@@ -222,11 +232,9 @@ public abstract class QuadraticSieve {
     public void trialDivision(QSPoly g, QSPoly h, int min_val) {
         IntArray array;
         BigInteger X, t, u;
-        HashSet<Integer> sieved = new HashSet<>();
 
         for (int x = 0; x < sieve_array.length; x++) {
             if (sieve_array[x] >= min_val) {
-                sieved.add(x);
                 try {
                     X = BigInteger.valueOf(x - m);
                     u = g.apply(X);
@@ -235,17 +243,11 @@ public abstract class QuadraticSieve {
 
                     array = trialDivide(u);
                     t = h.apply(X);
-                    System.err.println("Q_x(" + x + ") = " + u + " is smooth");
+                    // System.err.println("Q_x(" + x + ") = " + u + " is smooth");
                     smooth_relations_u.add(array);
                     smooth_relations_t.add(t);
                 } catch (ArithmeticException ignored) { }
             }
-        }
-        if (sieved.size() > 3) {
-            System.err.println("Performing trial division with a = " + a + "; b = " + b);
-            System.out.printf("Trial division complete. %d indices were larger than limit\n", sieved.size());
-            System.out.println("Sieved indices: " + sieved);
-            System.exit(0);
         }
     }
 

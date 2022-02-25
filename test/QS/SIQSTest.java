@@ -31,9 +31,27 @@ class SIQSTest {
 
             // Make new object which just creates arrays for process
             SIQS qs = new SIQS(N, primes);
+            QSPoly[] poly = qs.firstPolynomial();
+            // qs.printInfoA();
 
-            for (int i = 0; i < 30; i++) {
-                qs.firstPolynomial();
+            QSPoly g = poly[0];
+            QSPoly h = poly[1];
+
+            qs.sieve();
+            int minTrial = Utils.BigSqrt(qs.N).multiply(qs.M).bitLength() - SIQS.trialDivError;
+            System.out.print("indices = ");
+            qs.trialDivision(g, h, minTrial);
+
+            for (int i = 1; i < 5; i++) {
+
+
+                poly = qs.nextPoly(i);
+                g = poly[0];
+                h = poly[1];
+
+                qs.sieve();
+                System.out.printf("indices_%d = ", i);
+                qs.trialDivision(g, h, minTrial);
             }
 
         } catch (FileNotFoundException e) {
