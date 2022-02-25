@@ -417,8 +417,10 @@ public class SIQS extends QuadraticSieve {
 
         }
         catch (FileNotFoundException e) {
-            e.printStackTrace();
-            System.err.println("File not found");
+            if (loud) {
+                e.printStackTrace();
+                System.err.println("File not found");
+            }
         }
     }
 
