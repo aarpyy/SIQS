@@ -22,7 +22,8 @@ public final class Utils {
     public static final double log2 = Math.log(2);
 
     public static int nDigits(BigInteger n) {
-        return (int) Math.round(n.bitLength() / (Math.log(10) / log2));
+        // return (int) Math.round(n.bitLength() / (Math.log(10) / log2));
+        return n.toString().length();
     }
 
     public static int nDigits(BigDecimal n) {
@@ -154,13 +155,13 @@ public final class Utils {
             int[] array = new int[matrix[0].length];
             int i = 0;
             for (int[] row : transpose(matrix)) {
-                array[i++] = dot(vector, row);
+                array[i++] = binaryDot(vector, row);
             }
             return array;
         }
     }
 
-    public static int dot(int[] a, int[] b) {
+    public static int binaryDot(int[] a, int[] b) {
         if (a.length == b.length) {
             int res = 0;
             for (int i = 0; i < a.length; i++) {
@@ -172,11 +173,11 @@ public final class Utils {
         }
     }
 
-    public static BigInteger dot(int[] a, BigInteger[] b) {
+    public static BigInteger binaryDot(int[] a, BigInteger[] b) {
         if (a.length == b.length) {
             BigInteger res = BigInteger.ZERO;
             for (int i = 0; i < a.length; i++) {
-                res = res.add(BigInteger.valueOf(a[i]).multiply(b[i]));
+                if (a[i] == 1) res = res.add(b[i]);
             }
             return res;
         } else {

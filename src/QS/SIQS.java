@@ -297,15 +297,6 @@ public class SIQS extends QuadraticSieve {
     public BigInteger solve() {
         assert (smooth_matrix != null) : "Trial division must be performed before solving!";
 
-//        System.err.printf("Dimensions of smooth matrix: (%d, %d)\n", smooth_matrix.length, smooth_matrix[0].length);
-//        System.err.printf("Length of polynomial input: %d\n", polynomialInput.length);
-
-        System.out.println("first 5 t^2 = u mod n (after)");
-        for (int i = 0; i < 5; i++) {
-            System.out.printf("t: %s; u: %s\n", polynomialInput[i],
-                    Arrays.toString(trialDivide(polynomialInput[i].pow(2).subtract(N))));
-        }
-
         int[][] transposed = new int[smooth_matrix[0].length][smooth_matrix.length];
         for (int i = 0; i < smooth_matrix[0].length; i++) {
             for (int j = 0; j < smooth_matrix.length; j++) {
@@ -314,42 +305,23 @@ public class SIQS extends QuadraticSieve {
         }
 
         int[][] kernel = Utils.binaryKernel(transposed);
-        // System.err.printf("Dimensions of kernel: (%d, %d)\n", kernel.length, kernel[0].length);
 
-        int[] powers, tmp_powers;
-        BigInteger g_x, a, p, q, r, g_sq;
+        int[] powers;
+        BigInteger g_x, acc, p, q;
         for (int[] array : kernel) {
-            for (int x : Utils.matMul(array, Utils.transpose(transposed))) {
-                assert x % 2 == 0 : "kernel failed mod2";
-            }
-
             powers = Utils.matMul(array, smooth_matrix);
-            a = Utils.dot(array, polynomialInput);
-            tmp_powers = trialDivide(a.pow(2).subtract(N));
 
-            if (!Arrays.equals(powers, tmp_powers)) {
-                System.err.printf("powers: %s\n", Arrays.toString(powers));
-                System.err.printf("tmp_powers: %s\n", Arrays.toString(tmp_powers));
-                System.exit(0);
+            acc = BigInteger.ONE;
+            for (int i = 0; i < array.length; i++) {
+                if (array[i] == 1) acc = acc.multiply(polynomialInput[i]);
             }
 
-            g_sq = Utils.evalPower(primesLTF, powers);
-            for (int i = 0; i < powers.length; i++) {
-                assert powers[i] >= 0 && powers[i] % 2 == 0 : "power is not even";
-                powers[i] /= 2;
-            }
+            for (int i = 0; i < powers.length; i++) powers[i] /= 2;
+
             g_x = Utils.evalPower(primesLTF, powers);
 
-            assert g_x.pow(2).equals(g_sq) : "sqrt(x)^2 != x";
-
-            if (!a.modPow(BigInteger.TWO, N).equals(g_sq.mod(N))) {
-                System.err.printf("poly^2: %s; eval^2: %s\n", a.modPow(BigInteger.TWO, N), g_sq.mod(N));
-                System.err.printf("poly: %s; eval: %s\n", a.mod(N), g_x.mod(N));
-            }
-
-
-            p = a.subtract(g_x).gcd(N);
-            q = a.add(g_x).gcd(N);
+            p = acc.subtract(g_x).gcd(N);
+            q = acc.add(g_x).gcd(N);
 
             if ((p.compareTo(N) < 0) && (p.compareTo(BigInteger.ONE) > 0)) {
                 return p;
@@ -381,8 +353,9 @@ public class SIQS extends QuadraticSieve {
         }
 
         try {
-            System.err.println("N = " + N);
-            System.err.println("digits(N) = " + Utils.nDigits(N));
+            System.out.println("N = " + N);
+            System.out.println("digits(N) = " + Utils.nDigits(N));
+
             // Open file for primes
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
@@ -399,12 +372,12 @@ public class SIQS extends QuadraticSieve {
             int nPolynomials = 1 << (qs.nFactorsA() - 1);
             int minTrial = Utils.BigSqrt(qs.N).multiply(qs.M).bitLength() - trialDivError;
 
-            System.err.println("Minimum sieve value = " + minTrial);
-
             int relations = qs.getRelationsFound();
-            int required = qs.getRequiredRelations();
+            int relationsIncrement = qs.requiredRelations / 10;
 
-            for (int j = 0; j < 1; j++) {
+            BigInteger factor;
+            boolean foundFactor = false;
+            for (int j = 0; j < 5; j++) {
                 for (int i = 1; !qs.enoughRelations(); i++) {
                     qs.sieve();
                     qs.trialDivision(g, h, minTrial);
@@ -412,43 +385,43 @@ public class SIQS extends QuadraticSieve {
                     g = Q_x[0];
                     h = Q_x[1];
 
-                    // if (i % (nPolynomials / 4) == 0) System.out.printf("%d/%d polynomials used\n", i, nPolynomials);
-
                     if (i >= nPolynomials) {
-                        // System.err.printf("Sieved %d/%d possible polynomials\nRecycling...\n", nPolynomials, nPolynomials);
                         Q_x = qs.firstPolynomial();
                         nPolynomials = 1 << (qs.nFactorsA() - 1);
                         g = Q_x[0];
                         h = Q_x[1];
                         i = 0;
+                    }
 
-                        if (relations != qs.getRelationsFound()) {
-                            relations = qs.getRelationsFound();
-                            // System.out.printf("%d/%d\n", relations, required);
+                    if (relations != qs.getRelationsFound()) {
+                        relations = qs.getRelationsFound();
+                        if (relations % relationsIncrement == 0) {
+                            System.out.printf("%d/%d\n", relations, qs.requiredRelations);
                         }
                     }
                 }
 
+                System.out.printf("%d/%d\n", qs.getRelationsFound(), qs.requiredRelations);
+                System.out.println("Attempting linear algebra stage");
+
                 qs.constructMatrix();
+                factor = qs.solve();
 
-                // FileWriter matrixFile = new FileWriter("./matrix.txt");
-                // qs.writeMatrix(matrixFile);
-
-                BigInteger factor = qs.solve();
-
-                if (factor == null) {
-                    System.err.println("Unable to find non-trivial factor of n");
-                } else {
-                    System.out.println("Factor of n: " + factor + "\nn / factor = " + N.divide(factor));
+                if (factor != null) {
+                    System.out.println("Factor of N: " + factor + "\nN / factor = " + N.divide(factor));
+                    foundFactor = true;
+                    break;
                 }
+            }
+
+            if (!foundFactor) {
+                System.out.println("Unable to find non-trivial factor of N");
             }
 
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
             System.err.println("File not found");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 

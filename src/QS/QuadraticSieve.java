@@ -27,7 +27,7 @@ public abstract class QuadraticSieve {
 
     public final BigInteger[] primesLTF;
 
-    protected final int requiredRelations;
+    public final int requiredRelations;
     protected int relationsFound;
 
     // Everything else is protected so that both MPQS and SIQS can have access, but they are not needed outside
@@ -94,10 +94,10 @@ public abstract class QuadraticSieve {
         m = chooseSieveRange(digits);
         M = BigInteger.valueOf(m);
 
-        System.out.println("M = " + M);
+        System.out.println("M: " + M);
 
-        System.out.println("Size of factor base = " + fbSize);
-        System.out.println("Primes < F = " + primesLTF.length);
+        System.out.println("Size of factor base: " + fbSize);
+        System.out.println("Number of primes < F: " + primesLTF.length);
 
         // These are all variables that will be set during initialization stage
         soln1 = new int[fbSize];
@@ -123,7 +123,7 @@ public abstract class QuadraticSieve {
         // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
         BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
 
-        System.out.println("F = " + F);
+        System.out.println("F: " + F);
 
         LinkedList<BigInteger> primes = new LinkedList<>();
 
@@ -174,10 +174,6 @@ public abstract class QuadraticSieve {
         return (relationsFound >= requiredRelations);
     }
 
-    public int getRequiredRelations() {
-        return requiredRelations;
-    }
-
     public int getRelationsFound() {
         return relationsFound;
     }
@@ -222,7 +218,6 @@ public abstract class QuadraticSieve {
         }
 
         if (a.abs().equals(BigInteger.ONE)) {
-            relationsFound++;
             return factors;
         } else {
             return null;
@@ -248,19 +243,9 @@ public abstract class QuadraticSieve {
                 if ((array = trialDivide(u)) != null) {
                     t = h.apply(X);
 
-                    assert t.modPow(BigInteger.TWO, N).equals(u.mod(N)) : "t^2 != u mod n";
-                    assert t.pow(2).subtract(N).equals(u) : "t^2 - n != u";
-
                     smooth_relations_u.add(array);
                     smooth_relations_t.add(t);
-
-                    if (smooth_relations_u.size() == 5) {
-                        System.out.println("first 5 t^2 = u mod n");
-                        for (int i = 0; i < 5; i++) {
-                            System.out.printf("t: %s; u: %s\n", smooth_relations_t.get(i),
-                                    Arrays.toString(smooth_relations_u.get(i)));
-                        }
-                    }
+                    relationsFound++;
                 }
             }
         }
@@ -269,14 +254,12 @@ public abstract class QuadraticSieve {
     public void constructMatrix() {
         smooth_matrix = new int[smooth_relations_u.size()][primesLTF.length];
         polynomialInput = new BigInteger[smooth_relations_t.size()];
+
         assert smooth_matrix.length == polynomialInput.length;
+
         for (int i = 0; i < smooth_matrix.length; i++) {
             smooth_matrix[i] = smooth_relations_u.get(i);
             polynomialInput[i] = smooth_relations_t.get(i);
-
-            assert polynomialInput[i].pow(2).subtract(N).abs().equals(Utils.evalPower(primesLTF, smooth_matrix[i])) : "this2";
-            // assert polynomialInput[i].modPow(BigInteger.TWO, N).equals(
-                //    Utils.evalPower(primesLTF, smooth_matrix[i]).mod(N)) : "power fail";
         }
     }
 
