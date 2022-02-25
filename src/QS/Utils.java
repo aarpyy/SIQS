@@ -193,32 +193,6 @@ public final class Utils {
     }
 
     /**
-     * Given a list of primes and a list of corresponding powers for each of those primes,
-     * return the BigInteger that is the product of each of those powers.
-     *
-     * @param primes BigIntArray of factor base
-     * @param powers IntArray of powers of each of the factors in the factor base
-     * @return BigInteger result of taking the product of each of the primes raised to each of the
-     * powers of corresponding indices.
-     *
-     * @throws ArithmeticException if the lengths of the two arrays differ
-     */
-    public static BigInteger evalPower(BigInteger[] primes, int[] powers) {
-        if (primes.length != powers.length) {
-            throw new ArithmeticException("Array lengths differ: " + primes.length + ", " + powers.length);
-        } else {
-
-            BigInteger acc = BigInteger.ONE;
-            // Otherwise, they are same size so evaluate powers
-            for (int i = 0; i < primes.length; i++) {
-                // Take product of BigInteger power value
-                acc = acc.multiply(primes[i].pow(powers[i]));
-            }
-            return acc;
-        }
-    }
-
-    /**
      * Performs the fast power algorithm raising a to the power of p mod m.
      * Equivalent to Python's pow(a, p, m)
      * @param a base

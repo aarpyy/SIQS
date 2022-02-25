@@ -7,10 +7,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Self Initializing Quadratic Sieve
@@ -270,7 +267,7 @@ public class SIQS extends QuadraticSieve {
     }
 
     @Override
-    public BigInteger solve() {
+    public BigInteger solveMatrix() {
         assert (smooth_matrix != null) : "Trial division must be performed before solving!";
 
         int[][] transposed = new int[smooth_matrix[0].length][smooth_matrix.length];
@@ -294,7 +291,7 @@ public class SIQS extends QuadraticSieve {
 
             for (int i = 0; i < powers.length; i++) powers[i] /= 2;
 
-            g_x = Utils.evalPower(primesLTF, powers);
+            g_x = evalPower(powers);
 
             p = acc.subtract(g_x).gcd(N);
             q = acc.add(g_x).gcd(N);
@@ -309,16 +306,28 @@ public class SIQS extends QuadraticSieve {
     }
 
     public static void main(String[] args) {
-        BigInteger N;
-        String fName;
+        BigInteger N = null;
+        String fName = null;
 
         if (args.length == 0) {
-            throw new IllegalArgumentException("Must provide composite integer to be factored");
+            System.err.println("An integer argument must be provided");
+            System.exit(1);
         } else {
-            N = new BigInteger(args[0]);
-            if (args.length > 1) {
-                fName = args[1];
-            } else {
+
+            for (String s : args) {
+                if (s.equals("-s")) {
+                    QuadraticSieve.loud = false;
+                } else if (s.matches("[0-9]+")) {
+                    N = new BigInteger(s);
+                } else {
+                    fName = s;
+                }
+            }
+
+            if (N == null) {
+                System.err.println("An integer argument must be provided");
+                System.exit(1);
+            } else if (fName == null) {
                 String os = System.getProperty("os.name");
                 if (os.startsWith("Windows")) {
                     fName = ".\\primes.txt";
@@ -329,8 +338,10 @@ public class SIQS extends QuadraticSieve {
         }
 
         try {
-            System.out.println("N = " + N);
-            System.out.println("digits(N) = " + Utils.nDigits(N));
+            if (loud) {
+                System.out.println("N = " + N);
+                System.out.println("digits(N) = " + Utils.nDigits(N));
+            }
 
             // Open file for primes
             File primesFile = new File(fName);
@@ -373,29 +384,34 @@ public class SIQS extends QuadraticSieve {
 
                     if (relations != qs.getRelationsFound()) {
                         relations = qs.getRelationsFound();
-                        if (relations % relationsIncrement == 0) {
+                        if ((relations % relationsIncrement == 0) && loud) {
                             System.out.printf("%d/%d\n", relations, qs.requiredRelations);
                         }
                     }
                 }
 
-                System.out.printf("%d/%d\n", qs.getRelationsFound(), qs.requiredRelations);
-                System.out.println("Attempting linear algebra stage...");
+                if (loud) {
+                    System.out.printf("%d/%d\n", qs.getRelationsFound(), qs.requiredRelations);
+                    System.out.println("Attempting linear algebra stage...");
+                }
 
                 qs.constructMatrix();
-                factor = qs.solve();
+                factor = qs.solveMatrix();
 
                 if (factor != null) {
                     assert N.mod(factor).equals(BigInteger.ZERO) : "Factor does not divide N";
-                    System.out.println("Factor of N: " + factor + "\nN / factor = " + N.divide(factor));
-
-                    System.out.printf("Time to factor: %ds\n", Duration.between(startTime, Instant.now()).toSeconds());
+                    if (loud) {
+                        System.out.println("Factor of N: " + factor + "\nN / factor = " + N.divide(factor));
+                        System.out.printf("Time to factor: %ds\n", Duration.between(startTime, Instant.now()).toSeconds());
+                    } else {
+                        System.out.println(factor);
+                    }
                     foundFactor = true;
                     break;
                 }
             }
 
-            if (!foundFactor) {
+            if (!foundFactor && loud) {
                 System.out.println("Unable to find non-trivial factor of N");
             }
 

@@ -18,6 +18,8 @@ public abstract class QuadraticSieve {
 
     private static final double smoothRelationRatio = 1.05;
 
+    public static boolean loud = true;
+
     // Both integer and BigInteger versions of factor base are public as well as N
     public final BigInteger N;
 
@@ -79,9 +81,6 @@ public abstract class QuadraticSieve {
             p = FactorBase[i];
             t = Utils.modSqrt(N, p);
 
-            assert t.modPow(BigInteger.TWO, p).equals(N.mod(p)) :
-                    "Square root failed: " + t + "^2 == " + t.pow(2).mod(p) + " != N mod " + p + " (" + N.mod(p) + ")";
-
             t_sqrt[i] = t;
 
             // Take log base 2 of prime p
@@ -94,10 +93,12 @@ public abstract class QuadraticSieve {
         m = chooseSieveRange(digits);
         M = BigInteger.valueOf(m);
 
-        System.out.println("M: " + M);
+        if (loud) {
+            System.out.println("M: " + M);
 
-        System.out.println("Size of factor base: " + fbSize);
-        System.out.println("Number of primes < F: " + primesLTF.length);
+            System.out.println("Size of factor base: " + fbSize);
+            System.out.println("Number of primes < F: " + primesLTF.length);
+        }
 
         // These are all variables that will be set during initialization stage
         soln1 = new int[fbSize];
@@ -122,7 +123,9 @@ public abstract class QuadraticSieve {
     public static BigInteger[] startup(BigInteger N, Scanner primesScanner) {
         BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
 
-        System.out.println("F: " + F);
+        if (loud) {
+            System.out.println("F: " + F);
+        }
 
         LinkedList<BigInteger> primes = new LinkedList<>();
 
@@ -197,10 +200,35 @@ public abstract class QuadraticSieve {
     }
 
     /**
+     * Given a list of primes and a list of corresponding powers for each of those primes,
+     * return the BigInteger that is the product of each of those powers.
+     *
+     * @param powers int[] of powers of each of the factors in the factor base
+     * @return BigInteger result of taking the product of each of the primes raised to each of the
+     * powers of corresponding indices.
+     *
+     * @throws ArithmeticException if the lengths of the two arrays differ
+     */
+    public BigInteger evalPower(int[] powers) {
+        if (primesLTF.length != powers.length) {
+            throw new ArithmeticException("Array lengths differ: " + primesLTF.length + ", " + powers.length);
+        } else {
+
+            BigInteger acc = BigInteger.ONE;
+            // Otherwise, they are same size so evaluate powers
+            for (int i = 0; i < primesLTF.length; i++) {
+                // Take product of BigInteger power value
+                acc = acc.multiply(primesLTF[i].pow(powers[i]));
+            }
+            return acc;
+        }
+    }
+
+    /**
      * Attempts to completely factor n using the given factor base, returning the powers of the factors
      * if number was completely factored, throwing ArithmeticException if not.
      * @param a BigInteger to be factored
-     * @return IntArray of the powers of each of the factors in the factor base if {@code n} was completely factored
+     * @return int[] of the powers of each of the factors in the factor base if {@code n} was completely factored
      * or null if not
      */
     public int[] trialDivide(BigInteger a) throws ArithmeticException {
@@ -226,7 +254,7 @@ public abstract class QuadraticSieve {
     /**
      * Perform trial division, attempting to divide each result returned by {@code this.Q_x}, adding
      * it to the matrix if successful. If more trial divisions were successful than the number
-     * of factors in the factor base, save the {@code LinkedList<IntArray>} as an {@code IntMatrix}
+     * of factors in the factor base, save the {@code LinkedList<int[]>} as an {@code int[][]}
      * via {@code this.smooth_matrix} and return {@code true} otherwise return {@code false}.
      *
      * @param g polynomial to use to get smooth output
@@ -262,5 +290,5 @@ public abstract class QuadraticSieve {
         }
     }
 
-    public abstract BigInteger solve();
+    public abstract BigInteger solveMatrix();
 }

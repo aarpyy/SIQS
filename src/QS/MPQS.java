@@ -13,7 +13,7 @@ public class MPQS extends QuadraticSieve {
     /*
     Find n BigInteger's q s.sqrtFB. (N/q) = 1. Here, n is how many polynomials we want to sieve
      */
-    public BigIntArray findQ(int n) {
+    public BigInteger[] findQ(int n) {
         int found = 0;
 
         // Get the first prime greater than √(√2n / m)
@@ -28,7 +28,7 @@ public class MPQS extends QuadraticSieve {
             }
             q = q.nextProbablePrime();
         }
-        return BigIntArray.fromArray(arrQ);
+        return arrQ;
     }
 
     // Given a q that is odd prime s.sqrtFB. N is a quadratic residue mod q, find polynomial coefficient a, b, c
@@ -120,7 +120,7 @@ public class MPQS extends QuadraticSieve {
     }
 
     @Override
-    public BigInteger solve() {
+    public BigInteger solveMatrix() {
         return null;
     }
 }

@@ -14,26 +14,6 @@ class UtilsTest {
 
     private static final boolean print = false;
 
-    @Test
-    void smoothFactor() {
-        BigInteger a = new BigInteger("3019406709819244469219098647" +
-                "429015240407452240932129599881656");
-        BigIntArray primesLTF = BigIntArray.fromArray(Utils.firstN(6000, new File(".\\primes.txt")));
-        int[] factors = new int[primesLTF.size()];
-        BigInteger[] div;
-        BigInteger prime;
-        for (int i = 0; i < primesLTF.size(); i++) {
-            factors[i] = 0;
-            prime = primesLTF.get(i);
-            while ((div = a.divideAndRemainder(prime))[1].equals(BigInteger.ZERO)) {
-                a = div[0];
-                factors[i]++;
-            }
-        }
-
-        System.out.println("A = " + a);
-    }
-
     public boolean smoothQ(BigInteger a, BigInteger[] fb) throws ArithmeticException {
         BigInteger[] div;
         for (BigInteger prime : fb) {
