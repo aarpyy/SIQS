@@ -21,13 +21,14 @@ public final class Utils {
      */
     public static final double log2 = Math.log(2);
 
+    /**
+     * Returns the number of digits in a {@code BigInteger}
+     * @param n number to get digits of
+     * @return the number of digits in {@code n}
+     */
     public static int nDigits(BigInteger n) {
         // return (int) Math.round(n.bitLength() / (Math.log(10) / log2));
         return n.toString().length();
-    }
-
-    public static int nDigits(BigDecimal n) {
-        return nDigits(n.toBigInteger());
     }
 
     /**
@@ -54,6 +55,11 @@ public final class Utils {
         }
     }
 
+    /**
+     * Computes the transpose of matrix
+     * @param matrix {@code int[][]} matrix
+     * @return new {@code int[][]} matrix, the transpose of the original
+     */
     public static int[][] transpose(int[][] matrix) {
         int[] column;
         int[][] transposed = new int[matrix[0].length][matrix.length];
@@ -148,6 +154,13 @@ public final class Utils {
         return kernel;
     }
 
+    /**
+     * Multiplies {@code vector} against {@code matrix}, computing an array that contains
+     * the dot product of each column of {@code matrix} with {@code vector}
+     * @param vector {@code int[]} vector
+     * @param matrix {@code int[][]} matrix
+     * @return product of {@code vector} * {@code matrix}
+     */
     public static int[] matMul(int[] vector, int[][] matrix) {
         if (vector.length != matrix.length) {
             throw new IllegalArgumentException("Array lengths differ: " + vector.length + ", " + matrix.length);
@@ -155,13 +168,19 @@ public final class Utils {
             int[] array = new int[matrix[0].length];
             int i = 0;
             for (int[] row : transpose(matrix)) {
-                array[i++] = binaryDot(vector, row);
+                array[i++] = dot(vector, row);
             }
             return array;
         }
     }
 
-    public static int binaryDot(int[] a, int[] b) {
+    /**
+     * Computes the dot product of two arrays
+     * @param a first array
+     * @param b second array
+     * @return the sum of the products of each element of {@code a} and {@code b}
+     */
+    public static int dot(int[] a, int[] b) {
         if (a.length == b.length) {
             int res = 0;
             for (int i = 0; i < a.length; i++) {
@@ -170,18 +189,6 @@ public final class Utils {
             return res;
         } else {
             throw new ArrayIndexOutOfBoundsException("Lengths " + a.length + " and " + b.length + " differ");
-        }
-    }
-
-    public static BigInteger binaryDot(int[] a, BigInteger[] b) {
-        if (a.length == b.length) {
-            BigInteger res = BigInteger.ZERO;
-            for (int i = 0; i < a.length; i++) {
-                if (a[i] == 1) res = res.add(b[i]);
-            }
-            return res;
-        } else {
-            throw new ArrayIndexOutOfBoundsException("Lengths" + a.length + " and " + b.length + " differ");
         }
     }
 
@@ -328,18 +335,6 @@ public final class Utils {
     }
 
     /**
-     * Function identical to {@code intMod(BigInteger n, BigInteger m)} that accepts a Java int
-     * as the modulus
-     *
-     * @param n operand
-     * @param m modulus
-     * @return integer value of n mod m
-     */
-    public static int intMod(BigInteger n, int m) {
-        return n.mod(BigInteger.valueOf(m)).intValue();
-    }
-
-    /**
      * Computes the BigInteger result of taking the square root of {@code a}
      *
      * @param a BigInteger to be square-rooted
@@ -347,29 +342,6 @@ public final class Utils {
      */
     public static BigInteger BigSqrt(BigInteger a) {
         return (new BigDecimal(a)).sqrt(MathContext.DECIMAL128).toBigInteger();
-    }
-
-    /**
-     * Computes the log {@code base} of {@code a}, returning it as a double. Since
-     * this is done using {@code a.bitLength()} which returns an int, converting to a double
-     * and returning ensures that this operation is not affected by the input being a
-     * BigInteger. Equivalent to {@code Math.log(a) / Math.log(base)}
-     *
-     * @param a number to take log of
-     * @param base base of log
-     * @return log base of a
-     */
-    public static double BigLog(BigInteger a, double base) {
-        return a.bitLength() / (Math.log(base) / Math.log(2));
-    }
-
-    /**
-     * Helper function for {@code BigLog()} that computes the natural log of {@code a}
-     * @param a number to take log of
-     * @return ln of a
-     */
-    public static double BigLN(BigInteger a) {
-        return BigLog(a, Math.E);
     }
 
     /**
@@ -551,20 +523,6 @@ public final class Utils {
     }
 
     /**
-     * Function identical to {@code BigInteger liftSqrt()} that accepts and returns Java ints instead of
-     * BigIntegers.
-     * @param root square root of n mod baseQ
-     * @param n square of root mod baseQ
-     * @param baseQ base modulus
-     * @param q prime modulus to increment baseQ by
-     * @return x s.t. x^2 = n mod baseQ and x^2 = n mod (baseQ * q)
-     */
-    public static int liftSqrt(int root, int n, int baseQ, int q) {
-        int s = (((n - (root * root)) / baseQ) * modularInverse(root * 2, q)) % q;
-        return (root + (s * baseQ)) % (baseQ * q);
-    }
-
-    /**
      * Returns true iff a number {@code c} exists s.t. {@code c^2 = a mod p}, false otherwise. If returns
      * false, {@code c} either does not exist, {@code a} is 0, or {@code p} is composite
      * (determining quadratic residue using this method is undefined for a composite modulus).
@@ -576,10 +534,6 @@ public final class Utils {
         // Returns a ^ ((p - 1) / 2) == 1, which tells us if there exists an integer c s.sqrtFB.
         // c^2 = a mod p
         return a.modPow(p.subtract(BigInteger.ONE).divide(BigInteger.TWO), p).equals(BigInteger.ONE);
-    }
-
-    public static boolean quadraticResidue(BigInteger a, int p) {
-        return quadraticResidue(a, BigInteger.valueOf(p));
     }
 
     /**

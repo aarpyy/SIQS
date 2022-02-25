@@ -111,7 +111,7 @@ class UtilsTest {
         for (int[] row : kernel) {
             System.out.println(Arrays.toString(row));
             for (int[] r : matrix) {
-                assert Utils.binaryDot(row, r) % 2 == 0 : "Kernel produced non-zero result";
+                assert Utils.dot(row, r) % 2 == 0 : "Kernel produced non-zero result";
             }
         }
     }

@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 class SIQSTest {
@@ -33,7 +32,7 @@ class SIQSTest {
 
             // Make new object which just creates arrays for process
             SIQS qs = new SIQS(N, primes);
-            QSPoly[] poly = qs.firstPolynomial();
+            QSPoly[] poly = qs.firstPoly();
             // qs.printInfoA();
 
             QSPoly g = poly[0];

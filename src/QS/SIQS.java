@@ -2,10 +2,11 @@ package QS;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
@@ -50,18 +51,6 @@ public class SIQS extends QuadraticSieve {
 
     public int nFactorsA() {
         return a_factors.size();
-    }
-
-    public void printInfoA() {
-        System.err.println("Indices: " + a_factors);
-
-        int[] primes = new int[a_factors.size()];
-        int i = 0;
-        for (int j : a_factors) {
-            primes[i++] = factor_base[j];
-        }
-
-        System.err.println("Prime factors: " + Arrays.toString(primes));
     }
 
     public void smoothA() {
@@ -147,17 +136,17 @@ public class SIQS extends QuadraticSieve {
             }
         }
 
+        // Create set of indices of primes that do NOT divide a (for convenience when sieving)
         for (int p = 0; p < factor_base.length; p++) {
             if (!a_factors.contains(p)) a_non_factors.add(p);
         }
-
-//        BigDecimal d_diff = new BigDecimal(a).divide(target, MathContext.DECIMAL32);
-//        System.err.println("a_java = " + a + "  # (" + d_diff + "%)");
     }
 
-    public QSPoly[] firstPolynomial() throws ArithmeticException {
+    public QSPoly[] firstPoly() throws ArithmeticException {
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
+
+        // Get coefficient a that is smooth with respect to the factor base
         smoothA();
 
         B = new BigInteger[a_factors.size()];
@@ -166,6 +155,8 @@ public class SIQS extends QuadraticSieve {
         BigInteger a_l;     // a missing one of it's factors
         BigInteger gamma, q;
 
+        // Convert a_factors into a sorted array, so that the primes that divide 'a' are iterated over
+        // in ascending order
         int[] factors_q = new int[a_factors.size()];
         int j = 0;
         for (int l : a_factors) {
@@ -176,8 +167,6 @@ public class SIQS extends QuadraticSieve {
         for (int l : factors_q) {
             // Get BigInteger prime
             q = FactorBase[l];
-
-            assert a.mod(q).equals(BigInteger.ZERO) : "q_l does not divide a";
 
             a_l = a.divide(q);
 
@@ -193,31 +182,25 @@ public class SIQS extends QuadraticSieve {
             B[b_index++] = a_l.multiply(gamma);
         }
 
-        // System.err.println("B_java = " + Arrays.toString(B));
-
         b = BigInteger.ZERO;
         for (BigInteger B_i : B) b = b.add(B_i);
         b = b.mod(a);
 
-        // System.err.println("b_java = " + b);
-
+        /*
+        From skollman - PyFactorise:
+        b needs to remain consistent for generating new polynomials, but in order for a | b^2 - N,
+        skollman uses (and I have borrowed here) making sure that 2*b <= a. This value is used for
+        the current polynomial but NOT for generation of new ones
+         */
         BigInteger _b = b;
         if (_b.add(_b).compareTo(a) > 0) _b = a.subtract(_b);
 
-        // System.err.println("b = " + _b);
-
         BigInteger b2_n = _b.multiply(_b).subtract(N);
-
-        assert _b.compareTo(BigInteger.ZERO) > 0 : "b <= 0";
-        assert _b.multiply(BigInteger.TWO).compareTo(a) <= 0 : "2*b > a";
-        assert b2_n.mod(a).equals(BigInteger.ZERO) : "a does not divide b^2 - N";
 
         B_ainv2 = new int[a_factors.size()][factor_base.length];
         BigInteger a_inv, prime, t;
         for (int p : a_non_factors) {
             prime = FactorBase[p];
-
-            assert !a.mod(prime).equals(BigInteger.ZERO) : "p divides a";
 
             a_inv = a.modInverse(prime);
             for (j = 0; j < a_factors.size(); j++) {
@@ -257,19 +240,12 @@ public class SIQS extends QuadraticSieve {
 
         int sign = ((((int) Math.ceil(i / Math.pow(2, v))) & 1) == 1) ? -1 : 1;
 
-//        System.err.printf("sign_%d = %d\n", i, sign);
-//        System.err.printf("v_%d = %d\n", i, v);
-        // System.err.println("B_v = " + B[v - 1]);
-
         // b = (b + 2 * sign * B_v) % a
         b = b.add(BigInteger.valueOf(2 * sign).multiply(B[v - 1])).mod(a);
 
-        // System.err.printf("b_%d_java = %s\n", i + 1, b);
-
+        // See comment in firstPoly() for why this is being done
         BigInteger _b = b;
         if (_b.add(_b).compareTo(a) > 0) _b = a.subtract(_b);
-
-        // System.err.printf("b(%d) = %s\n", i, _b);
 
         BigInteger b2_n = _b.multiply(_b).subtract(N);
 
@@ -360,13 +336,15 @@ public class SIQS extends QuadraticSieve {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
+            Instant startTime = Instant.now();
+
             BigInteger[] primes = QuadraticSieve.startup(N, scanner);
 
             // Make new object which just creates arrays for process
             SIQS qs = new SIQS(N, primes);
 
             // Initialize a and get first polynomial
-            QSPoly[] Q_x = qs.firstPolynomial();
+            QSPoly[] Q_x = qs.firstPoly();
             QSPoly g = Q_x[0];
             QSPoly h = Q_x[1];
             int nPolynomials = 1 << (qs.nFactorsA() - 1);
@@ -386,7 +364,7 @@ public class SIQS extends QuadraticSieve {
                     h = Q_x[1];
 
                     if (i >= nPolynomials) {
-                        Q_x = qs.firstPolynomial();
+                        Q_x = qs.firstPoly();
                         nPolynomials = 1 << (qs.nFactorsA() - 1);
                         g = Q_x[0];
                         h = Q_x[1];
@@ -402,13 +380,16 @@ public class SIQS extends QuadraticSieve {
                 }
 
                 System.out.printf("%d/%d\n", qs.getRelationsFound(), qs.requiredRelations);
-                System.out.println("Attempting linear algebra stage");
+                System.out.println("Attempting linear algebra stage...");
 
                 qs.constructMatrix();
                 factor = qs.solve();
 
                 if (factor != null) {
+                    assert N.mod(factor).equals(BigInteger.ZERO) : "Factor does not divide N";
                     System.out.println("Factor of N: " + factor + "\nN / factor = " + N.divide(factor));
+
+                    System.out.printf("Time to factor: %ds\n", Duration.between(startTime, Instant.now()).toSeconds());
                     foundFactor = true;
                     break;
                 }

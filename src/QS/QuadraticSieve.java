@@ -1,10 +1,10 @@
 package QS;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.math.MathContext;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Scanner;
 
 /**
  * This class is base class for both {@code SIQS} and {@code MPQS} as both share the same computation
@@ -120,7 +120,6 @@ public abstract class QuadraticSieve {
      * @return {@code BigInteger[]} containing primes < F
      */
     public static BigInteger[] startup(BigInteger N, Scanner primesScanner) {
-        // F = e^((1/2) * sqrt(log(N) * log(log(N)))) according to p.5 Contini Thesis
         BigInteger F = BigInteger.valueOf(chooseF(Utils.nDigits(N)));
 
         System.out.println("F: " + F);
@@ -260,17 +259,6 @@ public abstract class QuadraticSieve {
         for (int i = 0; i < smooth_matrix.length; i++) {
             smooth_matrix[i] = smooth_relations_u.get(i);
             polynomialInput[i] = smooth_relations_t.get(i);
-        }
-    }
-
-    public void writeMatrix(FileWriter fileWriter) throws IOException {
-        fileWriter.write("Smooth matrix\n");
-        for (int[] a : smooth_matrix) {
-            fileWriter.write(Arrays.toString(a) + "\n");
-        }
-        fileWriter.write("\nPolynomial input\n");
-        for (BigInteger i : polynomialInput) {
-            fileWriter.write(i + "\n");
         }
     }
 
