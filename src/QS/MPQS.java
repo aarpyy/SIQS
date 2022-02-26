@@ -51,15 +51,16 @@ public class MPQS extends QuadraticSieve {
         BigInteger a = q.pow(2);
         BigInteger b = Utils.liftSqrt(Utils.modSqrt(N, q), N, q, q);
 
-        int int_a = a.intValue();
         int int_b = b.intValue();
 
         int p, t, a_inv, b_mod_p;
-        for (int i = 0; i < factor_base.length; i++) {
+        for (int i = 0; i < FactorBase.length; i++) {
+
             p = factor_base[i];
+
             t = t_sqrt[i].intValue();
 
-            a_inv = Utils.modularInverse(int_a, p);
+            a_inv = a.modInverse(FactorBase[i]).intValue();
             b_mod_p = int_b % p;
 
             // soln1 = a^-1 * (tmem_p - b ) mod p

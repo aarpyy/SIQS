@@ -4,7 +4,12 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.util.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -252,11 +257,50 @@ class UtilsTest {
 
     }
 
+    static int divide(int dividend, int divisor)
+    {
+
+        // Calculate sign of divisor i.e.,
+        // sign will be negative only if
+        // either one of them is negative
+        // otherwise it will be positive
+        // int sign = ((dividend < 0) ^
+               //  (divisor < 0)) ? -1 : 1;
+
+        // Update both divisor and
+        // dividend positive
+        dividend = Math.abs(dividend);
+        divisor = Math.abs(divisor);
+
+        // Initialize the quotient
+        int quotient = 0;
+
+        while (dividend >= divisor)
+        {
+            dividend -= divisor;
+            ++quotient;
+        }
+
+        return quotient;
+    }
+
     @Test
     void quadraticResidue() {
-        int digits = 70;
-        int bits = (int) (digits / (Math.log(2) / Math.log(10)));
-        System.out.println("Bits in " + digits + " digit number = " + bits);
+        long iters = 2 << 15;
+
+        int a = 257;
+        int b = 13;
+        int c;
+        Instant start = Instant.now();
+        for (long i = 0; i < iters; i++) {
+            c = (a / b) * b;
+        }
+        System.out.printf("/* took %dns\n", Duration.between(start, Instant.now()).toNanos());
+        start = Instant.now();
+        for (long i = 0; i < iters; i++) {
+            c = divide(a, b);
+        }
+        System.out.printf("divide took %dns\n", Duration.between(start, Instant.now()).toNanos());
     }
 
     @Test

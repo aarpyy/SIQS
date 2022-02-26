@@ -21,6 +21,12 @@ public final class Utils {
      */
     public static final double log2 = Math.log(2);
 
+    private static final BigInteger bigInt = BigInteger.valueOf(Integer.MAX_VALUE);
+
+    public static boolean isInteger(BigInteger a) {
+        return a.compareTo(bigInt) <= 0;
+    }
+
     /**
      * Returns the number of digits in a {@code BigInteger}
      * @param n number to get digits of
@@ -46,8 +52,7 @@ public final class Utils {
             BigInteger[] array = new BigInteger[n];
             int i = 0;
             while (scanner.hasNextLine() && (i < n)) {
-                array[i] = new BigInteger(scanner.nextLine());
-                i++;
+                array[i++] = new BigInteger(scanner.nextLine());
             }
             return array;
         } catch (FileNotFoundException e) {
@@ -61,15 +66,14 @@ public final class Utils {
      * @return new {@code int[][]} matrix, the transpose of the original
      */
     public static int[][] transpose(int[][] matrix) {
-        int[] column;
-        int[][] transposed = new int[matrix[0].length][matrix.length];
+        int w = matrix[0].length;
+        int h = matrix.length;
+        int[][] transposed = new int[w][h];
 
-        for (int i = 0; i < matrix[0].length; i++) {
-            column = new int[matrix.length];
-            for (int j = 0; j < matrix.length; j++) {
-                column[j] = matrix[j][i];
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                transposed[i][j] = matrix[j][i];
             }
-            transposed[i] = column;
         }
         return transposed;
     }
@@ -84,19 +88,18 @@ public final class Utils {
         int w = matrix[0].length;
         int h = matrix.length;
 
-        int[][] tmpMatrix = new int[h + w][];
+        int[][] tmpMatrix = new int[h + w][w];
 
         int n = 0;
         for (int[] a : matrix) {
-            tmpMatrix[n++] = a;
+            System.arraycopy(tmpMatrix[n], 0, a, 0, a.length);
+            n++;
         }
 
-        int[] row;
         for (int i = 0; i < w; i++) {
-            row = new int[w];
-            Arrays.fill(row, 0);
-            row[i] = 1;
-            tmpMatrix[n++] = row;
+            Arrays.fill(tmpMatrix[n], 0);
+            tmpMatrix[n][i] = 1;
+            n++;
         }
 
         int[][] T = transpose(tmpMatrix);
@@ -114,6 +117,8 @@ public final class Utils {
                     }
 
                     for (int k = 0; k < w; k++) {
+
+                        // If row is not pivot row and this row has entry blocking pivot
                         if ((k != pivotRow) && (T[k][j] == 1)) {
                             for (int m = 0; m < h + w; m++) {
                                 T[k][m] = Math.floorMod(T[k][m] - T[pivotRow][m], 2);

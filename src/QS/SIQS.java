@@ -52,11 +52,11 @@ public class SIQS extends QuadraticSieve {
 
     public void smoothA() {
         int min = 0;
-        // Get first prime in factor base >= 2000
+        // Get first prime in factor base >= minFactor
         while (factor_base[min] < minFactor) {
             min++;
 
-            // If there aren't enough primes to reach 2000, just start from beginning
+            // If there aren't enough primes to reach minFactor, just start from beginning
             if (min >= factor_base.length) {
                 min = 0;
                 break;
@@ -139,7 +139,7 @@ public class SIQS extends QuadraticSieve {
         }
     }
 
-    public QSPoly[] firstPoly() throws ArithmeticException {
+    public QSPoly[] firstPoly() {
 
         // This is following the initialization algorithm detailed on p. 14 on Contini's thesis
 
@@ -224,17 +224,25 @@ public class SIQS extends QuadraticSieve {
     }
 
     public QSPoly[] nextPoly(int i) {
-
-        assert (1 <= i) && (i <= ((2 << (a_factors.size() - 1)) - 1)) : "Invalid polynomial index of " + i;
-
-        // v is the highest power of 2 that divides 2*i
-        int v = 0;
-        int j = i + i;
+        /*
+        v is the highest power of 2 that divides 2*i
+        We can just start j at i and v at 1 since j = 2*i will
+        always be divisible once by 2
+         */
+        int v = 1;
+        int j = i;
         while ((j & 1) == 0) {
             j >>= 1;
             v++;
         }
 
+        /*
+        This math definitely could be faster, but using Math.pow(2, v) returns a double and we
+        want floating point division here to get the ceiling so it's okay. Prime Wiki article
+        suggests that the bit just left of the rightmost set bit should determine the sign, but
+        in testing I was unable to get this consistent and decided to just do the exact math
+        outlined in Contini's thesis, since it's very low cost math anyway
+         */
         int sign = ((((int) Math.ceil(i / Math.pow(2, v))) & 1) == 1) ? -1 : 1;
 
         // b = (b + 2 * sign * B_v) % a
@@ -246,11 +254,11 @@ public class SIQS extends QuadraticSieve {
 
         BigInteger b2_n = _b.multiply(_b).subtract(N);
 
-        assert b2_n.mod(a).equals(BigInteger.ZERO) : "(" + i + ") a does not divide b^2 - N";
-
+        // Pre-compute the coefficients for faster application of polynomial
         QSPoly g = new QSPoly(new BigInteger[]{a.multiply(a), a.multiply(_b).multiply(BigInteger.TWO), b2_n});
         QSPoly h = new QSPoly(new BigInteger[]{a, _b});
 
+        // For all prime p : factor base where p does not divide a
         for (int p : a_non_factors) {
             // solnj[p] = solnj[p] + (-1 ^ (i / 2^v)) * B_ainv2[v][p] mod p
             soln1[p] = Math.floorMod((soln1[p] + sign * B_ainv2[v - 1][p]), factor_base[p]);
@@ -270,14 +278,16 @@ public class SIQS extends QuadraticSieve {
     public BigInteger solveMatrix() {
         assert (smooth_matrix != null) : "Trial division must be performed before solving!";
 
-        int[][] transposed = new int[smooth_matrix[0].length][smooth_matrix.length];
+        int[][] mod2 = new int[smooth_matrix[0].length][smooth_matrix.length];
         for (int i = 0; i < smooth_matrix[0].length; i++) {
             for (int j = 0; j < smooth_matrix.length; j++) {
-                transposed[i][j] = Math.floorMod(smooth_matrix[j][i], 2);
+                mod2[i][j] = Math.floorMod(smooth_matrix[j][i], 2);
             }
         }
 
-        int[][] kernel = Utils.binaryKernel(transposed);
+        // Kernel of smooth_matrix mod 2, each vector corresponds to the set of
+        // g(x) outputs that produce a perfect square
+        int[][] kernel = Utils.binaryKernel(mod2);
 
         int[] powers;
         BigInteger g_x, acc, p, q;
@@ -286,22 +296,32 @@ public class SIQS extends QuadraticSieve {
 
             acc = BigInteger.ONE;
             for (int i = 0; i < array.length; i++) {
+
+                // Array[i] is either 1 or 0, so either add or don't, no need to multiply
                 if (array[i] == 1) acc = acc.multiply(polynomialInput[i]);
             }
 
+            // Taking the 'square root' of the output
             for (int i = 0; i < powers.length; i++) powers[i] /= 2;
 
             g_x = evalPower(powers);
 
+            /*
+            When performing trial division, g(x) is considered smooth regardless of if it is reduced to
+            -1 or 1 after division by the factor base, but when the powers of the factor base are
+            re-applied the result is always positive, so check both +g(x) and -g(x) for non-trivial factor
+             */
             p = acc.subtract(g_x).gcd(N);
             q = acc.add(g_x).gcd(N);
 
+            // If non-trivial ({1, N} are trivial), return
             if ((p.compareTo(N) < 0) && (p.compareTo(BigInteger.ONE) > 0)) {
                 return p;
             } else if ((q.compareTo(N) < 0) && (q.compareTo(BigInteger.ONE) > 0)) {
                 return q;
             }
         }
+
         return null;
     }
 
@@ -347,8 +367,9 @@ public class SIQS extends QuadraticSieve {
             File primesFile = new File(fName);
             Scanner scanner = new Scanner(primesFile);
 
-            Instant startTime = Instant.now();
+            Instant start = Instant.now();
 
+            // Find all primes <= upper limit F and return as array
             BigInteger[] primes = QuadraticSieve.startup(N, scanner);
 
             // Make new object which just creates arrays for process
@@ -398,11 +419,12 @@ public class SIQS extends QuadraticSieve {
                 qs.constructMatrix();
                 factor = qs.solveMatrix();
 
+                // If no basis vectors produced non-trivial factor, we go back to sieving stage, otherwise print factor
                 if (factor != null) {
                     assert N.mod(factor).equals(BigInteger.ZERO) : "Factor does not divide N";
                     if (loud) {
                         System.out.println("Factor of N: " + factor + "\nN / factor = " + N.divide(factor));
-                        System.out.printf("Time to factor: %ds\n", Duration.between(startTime, Instant.now()).toSeconds());
+                        System.out.printf("Time to factor: %ds\n", Duration.between(start, Instant.now()).toSeconds());
                     } else {
                         System.out.println(factor);
                     }
@@ -417,10 +439,7 @@ public class SIQS extends QuadraticSieve {
 
         }
         catch (FileNotFoundException e) {
-            if (loud) {
-                e.printStackTrace();
-                System.err.println("File not found");
-            }
+            e.printStackTrace();
         }
     }
 

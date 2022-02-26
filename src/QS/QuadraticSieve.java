@@ -59,11 +59,16 @@ public abstract class QuadraticSieve {
             if (Utils.quadraticResidue(N, p)) fb.add(p);
         }
 
-        int fbSize = fb.size();
+        if (!Utils.isInteger(fb.getLast())) {
+            System.err.println("All primes in factor base must be <= " + Integer.MAX_VALUE);
+            System.exit(1);
+        }
 
+        int fbSize = fb.size();
         FactorBase = new BigInteger[fbSize];
-        factor_base = new int[fbSize];
+
         int i = 0;
+        factor_base = new int[fbSize];
         for (BigInteger p : fb) {
             FactorBase[i] = p;
             factor_base[i] = p.intValue();
@@ -76,21 +81,14 @@ public abstract class QuadraticSieve {
         // Array of log base e of p (rounded)
         log_p = new int[fbSize];
 
-        BigInteger t, p;
         for (i = 0; i < fbSize; i++) {
-            p = FactorBase[i];
-            t = Utils.modSqrt(N, p);
-
-            t_sqrt[i] = t;
+            t_sqrt[i] = Utils.modSqrt(N, FactorBase[i]);
 
             // Take log base 2 of prime p
-            log_p[i] = (int) Math.round(Math.log(p.intValue()) / Utils.log2);
+            log_p[i] = (int) Math.round(Math.log(factor_base[i]) / Utils.log2);
         }
 
-
-        assert factor_base[0] == 2 : "First prime in factor base is not 2";
-        int digits = Utils.nDigits(N);
-        m = chooseSieveRange(digits);
+        m = chooseSieveRange(Utils.nDigits(N));
         M = BigInteger.valueOf(m);
 
         if (loud) {
@@ -186,6 +184,7 @@ public abstract class QuadraticSieve {
     public abstract void sieve();
 
     public void sieveIndex(int i) {
+
         int prime = factor_base[i];
 
         int i_min = -((m + soln1[i]) / prime);
