@@ -67,7 +67,7 @@ public class SIQS extends QuadraticSieve {
             max++;
 
             if (max >= factor_base.length) {
-                max = factor_base.length;
+                max = factor_base.length - 1;
                 break;
             }
         }
