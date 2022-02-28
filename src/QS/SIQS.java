@@ -278,10 +278,20 @@ public class SIQS extends QuadraticSieve {
     public BigInteger solveMatrix() {
         assert (smooth_matrix != null) : "Trial division must be performed before solving!";
 
-        int[][] mod2 = new int[smooth_matrix[0].length][smooth_matrix.length];
-        for (int i = 0; i < smooth_matrix[0].length; i++) {
-            for (int j = 0; j < smooth_matrix.length; j++) {
+        int h = smooth_matrix.length;
+        int w = smooth_matrix[0].length;
+
+        /*
+        Take 2 transposes here, one for using in finding the kernel mod 2 and the other
+        for repeated use in matrix multiplication, instead of re-transposing smooth_matrix
+        everytime matMul() is called
+         */
+        int[][] mod2 = new int[w][h];
+        int[][] T = new int[w][h];
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
                 mod2[i][j] = Math.floorMod(smooth_matrix[j][i], 2);
+                T[i][j] = smooth_matrix[j][i];
             }
         }
 
@@ -292,17 +302,17 @@ public class SIQS extends QuadraticSieve {
         int[] powers;
         BigInteger g_x, acc, p, q;
         for (int[] array : kernel) {
-            powers = Utils.matMul(array, smooth_matrix);
+            powers = Utils.matMul(array, T);
 
             acc = BigInteger.ONE;
-            for (int i = 0; i < array.length; i++) {
+            for (int i = 0; i < h; i++) {
 
                 // Array[i] is either 1 or 0, so either add or don't, no need to multiply
                 if (array[i] == 1) acc = acc.multiply(polynomialInput[i]);
             }
 
             // Taking the 'square root' of the output
-            for (int i = 0; i < powers.length; i++) powers[i] /= 2;
+            for (int i = 0; i < w; i++) powers[i] /= 2;
 
             g_x = evalPower(powers);
 
@@ -387,7 +397,7 @@ public class SIQS extends QuadraticSieve {
 
             BigInteger factor;
             boolean foundFactor = false;
-            for (int j = 0; j < 5; j++) {
+            for (int j = 0; j < 1; j++) {
                 for (int i = 1; !qs.enoughRelations(); i++) {
                     qs.sieve();
                     qs.trialDivision(g, h, minTrial);
@@ -431,6 +441,7 @@ public class SIQS extends QuadraticSieve {
                     foundFactor = true;
                     break;
                 }
+                qs.clearRelations();
             }
 
             if (!foundFactor && loud) {

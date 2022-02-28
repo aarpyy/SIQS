@@ -332,14 +332,8 @@ class UtilsTest {
 
     @Test
     void BigInteger_intValue() {
-        BigInteger n = BigInteger.valueOf(91898214);
-        double iters = 10000;
-        long start = System.nanoTime();
-        for (int i = 0; i < iters; i++) {
-            n.intValue();
-        }
-
-        double t_per = (System.nanoTime() - start) / iters;
-        System.out.println("BigInteger.intValue() took " + t_per + "ns on average");
+        QSPoly q = new QSPoly(new BigInteger[]{BigInteger.TWO, BigInteger.valueOf(3), BigInteger.valueOf(4)});
+        BigInteger r = q.apply(BigInteger.valueOf(-3));
+        System.out.println(r);
     }
 }

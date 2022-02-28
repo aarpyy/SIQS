@@ -178,6 +178,12 @@ public abstract class QuadraticSieve {
         return relationsFound;
     }
 
+    public void clearRelations() {
+        relationsFound = 0;
+        smooth_relations_u.clear();
+        smooth_relations_t.clear();
+    }
+
     /**
      * Sieve along the range of (-M, M), filling {@code this.sieve_array} in the process.
      */

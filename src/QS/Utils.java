@@ -90,16 +90,14 @@ public final class Utils {
 
         int[][] tmpMatrix = new int[h + w][w];
 
-        int n = 0;
-        for (int[] a : matrix) {
-            System.arraycopy(tmpMatrix[n], 0, a, 0, a.length);
-            n++;
+        for (int i = 0; i < h; i++) {
+            System.arraycopy(matrix[i], 0, tmpMatrix[i], 0, w);
         }
 
-        for (int i = 0; i < w; i++) {
-            Arrays.fill(tmpMatrix[n], 0);
-            tmpMatrix[n][i] = 1;
-            n++;
+        int n = 0;
+        for (int i = h; i < w + h; i++) {
+            Arrays.fill(tmpMatrix[i], 0);
+            tmpMatrix[i][n++] = 1;
         }
 
         int[][] T = transpose(tmpMatrix);
@@ -152,28 +150,27 @@ public final class Utils {
         }
         kernel = new int[w - i][w];
         // Add rest of them, since matrix in RREF all rows below will also be zero
-        int k = 0;
-        for (; i < w; i++) {
-            kernel[k++] = right[i];
+        for (int j = 0; i < w; i++) {
+            kernel[j++] = right[i];
         }
         return kernel;
     }
 
     /**
-     * Multiplies {@code vector} against {@code matrix}, computing an array that contains
-     * the dot product of each column of {@code matrix} with {@code vector}
+     * Multiplies {@code vector} against the transpose of {@code matrix}, computing an array that contains
+     * the dot product of each row of {@code matrix} with {@code vector}. Make sure to give this function
+     * the transpose of the matrix you want to multiply.
      * @param vector {@code int[]} vector
      * @param matrix {@code int[][]} matrix
      * @return product of {@code vector} * {@code matrix}
      */
     public static int[] matMul(int[] vector, int[][] matrix) {
-        if (vector.length != matrix.length) {
-            throw new IllegalArgumentException("Array lengths differ: " + vector.length + ", " + matrix.length);
+        if (vector.length != matrix[0].length) {
+            throw new IllegalArgumentException("Array lengths differ: " + vector.length + ", " + matrix[0].length);
         } else {
-            int[] array = new int[matrix[0].length];
-            int i = 0;
-            for (int[] row : transpose(matrix)) {
-                array[i++] = dot(vector, row);
+            int[] array = new int[matrix.length];
+            for (int i = 0; i < matrix.length; i++) {
+                array[i] = dot(vector, matrix[i]);
             }
             return array;
         }
