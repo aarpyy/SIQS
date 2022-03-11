@@ -392,8 +392,10 @@ public class SIQS extends QuadraticSieve {
             int nPolynomials = 1 << (qs.nFactorsA() - 1);
             int minTrial = Utils.BigSqrt(qs.N).multiply(qs.M).bitLength() - trialDivError;
 
-            int relations = qs.getRelationsFound();
-            int relationsIncrement = qs.requiredRelations / 10;
+            int relationsIncrement = qs.requiredRelations / 25;
+            int lastPrinted = 0;
+
+            System.out.println("Finding relations...");
 
             BigInteger factor;
             boolean foundFactor = false;
@@ -413,17 +415,14 @@ public class SIQS extends QuadraticSieve {
                         i = 0;
                     }
 
-                    if (relations != qs.getRelationsFound()) {
-                        relations = qs.getRelationsFound();
-                        if ((relations % relationsIncrement == 0) && loud) {
-                            System.out.printf("%d/%d\n", relations, qs.requiredRelations);
-                        }
+                    if ((qs.getRelationsFound() - lastPrinted > relationsIncrement) && loud) {
+                        System.out.printf("\r%d/%d", qs.getRelationsFound(), qs.requiredRelations);
+                        lastPrinted = qs.getRelationsFound();
                     }
                 }
 
                 if (loud) {
-                    System.out.printf("%d/%d\n", qs.getRelationsFound(), qs.requiredRelations);
-                    System.out.println("Attempting linear algebra stage...");
+                    System.out.println("\nAttempting linear algebra stage...");
                 }
 
                 qs.constructMatrix();
